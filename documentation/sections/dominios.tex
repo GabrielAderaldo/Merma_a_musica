@@ -1,0 +1,35 @@
+\begin{titlepage}
+
+\section{Contexto do Sistema}
+
+\subsection{Mermã, a Música! - Descrição do Projeto}
+
+Mermã, a Música! é um jogo de quiz musical rápido, leve e multiplayer, desenvolvido para rodar diretamente no navegador. Inspirado no conceito de jogos como Anime Music Quiz (AMQ), o diferencial do Mermã, a Música! é permitir que os jogadores joguem com músicas normais, utilizando suas próprias playlists de serviços de streaming como Spotify.
+
+O objetivo do jogo é simples: adivinhar o nome da música ou do artista antes que o tempo acabe. Os jogadores podem participar de partidas solo para treino ou desafiar amigos em salas multiplayer com diferentes modos de jogo, incluindo um sistema ranqueado com pontuação baseada no tempo de resposta e acertos. O sistema de ELO, inspirado em jogos competitivos como Valorant e LoL, garante que os melhores jogadores subam no ranking de forma justa.
+
+O jogo é open-source, permitindo contribuições da comunidade para expandir funcionalidades e melhorar a experiência. Sua arquitetura segue princípios de Domain-Driven Design (DDD) e Clean Architecture, garantindo um código modular e organizado. O backend é desenvolvido em Deno com TypeScript, utilizando REST API para operações gerais e WebSockets para sincronização em tempo real. A persistência dos dados combina PostgreSQL (para jogadores, salas e ranking), MongoDB (para playlists e histórico de partidas) e Redis (para cache e tempo real).
+
+A aplicação é hospedada em uma VPS na MagaluCloud, utilizando Docker Compose para orquestrar os serviços, garantindo flexibilidade e escalabilidade. Inicialmente, o jogo será um monólito modular, mas poderá evoluir para microsserviços conforme a necessidade.
+
+Com um design pensado para ser acessível, ágil e competitivo, Mermã, a Música! se propõe a ser o quiz musical definitivo para quem quer testar seus conhecimentos e se divertir com amigos de forma dinâmica e envolvente.
+
+Slogan: "Mermã, tu conhece mesmo essas músicas?"
+
+\subsection{Arquitetura do Sistema}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{image/arquitetura_do_projeto.png}
+    \caption{Arquitetura do Projeto Mermã, a Música!}
+    \label{fig:minha_imagem}
+\end{figure}
+
+\subsection{CORE DOMAIN - Sistema de Partidas}
+    O Sistema de Partidas é o Core Domain do jogo "Mermã, a Música!", responsável por gerenciar o núcleo da experiência de jogo, desde a criação da partida até a exibição dos resultados finais.  Ele garante a sincronização em tempo real entre os jogadores, oferecendo uma experiência multiplayer fluida e dinâmica.
+    \input{bouded_contexts/sistema_partida/gerenciamento_partida.tex}
+    
+
+\end{titlepage}
+
+

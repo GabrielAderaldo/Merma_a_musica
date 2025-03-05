@@ -1,0 +1,28 @@
+\subsubsection{Caso de Uso 4: Responder a uma Pergunta}
+    \textbf{Ator Principal}: Jogador  \\
+    \textbf{Objetivo}: Responder a uma pergunta sobre a música que está sendo tocada na rodada atual da partida, com a possibilidade de múltiplas tentativas até o tempo limite. \\
+    \textbf{Pre-Requesito}: A partida tem que ser válida e está em andamento \\
+    \textbf{Fluxo Principal}: \\
+    \begin{enumerate}
+        \item O sistema apresenta uma pergunta ao jogador sobre a música que está sendo tocada na rodada atual.
+        \item O jogador analisa a pergunta e as opções de resposta.
+        \item O jogador seleciona a opção de resposta que acredita ser a correta.
+        \item O sistema registra a resposta do jogador e o tempo em que ela foi dada.
+        \item O jogador pode continuar respondendo à mesma pergunta, alterando sua resposta quantas vezes desejar, até o tempo limite.
+        \item Quando o tempo limite da rodada expirar, o sistema considera a última resposta dada pelo jogador como a resposta final.
+        \item O sistema verifica se a resposta final do jogador está correta.
+        \item Se a resposta final estiver correta, o sistema calcula a pontuação do jogador com base no tempo da última resposta.
+        \item O sistema atualiza a pontuação do jogador na partida.
+        \item O sistema notifica o jogador sobre o resultado da sua resposta final (correta ou incorreta) e a pontuação obtida.
+        \item O sistema verifica se a rodada terminou (todos os jogadores responderam ou o tempo limite da rodada expirou).
+        \item Se a rodada terminou, o sistema inicia a próxima rodada ou finaliza a partida, caso seja a última rodada.
+    \end{enumerate}
+    \textbf{REGRAS DE NEGOCIO}:
+    \begin{itemize}
+        \item \textbf{Tempo Limite}:O jogador tem um tempo limite para responder a cada pergunta, definido nas configurações da partida.
+        \item \textbf{Múltiplas Tentativas}:O jogador pode responder à mesma pergunta várias vezes dentro do tempo limite.
+        \item \textbf{Última Resposta}: O sistema considera apenas a última resposta dada pelo jogador como a resposta final.
+        \item \textbf{Pontuação}: A pontuação do jogador é calculada com base no tempo da última resposta e no tipo de acerto (música, artista ou ambos), conforme definido nas configurações da partida.
+        \item \textbf{Tipo de Pergunta}: O tipo de pergunta (música, artista ou ambos) varia de acordo com as configurações da partida.
+        \item \textbf{Registro de tempo de resposta}: O sistema deve registrar todas as respostas do jogador e seus respectivos tempos, mas apenas a última resposta é considerada para o cálculo da pontuação.
+    \end{itemize}

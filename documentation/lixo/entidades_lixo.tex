@@ -1,0 +1,2081 @@
+\subsection{entidades}
+    \subsubsection{Partida}
+    A entidade Partida é o núcleo do jogo, pois controla toda a mecânica de gameplay, desde o início até a finalização. Ela gerencia as rodadas, jogadores, pontuação e ranking, garantindo que o jogo ocorra de forma justa e sincronizada.
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+            \begin{itemize}
+                \item Atributo Bruto
+                \item Identificador único da partida.
+            \end{itemize}
+
+        \item \textbf{salaId}: UUID  
+            \begin{itemize}
+                \item Atributo Bruto
+                \item Identificador da sala onde a partida foi criada.
+            \end{itemize}
+
+        \item \textbf{status}: PartidaStatus (enum)  
+            \begin{itemize}
+                \item Objeto de Valor
+                \item Estado atual da partida, podendo ser:
+                \begin{itemize}
+                    \item \textbf{AGUARDANDO\_JOGADORES}: Esperando os jogadores ficarem prontos.
+                    \item \textbf{EM\_ANDAMENTO}: A partida começou e está ocorrendo.
+                    \item \textbf{FINALIZADA}: Todas as rodadas terminaram e o ranking foi gerado.
+                    \item \textbf{CANCELADA}: A partida foi interrompida antes de ser finalizada.
+                \end{itemize}
+            \end{itemize}
+
+        \item \textbf{configuracao}: ConfiguraçãoPartida  
+            \begin{itemize}
+                \item Objeto de Valor
+                \item Define as regras e configurações da partida, incluindo tempo de resposta, modo de jogo e número de rodadas.
+            \end{itemize}
+
+        \item \textbf{jogadores}: Lista\textless JogadorPartida\textgreater  
+            \begin{itemize}
+                \item Referência a Outras Entidades
+                \item Lista de jogadores que estão participando da partida.
+            \end{itemize}
+
+        \item \textbf{rodadas}: Lista\textless Rodada\textgreater  
+            \begin{itemize}
+                \item Referência a Outras Entidades
+                \item Lista das rodadas que compõem a partida.
+            \end{itemize}
+
+        \item \textbf{rodadaAtual}: Rodada  
+            \begin{itemize}
+                \item Referência a Outras Entidades
+                \item Referência para a rodada que está em andamento.
+            \end{itemize}
+
+        \item \textbf{mecanicaPontuacao}: PontuacaoModo (enum)  
+            \begin{itemize}
+                \item Objeto de Valor
+                \item Determina a lógica de pontuação usada na partida:
+                \begin{itemize}
+                    \item \textbf{NORMAL}: Apenas contagem de pontos.
+                    \item \textbf{RANQUEADA}: Pontuação baseada no tempo de resposta e cálculo de ELO.
+                    \item \textbf{BATTLE\_ROYALE}: Jogadores começam com vidas e são eliminados ao errar.
+                \end{itemize}
+            \end{itemize}
+
+        \item \textbf{ranking}: RankingPartida  
+            \begin{itemize}
+                \item Objeto de Valor
+                \item Representa a classificação final dos jogadores ao final da partida.
+            \end{itemize}
+
+        \item \textbf{dataCriacao}: DataHora  
+            \begin{itemize}
+                \item Objeto de Valor
+                \item Data e hora em que a partida foi criada.
+            \end{itemize}
+
+        \item \textbf{dataFinalizacao} (opcional): DataHora  
+            \begin{itemize}
+                \item Objeto de Valor
+                \item Data e hora em que a partida foi finalizada.
+            \end{itemize}
+    \end{itemize}
+
+    \subsubsection{Rodada}
+    A Rodada representa cada fase dentro de uma Partida. Durante uma rodada, uma música é tocada, e os jogadores tentam adivinhar antes que o tempo acabe. A rodada gerencia a música selecionada, as respostas dos jogadores, o tempo disponível e a transição para a próxima fase do jogo.
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único da rodada.
+              \end{itemize}
+    
+        \item \textbf{partidaId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência para a partida à qual essa rodada pertence.
+              \end{itemize}
+    
+        \item \textbf{numeroRodada}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Número sequencial da rodada dentro da partida.
+              \end{itemize}
+    
+        \item \textbf{musica}: MúsicaPartida  
+              \begin{itemize}
+                  \item Referência a Outras Entidades
+                  \item Música selecionada para esta rodada.
+              \end{itemize}
+    
+        \item \textbf{tempoLimite}: Tempo  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Tempo máximo para os jogadores responderem.
+              \end{itemize}
+    
+        \item \textbf{respostas}: Lista\textless Resposta\textgreater  
+              \begin{itemize}
+                  \item Referência a Outras Entidades
+                  \item Lista das respostas enviadas pelos jogadores.
+              \end{itemize}
+    
+        \item \textbf{estado}: RodadaEstado (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Estado atual da rodada, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{AGUARDANDO}: A rodada foi criada, mas ainda não começou.
+                      \item \textbf{EM\_ANDAMENTO}: A música está tocando e os jogadores podem responder.
+                      \item \textbf{FINALIZADA}: O tempo acabou e as respostas foram avaliadas.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{vencedores}: Lista\textless JogadorPartida\textgreater  
+              \begin{itemize}
+                  \item Referência a Outras Entidades
+                  \item Lista de jogadores que acertaram a música dentro do tempo.
+              \end{itemize}
+    
+        \item \textbf{dataInicio}: DataHora  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Data e hora do início da rodada.
+              \end{itemize}
+    
+        \item \textbf{dataFinalizacao} (opcional): DataHora  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Data e hora do final da rodada.
+              \end{itemize}
+    \end{itemize}
+    \subsubsection{JogadorPartida}
+    A JogadorPartida representa um jogador dentro de uma partida específica. Diferente da entidade Jogador, que armazena os dados globais do usuário, a JogadorPartida contém informações específicas da participação desse jogador na partida, incluindo pontuação, respostas enviadas, tempo de resposta e status (ativo, eliminado, etc.).
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único do jogador na partida.
+              \end{itemize}
+    
+        \item \textbf{partidaId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência para a partida à qual o jogador pertence.
+              \end{itemize}
+    
+        \item \textbf{jogadorId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador do jogador no sistema.
+              \end{itemize}
+    
+        \item \textbf{pontuacao}: Pontuacao  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Pontuação acumulada do jogador na partida.
+              \end{itemize}
+    
+        \item \textbf{vidas}: int (opcional)  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Número de vidas restantes (usado no modo Battle Royale).
+              \end{itemize}
+    
+        \item \textbf{respostas}: Lista\textless Resposta\textgreater  
+              \begin{itemize}
+                  \item Referência a Outras Entidades
+                  \item Lista de respostas enviadas pelo jogador.
+              \end{itemize}
+    
+        \item \textbf{tempoMedioResposta}: Tempo  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Tempo médio de resposta do jogador ao longo da partida.
+              \end{itemize}
+    
+        \item \textbf{estado}: EstadoJogadorPartida (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Estado do jogador na partida, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{ATIVO}: O jogador está participando normalmente da partida.
+                      \item \textbf{ELIMINADO}: O jogador perdeu todas as vidas no modo Battle Royale.
+                      \item \textbf{DESCONECTADO}: O jogador perdeu a conexão, mas pode retornar.
+                  \end{itemize}
+              \end{itemize}
+    \end{itemize}
+    \subsubsection{Resposta}
+    A Resposta representa a tentativa de um jogador de adivinhar a música durante uma Rodada. Cada jogador pode enviar múltiplas respostas, mas apenas a última enviada antes do tempo acabar será considerada. A resposta pode ser correta, errada ou vazia (caso o jogador não responda a tempo).
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único da resposta.
+              \end{itemize}
+    
+        \item \textbf{rodadaId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência para a rodada em que a resposta foi enviada.
+              \end{itemize}
+    
+        \item \textbf{jogadorId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência para o jogador que enviou a resposta.
+              \end{itemize}
+    
+        \item \textbf{conteudo}: Texto  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Texto digitado pelo jogador como resposta.
+              \end{itemize}
+    
+        \item \textbf{tempoEnvio}: Tempo  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Tempo em que a resposta foi enviada dentro da rodada.
+              \end{itemize}
+    
+        \item \textbf{status}: StatusResposta (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Status da resposta, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{CORRETA}: O jogador acertou a música ou artista.
+                      \item \textbf{ERRADA}: O jogador respondeu, mas a resposta estava errada.
+                      \item \textbf{VAZIA}: O jogador não respondeu antes do tempo acabar.
+                  \end{itemize}
+              \end{itemize}
+    \end{itemize}
+    \subsubsection{MúsicaPartida}
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único da música na partida.
+              \end{itemize}
+    
+        \item \textbf{rodadaId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência para a rodada em que essa música será tocada.
+              \end{itemize}
+    
+        \item \textbf{titulo}: Texto  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Nome da música.
+              \end{itemize}
+    
+        \item \textbf{artista}: Texto  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Nome do artista da música.
+              \end{itemize}
+    
+        \item \textbf{urlReproducao}: URL  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Link para reprodução da música (Spotify, YouTube, etc.).
+              \end{itemize}
+    
+        \item \textbf{urlImagem}: URL  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Link para a imagem do álbum da música.
+              \end{itemize}
+    
+        \item \textbf{duracao}: Tempo  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Duração total da música.
+              \end{itemize}
+    
+        \item \textbf{trechoInicio}: Tempo  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Momento da música em que a reprodução começa na rodada.
+              \end{itemize}
+    \end{itemize}
+    \subsubsection{RankingPartida}
+    A RankingPartida representa a classificação final dos jogadores ao término de uma partida. Essa entidade armazena a ordem dos jogadores baseada em pontuação, além de informações como vencedor, pontuação final e, no caso de partidas ranqueadas, a variação de ELO.    
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único do ranking da partida.
+              \end{itemize}
+    
+        \item \textbf{partidaId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência para a partida à qual esse ranking pertence.
+              \end{itemize}
+    
+        \item \textbf{jogadoresClassificados}: Lista\textless JogadorRanking\textgreater  
+              \begin{itemize}
+                  \item Referência a Outras Entidades
+                  \item Lista ordenada dos jogadores classificados.
+              \end{itemize}
+    
+        \item \textbf{vencedorId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador do jogador vencedor da partida.
+              \end{itemize}
+    
+        \item \textbf{modoRanking}: ModoRanking (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Tipo de ranking aplicado, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{NORMAL}: Partida sem impacto no ELO.
+                      \item \textbf{RANQUEADO}: Partida influencia o ELO dos jogadores.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{variacaoELO}: Lista\textless VariacaoELO\textgreater  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Alterações de ELO dos jogadores no modo ranqueado.
+              \end{itemize}
+    \end{itemize}
+
+    \subsubsection{ConfiguraçãoPartida}
+    A ConfiguraçãoPartida representa as regras e parâmetros definidos no momento da criação da partida. Essa entidade contém informações como tempo de resposta, modo de jogo, critérios de acerto e outras configurações que afetam diretamente a jogabilidade.
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único da configuração da partida.
+              \end{itemize}
+    
+        \item \textbf{partidaId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência para a partida associada a essa configuração.
+              \end{itemize}
+    
+        \item \textbf{modoJogo}: ModoJogo (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Define o modo de jogo, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{NORMAL}: Partida sem ranking.
+                      \item \textbf{RANQUEADO}: Partida com pontuação de ELO.
+                      \item \textbf{BATTLE\_ROYALE}: Partida com eliminação por vidas.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{criterioAcerto}: CriterioAcerto (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Determina o critério para considerar uma resposta correta:
+                  \begin{itemize}
+                      \item \textbf{NOME\_DA\_MUSICA}: O jogador deve acertar o nome da música.
+                      \item \textbf{ARTISTA}: O jogador deve acertar o nome do artista.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{tempoResposta}: Tempo  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Tempo máximo que os jogadores têm para responder cada rodada.
+              \end{itemize}
+    
+        \item \textbf{numRodadas}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Número total de rodadas da partida.
+              \end{itemize}
+    
+        \item \textbf{poolMusicas}: Lista\textless MúsicaPartida\textgreater  
+              \begin{itemize}
+                  \item Referência a Outras Entidades
+                  \item Lista de músicas que podem ser selecionadas para a partida.
+              \end{itemize}
+    
+        \item \textbf{maxJogadores}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Número máximo de jogadores permitidos na partida.
+              \end{itemize}
+    
+        \item \textbf{vidasIniciais}: int (opcional)  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Número de vidas iniciais no modo Battle Royale.
+              \end{itemize}
+    \end{itemize}
+    \subsubsection{EstadoPartida}
+    A EstadoPartida representa o estado atual de uma partida em qualquer momento do jogo. Essa entidade é essencial para controlar transições de estados, garantindo que o jogo siga um fluxo lógico e previsível.
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único do estado da partida.
+              \end{itemize}
+    
+        \item \textbf{partidaId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência para a partida associada a esse estado.
+              \end{itemize}
+    
+        \item \textbf{status}: StatusPartida (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Estado atual da partida, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{AGUARDANDO\_JOGADORES}: Criada, mas esperando todos ficarem "Prontos".
+                      \item \textbf{EM\_ANDAMENTO}: Partida iniciada e rodadas em execução.
+                      \item \textbf{PAUSADA}: Partida foi pausada manualmente pelo criador da sala.
+                      \item \textbf{FINALIZADA}: Partida terminou normalmente.
+                      \item \textbf{CANCELADA}: Partida foi cancelada antes de terminar.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{dataUltimaMudanca}: DataHora  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Momento da última mudança de estado.
+              \end{itemize}
+    \end{itemize}
+    \subsubsection{Sala}
+    A Sala representa o ambiente onde os jogadores se reúnem antes de iniciar uma partida. Ela gerencia a lista de jogadores, as configurações iniciais da partida e permissões do criador da sala.
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único da sala.
+              \end{itemize}
+    
+        \item \textbf{donoId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador do jogador que criou a sala.
+              \end{itemize}
+    
+        \item \textbf{jogadores}: Lista\textless JogadorSala\textgreater  
+              \begin{itemize}
+                  \item Referência a Outras Entidades
+                  \item Lista de jogadores dentro da sala.
+              \end{itemize}
+    
+        \item \textbf{configuracaoPartida}: ConfiguraçãoPartida  
+              \begin{itemize}
+                  \item Referência a Outras Entidades
+                  \item Configurações que serão usadas quando a partida for iniciada.
+              \end{itemize}
+    
+        \item \textbf{tipoSala}: TipoSala (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Define se a sala é:
+                  \begin{itemize}
+                      \item \textbf{PUBLICA}: Qualquer jogador pode entrar.
+                      \item \textbf{PRIVADA}: Apenas jogadores convidados podem entrar.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{maxJogadores}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Número máximo de jogadores permitidos na sala.
+              \end{itemize}
+    
+        \item \textbf{codigoConvite}: Texto (opcional)  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Código para que novos jogadores entrem na sala (se for privada).
+              \end{itemize}
+    
+        \item \textbf{status}: StatusSala (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Estado atual da sala, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{AGUARDANDO}: Sala esperando jogadores entrarem.
+                      \item \textbf{CHEIA}: Sala atingiu o número máximo de jogadores.
+                      \item \textbf{PARTIDA\_EM\_ANDAMENTO}: Partida foi iniciada, sala bloqueada.
+                  \end{itemize}
+              \end{itemize}
+    \end{itemize}
+
+    \subsubsection{Jogador}
+    A Jogador representa um usuário cadastrado no sistema, armazenando dados globais como nome, ID, estatísticas de partidas e ELO no caso de partidas ranqueadas. Essa entidade não está vinculada a uma partida específica, mas sim ao perfil do jogador dentro do jogo.
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único do jogador.
+              \end{itemize}
+    
+        \item \textbf{nome}: Texto  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Nome de exibição do jogador.
+              \end{itemize}
+    
+        \item \textbf{elo}: Elo  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Classificação do jogador no modo ranqueado.
+              \end{itemize}
+    
+        \item \textbf{partidasJogadas}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Número total de partidas jogadas pelo jogador.
+              \end{itemize}
+    
+        \item \textbf{vitorias}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Número total de vitórias do jogador.
+              \end{itemize}
+    
+        \item \textbf{derrotas}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Número total de derrotas do jogador.
+              \end{itemize}
+    
+        \item \textbf{historicoPartidas}: Lista\textless PartidaHistorico\textgreater  
+              \begin{itemize}
+                  \item Referência a Outras Entidades
+                  \item Histórico de partidas jogadas pelo jogador.
+              \end{itemize}
+    \end{itemize}
+    
+    \subsubsection{ELO}
+    A Elo representa a classificação de um jogador no modo ranqueado, armazenando nível e pontuação. Essa entidade define a progressão e regressão dos jogadores no ranking, garantindo que a mecânica de ELO seja aplicada corretamente.
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único do ELO do jogador.
+              \end{itemize}
+    
+        \item \textbf{jogadorId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência ao jogador associado a esse ELO.
+              \end{itemize}
+    
+        \item \textbf{nivel}: NivelElo (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Define o nível do jogador, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{INICIANTE}: Quem está começando, aprendendo as regras do jogo.
+                      \item \textbf{AMADOR}: Já tem alguma noção, mas ainda erra bastante.
+                      \item \textbf{COVER\_DE\_BARZINHO}: Jogador consistente, animando as mesas de um barzinho.
+                      \item \textbf{MUSICO\_DE\_BAILE}: Experiente, já tocando em eventos maiores.
+                      \item \textbf{ARTISTA\_INDIE\_LOCAL}: Já tem um público fiel na cena local.
+                      \item \textbf{REVELAÇÃO\_NACIONAL}: Um nome reconhecido, começando a ganhar destaque.
+                      \item \textbf{SUCESSO\_DE\_TURNE}: Joga no mais alto nível, como um astro da música.
+                      \item \textbf{LENDA\_DA\_MUSICA}: Elite absoluta, respeitado por todos no jogo.
+                      \item \textbf{ÍCONE\_IMORTAL}: Apenas os 10 melhores jogadores do jogo podem estar aqui.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{pontos}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Pontuação atual dentro do nível (0 a 100).
+              \end{itemize}
+    
+        \item \textbf{historicoVariacao}: Lista\textless VariacaoElo\textgreater  
+              \begin{itemize}
+                  \item Referência a Outras Entidades
+                  \item Histórico das últimas variações de ELO do jogador.
+              \end{itemize}
+    \end{itemize}
+
+    \subsubsection{VariacaoElo}
+    A VariacaoElo representa a mudança de pontuação de um jogador no ranking após cada partida ranqueada. Essa entidade armazena os pontos ganhos ou perdidos, a partida em que ocorreu a mudança, e a data da variação.
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único da variação de ELO.
+              \end{itemize}
+    
+        \item \textbf{jogadorId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência ao jogador associado a essa variação.
+              \end{itemize}
+    
+        \item \textbf{partidaId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência à partida que gerou essa variação.
+              \end{itemize}
+    
+        \item \textbf{dataVariacao}: DataHora  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Momento exato em que ocorreu a mudança de pontuação.
+              \end{itemize}
+    
+        \item \textbf{pontosAlterados}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Quantidade de pontos ganhos ou perdidos.
+              \end{itemize}
+    
+        \item \textbf{novoNivel}: NivelElo (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Nível do jogador após a variação de ELO, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{INICIANTE}: Quem está começando, aprendendo as regras do jogo.
+                      \item \textbf{AMADOR}: Já tem alguma noção, mas ainda erra bastante.
+                      \item \textbf{COVER\_DE\_BARZINHO}: Jogador consistente, animando as mesas de um barzinho.
+                      \item \textbf{MUSICO\_DE\_BAILE}: Experiente, já tocando em eventos maiores.
+                      \item \textbf{ARTISTA\_INDIE\_LOCAL}: Já tem um público fiel na cena local.
+                      \item \textbf{REVELAÇÃO\_NACIONAL}: Um nome reconhecido, começando a ganhar destaque.
+                      \item \textbf{SUCESSO\_DE\_TURNE}: Joga no mais alto nível, como um astro da música.
+                      \item \textbf{LENDA\_DA\_MUSICA}: Elite absoluta, respeitado por todos no jogo.
+                      \item \textbf{ÍCONE\_IMORTAL}: Apenas os 10 melhores jogadores do jogo podem estar aqui.
+                  \end{itemize}
+              \end{itemize}
+    \end{itemize}
+    
+    \subsubsection{PartidaHistorico}
+    A PartidaHistorico representa o registro de uma partida já finalizada no perfil do jogador, armazenando informações como resultado (vitória ou derrota), data da partida e pontuação obtida. Essa entidade permite que os jogadores acompanhem seu desempenho ao longo do tempo.
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único do histórico da partida.
+              \end{itemize}
+    
+        \item \textbf{jogadorId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência ao jogador associado a essa partida.
+              \end{itemize}
+    
+        \item \textbf{partidaId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência à partida armazenada no histórico.
+              \end{itemize}
+    
+        \item \textbf{dataPartida}: DataHora  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Data e hora em que a partida ocorreu.
+              \end{itemize}
+    
+        \item \textbf{resultado}: ResultadoPartida (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Resultado da partida para o jogador, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{VITORIA}: O jogador venceu a partida.
+                      \item \textbf{DERROTA}: O jogador perdeu a partida.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{pontosGanhos}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Quantidade de pontos ganhos ou perdidos na partida.
+              \end{itemize}
+    
+        \item \textbf{novoNivelElo}: NivelElo (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Nível do jogador após essa partida, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{INICIANTE}: Quem está começando, aprendendo as regras do jogo.
+                      \item \textbf{AMADOR}: Já tem alguma noção, mas ainda erra bastante.
+                      \item \textbf{COVER\_DE\_BARZINHO}: Jogador consistente, animando as mesas de um barzinho.
+                      \item \textbf{MUSICO\_DE\_BAILE}: Experiente, já tocando em eventos maiores.
+                      \item \textbf{ARTISTA\_INDIE\_LOCAL}: Já tem um público fiel na cena local.
+                      \item \textbf{REVELAÇÃO\_NACIONAL}: Um nome reconhecido, começando a ganhar destaque.
+                      \item \textbf{SUCESSO\_DE\_TURNE}: Joga no mais alto nível, como um astro da música.
+                      \item \textbf{LENDA\_DA\_MUSICA}: Elite absoluta, respeitado por todos no jogo.
+                      \item \textbf{ÍCONE\_IMORTAL}: Apenas os 10 melhores jogadores do jogo podem estar aqui.
+                  \end{itemize}
+              \end{itemize}
+    \end{itemize}
+    
+    \subsubsection{Playlist}
+    A Playlist representa uma coleção de músicas associadas a um jogador, permitindo que ele escolha quais músicas poderão ser usadas em partidas. Essa entidade armazena as músicas selecionadas de plataformas externas (Spotify, YouTube, etc.), garantindo que o jogo possa criar pools personalizadas para cada jogador.
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único da playlist.
+              \end{itemize}
+    
+        \item \textbf{jogadorId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência ao jogador dono da playlist.
+              \end{itemize}
+    
+        \item \textbf{nome}: Texto  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Nome da playlist.
+              \end{itemize}
+    
+        \item \textbf{plataforma}: PlataformaStreaming (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Origem da playlist, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{SPOTIFY}: Playlist criada no Spotify.
+                      \item \textbf{YOUTUBE}: Playlist importada do YouTube.
+                      \item \textbf{DEEZER}: Playlist sincronizada do Deezer.
+                      \item \textbf{OUTRA}: Qualquer outra fonte de música.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{musicas}: Lista\textless MusicaPartida\textgreater  
+              \begin{itemize}
+                  \item Referência a Outras Entidades
+                  \item Lista de músicas contidas na playlist.
+              \end{itemize}
+    
+        \item \textbf{urlExterna}: URL (opcional)  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Link para a playlist na plataforma original.
+              \end{itemize}
+    \end{itemize}
+    \subsubsection{ConviteSala}
+    A ConviteSala representa um convite enviado para um jogador ingressar em uma sala privada. Essa entidade é usada para gerenciar convites únicos, permissões e tempo de expiração, garantindo que apenas jogadores convidados possam entrar em salas restritas.
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único do convite.
+              \end{itemize}
+    
+        \item \textbf{salaId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência para a sala associada ao convite.
+              \end{itemize}
+    
+        \item \textbf{convidadoId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência ao jogador convidado.
+              \end{itemize}
+    
+        \item \textbf{convidanteId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência ao jogador que enviou o convite.
+              \end{itemize}
+    
+        \item \textbf{codigoConvite}: Texto  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Código único gerado para o convite.
+              \end{itemize}
+    
+        \item \textbf{status}: StatusConvite (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Estado atual do convite, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{PENDENTE}: O convite foi enviado, mas ainda não foi aceito.
+                      \item \textbf{ACEITO}: O jogador aceitou o convite e entrou na sala.
+                      \item \textbf{EXPIRADO}: O convite passou do tempo limite e não pode mais ser usado.
+                      \item \textbf{RECUSADO}: O jogador recusou o convite.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{dataExpiracao}: DataHora  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Data e hora limite para uso do convite.
+              \end{itemize}
+    \end{itemize}
+    \subsubsection{BanimentoSala}
+    A BanimentoSala representa um registro de banimento de um jogador em uma sala, impedindo que ele tente entrar novamente. Essa entidade armazena a razão do banimento, a data do bloqueio e a identidade do administrador que aplicou a punição.
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único do registro de banimento.
+              \end{itemize}
+    
+        \item \textbf{salaId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência para a sala onde o jogador foi banido.
+              \end{itemize}
+    
+        \item \textbf{jogadorId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência ao jogador banido.
+              \end{itemize}
+    
+        \item \textbf{administradorId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência ao jogador que aplicou o banimento.
+              \end{itemize}
+    
+        \item \textbf{motivo}: Texto  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Justificativa do banimento.
+              \end{itemize}
+    
+        \item \textbf{dataBanimento}: DataHora  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Data e hora em que o banimento foi aplicado.
+              \end{itemize}
+    
+        \item \textbf{status}: StatusBanimento (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Estado do banimento, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{ATIVO}: O jogador ainda está banido da sala.
+                      \item \textbf{EXPIRADO}: O banimento expirou automaticamente após um período de tempo.
+                      \item \textbf{REVOGADO}: O administrador revogou o banimento e o jogador pode entrar novamente.
+                  \end{itemize}
+              \end{itemize}
+    \end{itemize}
+
+    \subsubsection{EstatisticasJogador}
+    A EstatisticasJogador representa dados agregados sobre o desempenho de um jogador, incluindo quantidade de partidas jogadas, taxa de vitória, tempo médio de resposta e outros indicadores de performance. Essa entidade permite que o jogador acompanhe seu progresso e compare seus resultados com outros.
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único das estatísticas do jogador.
+              \end{itemize}
+    
+        \item \textbf{jogadorId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência ao jogador ao qual essas estatísticas pertencem.
+              \end{itemize}
+    
+        \item \textbf{partidasJogadas}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Número total de partidas disputadas pelo jogador.
+              \end{itemize}
+    
+        \item \textbf{vitorias}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Número total de partidas vencidas pelo jogador.
+              \end{itemize}
+    
+        \item \textbf{derrotas}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Número total de partidas perdidas pelo jogador.
+              \end{itemize}
+    
+        \item \textbf{taxaVitoria}: float  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Percentual de vitórias em relação ao total de partidas.
+              \end{itemize}
+    
+        \item \textbf{tempoMedioResposta}: Tempo  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Tempo médio de resposta do jogador nas rodadas.
+              \end{itemize}
+    
+        \item \textbf{pontosAcumulados}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Total de pontos acumulados ao longo das partidas.
+              \end{itemize}
+    
+        \item \textbf{musicasAcertadas}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Número total de músicas acertadas pelo jogador.
+              \end{itemize}
+    \end{itemize}
+    
+    \subsubsection{ConfiguracaoUsuario}
+    A ConfiguracaoUsuario representa as preferências e ajustes personalizados de um jogador dentro do sistema, incluindo configurações de idioma, tema, notificações e integração com serviços externos. Essa entidade garante que cada jogador tenha uma experiência personalizada dentro do jogo.
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único da configuração do usuário.
+              \end{itemize}
+    
+        \item \textbf{jogadorId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência ao jogador associado a essas configurações.
+              \end{itemize}
+    
+        \item \textbf{idioma}: Idioma (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Define o idioma preferido pelo jogador, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{PORTUGUES}: Português.
+                      \item \textbf{INGLES}: Inglês.
+                      \item \textbf{ESPANHOL}: Espanhol.
+                      \item \textbf{OUTRO}: Outro idioma não listado.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{tema}: Tema (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Define o tema visual preferido do jogador, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{CLARO}: Tema com fundo claro.
+                      \item \textbf{ESCURO}: Tema com fundo escuro.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{notificacoesAtivas}: boolean  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Define se o jogador recebe notificações.
+              \end{itemize}
+    
+        \item \textbf{integracaoSpotify}: boolean  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Indica se o jogador ativou a integração com Spotify.
+              \end{itemize}
+    
+        \item \textbf{integracaoYouTube}: boolean  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Indica se o jogador ativou a integração com YouTube.
+              \end{itemize}
+    \end{itemize}
+
+    \subsubsection{LogAtividadeJogador}
+    A LogAtividadeJogador representa o histórico de ações realizadas por um jogador dentro do jogo, como entrar em uma sala, iniciar uma partida, mudar configurações ou aceitar um convite. Essa entidade é essencial para auditoria, estatísticas e análise de comportamento dos jogadores.
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único do log de atividade.
+              \end{itemize}
+    
+        \item \textbf{jogadorId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência ao jogador que realizou a ação.
+              \end{itemize}
+    
+        \item \textbf{tipoAtividade}: TipoAtividade (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Tipo da ação registrada, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{ENTROU\_SALA}: Jogador entrou em uma sala.
+                      \item \textbf{SAIU\_SALA}: Jogador saiu de uma sala.
+                      \item \textbf{INICIOU\_PARTIDA}: Jogador iniciou uma partida.
+                      \item \textbf{FINALIZOU\_PARTIDA}: Jogador finalizou uma partida.
+                      \item \textbf{ALTEROU\_CONFIG}: Jogador alterou suas configurações.
+                      \item \textbf{RECEBEU\_CONVITE}: Jogador recebeu um convite.
+                      \item \textbf{ACEITOU\_CONVITE}: Jogador aceitou um convite para uma sala.
+                      \item \textbf{RECUSOU\_CONVITE}: Jogador recusou um convite.
+                      \item \textbf{FOI\_BANIDO\_SALA}: Jogador foi banido de uma sala.
+                      \item \textbf{OUTRA}: Qualquer outra ação relevante.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{descricao}: Texto  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Descrição detalhada da ação realizada.
+              \end{itemize}
+    
+        \item \textbf{dataAtividade}: DataHora  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Data e hora em que a atividade ocorreu.
+              \end{itemize}
+    \end{itemize}
+    
+    \subsubsection{RecompensaJogador}
+    A RecompensaJogador representa prêmios e conquistas que um jogador recebe ao longo do tempo, podendo ser baseados em desempenho, participação ou eventos especiais. Essa entidade permite que jogadores acompanhem suas conquistas e recompensas obtidas durante o jogo.
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único da recompensa recebida.
+              \end{itemize}
+    
+        \item \textbf{jogadorId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência ao jogador que recebeu a recompensa.
+              \end{itemize}
+    
+        \item \textbf{tipoRecompensa}: TipoRecompensa (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Tipo da recompensa, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{TROFEU}: Troféus obtidos em eventos especiais.
+                      \item \textbf{BADGE}: Insígnias ou emblemas de conquistas específicas.
+                      \item \textbf{MOEDA}: Moeda do jogo para desbloquear conteúdo.
+                      \item \textbf{ITEM\_ESPECIAL}: Itens exclusivos recebidos como recompensa.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{descricao}: Texto  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Descrição detalhada da recompensa.
+              \end{itemize}
+    
+        \item \textbf{dataRecebimento}: DataHora  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Data e hora em que a recompensa foi concedida.
+              \end{itemize}
+    
+        \item \textbf{quantidade}: int (opcional)  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Quantidade, se aplicável (ex: número de moedas recebidas).
+              \end{itemize}
+    \end{itemize}
+    
+    \subsubsection{MissaoJogador}
+    A MissaoJogador representa as missões ou desafios disponíveis para um jogador, podendo incluir objetivos como jogar um número específico de partidas, acertar uma quantidade de músicas ou vencer em modos específicos. Essa entidade permite a implementação de um sistema de progressão e incentivos, motivando os jogadores a completarem desafios e obterem recompensas.
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único da missão do jogador.
+              \end{itemize}
+    
+        \item \textbf{jogadorId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência ao jogador ao qual a missão pertence.
+              \end{itemize}
+    
+        \item \textbf{tipoMissao}: TipoMissao (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Define o tipo de missão, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{VITORIAS}: Vencer um número específico de partidas.
+                      \item \textbf{ACERTOS}: Acertar um número específico de músicas.
+                      \item \textbf{PARTICIPACOES}: Jogar um número específico de partidas.
+                      \item \textbf{RANKEADAS}: Completar partidas no modo ranqueado.
+                      \item \textbf{TEMPO\_JOGO}: Passar um tempo mínimo jogando.
+                      \item \textbf{OUTRA}: Missão personalizada.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{progressoAtual}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Progresso atual do jogador na missão.
+              \end{itemize}
+    
+        \item \textbf{meta}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Valor necessário para completar a missão.
+              \end{itemize}
+    
+        \item \textbf{status}: StatusMissao (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Indica o status da missão, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{EM\_ANDAMENTO}: O jogador ainda não completou a missão.
+                      \item \textbf{COMPLETA}: O jogador completou a missão e recebeu a recompensa.
+                      \item \textbf{EXPIRADA}: O jogador não completou a missão antes da data limite.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{recompensa}: RecompensaJogador  
+              \begin{itemize}
+                  \item Referência a Outras Entidades
+                  \item Recompensa concedida ao jogador ao completar a missão.
+              \end{itemize}
+    
+        \item \textbf{dataExpiracao}: DataHora (opcional)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Data limite para concluir a missão, se aplicável.
+              \end{itemize}
+    \end{itemize}
+    
+    \subsubsection{LojaItens}
+    A LojaItens representa a loja virtual do jogo, onde os jogadores podem gastar moedas do jogo para comprar itens cosméticos, boosts e outras vantagens. Essa entidade permite a implementação de um sistema de economia dentro do jogo, incentivando a progressão e personalização dos jogadores.
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único do item na loja.
+              \end{itemize}
+    
+        \item \textbf{nome}: Texto  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Nome do item disponível na loja.
+              \end{itemize}
+    
+        \item \textbf{descricao}: Texto  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Descrição do item e seus efeitos.
+              \end{itemize}
+    
+        \item \textbf{tipoItem}: TipoItem (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Define o tipo do item, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{COSMETICO}: Itens visuais (skins, ícones, molduras).
+                      \item \textbf{BOOST}: Itens que dão vantagens temporárias (dobro de XP, recuperação rápida).
+                      \item \textbf{OUTROS}: Qualquer outro tipo de item especial.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{preco}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Custo do item em moedas do jogo.
+              \end{itemize}
+    
+        \item \textbf{disponibilidade}: DisponibilidadeItem (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Define o estado de disponibilidade do item, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{DISPONIVEL}: Item disponível para compra.
+                      \item \textbf{ESGOTADO}: Item temporariamente esgotado.
+                      \item \textbf{LIMITADO}: Item disponível apenas por um período especial.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{quantidadeDisponivel}: int (opcional)  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Número de unidades disponíveis do item, se aplicável.
+              \end{itemize}
+    \end{itemize}
+    \subsubsection{CompraJogador}
+    A CompraJogador representa uma transação realizada por um jogador na loja do jogo, registrando a compra de itens cosméticos, boosts ou outros recursos. Essa entidade garante o rastreamento das compras feitas pelos jogadores, permitindo auditoria, suporte a reembolsos e gerenciamento de inventário.
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único da compra.
+              \end{itemize}
+    
+        \item \textbf{jogadorId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência ao jogador que realizou a compra.
+              \end{itemize}
+    
+        \item \textbf{itemId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência ao item comprado na loja.
+              \end{itemize}
+    
+        \item \textbf{quantidade}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Quantidade do item adquirido.
+              \end{itemize}
+    
+        \item \textbf{precoTotal}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Preço total pago pelo jogador (quantidade × preço unitário).
+              \end{itemize}
+    
+        \item \textbf{dataCompra}: DataHora  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Data e hora em que a compra foi realizada.
+              \end{itemize}
+    
+        \item \textbf{statusCompra}: StatusCompra (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Indica o status da compra, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{CONFIRMADA}: Compra realizada com sucesso e item entregue.
+                      \item \textbf{CANCELADA}: Compra cancelada antes da finalização.
+                      \item \textbf{REEMBOLSADA}: Compra reembolsada e moeda devolvida ao jogador.
+                  \end{itemize}
+              \end{itemize}
+    \end{itemize}
+    
+    \subsubsection{InventarioJogador}
+    A InventarioJogador representa o conjunto de itens comprados ou adquiridos por um jogador, armazenando informações sobre itens cosméticos, boosts, e outros recursos desbloqueados. Essa entidade permite que os jogadores visualizem e gerenciem os itens que possuem no jogo.
+
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único do inventário do jogador.
+              \end{itemize}
+    
+        \item \textbf{jogadorId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência ao jogador proprietário do inventário.
+              \end{itemize}
+    
+        \item \textbf{itemId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência ao item armazenado no inventário.
+              \end{itemize}
+    
+        \item \textbf{quantidade}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Quantidade de unidades do item no inventário.
+              \end{itemize}
+    
+        \item \textbf{statusItem}: StatusItem (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Estado do item, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{DISPONIVEL}: O item pode ser usado ou equipado.
+                      \item \textbf{USADO}: O item foi consumido/usado.
+                      \item \textbf{EXPIRADO}: O item tinha validade e já expirou.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{dataAquisicao}: DataHora  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Data e hora em que o item foi adquirido.
+              \end{itemize}
+    \end{itemize}
+    
+    \subsubsection{TransacaoMoedaJogador}
+    A TransacaoMoedaJogador representa todas as transações financeiras dentro do jogo envolvendo moedas do sistema, registrando ganhos, gastos e possíveis reembolsos. Essa entidade garante o controle e rastreabilidade da economia interna do jogo, permitindo que os jogadores visualizem seu histórico de transações.
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único da transação.
+              \end{itemize}
+    
+        \item \textbf{jogadorId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência ao jogador que realizou a transação.
+              \end{itemize}
+    
+        \item \textbf{tipoTransacao}: TipoTransacao (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Tipo da transação, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{GANHO}: Moedas adquiridas por missões, recompensas ou eventos.
+                      \item \textbf{GASTO}: Moedas gastas em compras na loja ou outras ações.
+                      \item \textbf{REEMBOLSO}: Moedas devolvidas ao jogador por um reembolso.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{valor}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Quantidade de moedas envolvidas na transação.
+              \end{itemize}
+    
+        \item \textbf{descricao}: Texto  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Descrição detalhada da transação.
+              \end{itemize}
+    
+        \item \textbf{dataTransacao}: DataHora  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Data e hora da transação.
+              \end{itemize}
+    \end{itemize}
+    
+    \subsubsection{RankingGlobal}
+    A RankingGlobal representa a classificação geral dos jogadores com base em seu desempenho no jogo, ordenando-os por pontuação, vitórias, taxa de acertos e outros critérios. Essa entidade permite a competição entre jogadores, fornecendo estatísticas globais e rankings por temporada.
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único do ranking.
+              \end{itemize}
+    
+        \item \textbf{jogadorId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência ao jogador ranqueado.
+              \end{itemize}
+    
+        \item \textbf{posicao}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Posição do jogador no ranking.
+              \end{itemize}
+    
+        \item \textbf{pontuacao}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Pontuação acumulada no ranking global.
+              \end{itemize}
+    
+        \item \textbf{nivelElo}: NivelElo (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Nível do jogador no ranking, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{INICIANTE}: Quem está começando, aprendendo as regras do jogo.
+                      \item \textbf{AMADOR}: Já tem alguma noção, mas ainda erra bastante.
+                      \item \textbf{COVER\_DE\_BARZINHO}: Jogador consistente, animando as mesas de um barzinho.
+                      \item \textbf{MUSICO\_DE\_BAILE}: Experiente, já tocando em eventos maiores.
+                      \item \textbf{ARTISTA\_INDIE\_LOCAL}: Já tem um público fiel na cena local.
+                      \item \textbf{REVELAÇÃO\_NACIONAL}: Um nome reconhecido, começando a ganhar destaque.
+                      \item \textbf{SUCESSO\_DE\_TURNE}: Joga no mais alto nível, como um astro da música.
+                      \item \textbf{LENDA\_DA\_MUSICA}: Elite absoluta, respeitado por todos no jogo.
+                      \item \textbf{ÍCONE\_IMORTAL}: Apenas os 10 melhores jogadores do jogo podem estar aqui.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{vitorias}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Número total de partidas vencidas.
+              \end{itemize}
+    
+        \item \textbf{taxaAcertos}: float  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Percentual de acertos do jogador.
+              \end{itemize}
+    
+        \item \textbf{temporada}: Texto  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Nome ou identificador da temporada do ranking.
+              \end{itemize}
+    \end{itemize}
+    
+    \subsubsection{EstatisticasGlobais}
+    A EstatisticasGlobais representa os dados estatísticos agregados de todos os jogadores no jogo, armazenando informações como total de partidas jogadas, músicas mais acertadas, taxa média de acertos e outras métricas globais. Essa entidade permite a análise do comportamento dos jogadores, fornecendo insights para balanceamento e melhorias no jogo.
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único das estatísticas globais.
+              \end{itemize}
+    
+        \item \textbf{totalJogadores}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Número total de jogadores registrados.
+              \end{itemize}
+    
+        \item \textbf{totalPartidas}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Número total de partidas disputadas.
+              \end{itemize}
+    
+        \item \textbf{totalMusicasTocadas}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Quantidade total de músicas tocadas no jogo.
+              \end{itemize}
+    
+        \item \textbf{taxaMediaAcertos}: float  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Média de acertos considerando todos os jogadores.
+              \end{itemize}
+    
+        \item \textbf{musicaMaisAcertada}: Texto  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Nome da música mais acertada no jogo.
+              \end{itemize}
+    
+        \item \textbf{musicaMaisErrada}: Texto  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Nome da música mais errada no jogo.
+              \end{itemize}
+    
+        \item \textbf{tempoMedioResposta}: Tempo  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Tempo médio de resposta dos jogadores.
+              \end{itemize}
+    
+        \item \textbf{dadosUltimaAtualizacao}: DataHora  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Data e hora da última atualização das estatísticas.
+              \end{itemize}
+    \end{itemize}
+
+    \subsubsection{ConfiguracaoSistema}
+    A ConfiguracaoSistema representa os parâmetros e definições globais que controlam o funcionamento do jogo, como limites de partidas, tempo de resposta, regras para modos de jogo e configurações administrativas. Essa entidade permite a personalização e ajuste dinâmico do jogo, sem necessidade de alterações diretas no código.
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único da configuração do sistema.
+              \end{itemize}
+    
+        \item \textbf{tempoMaximoResposta}: Tempo  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Tempo máximo permitido para responder em uma rodada.
+              \end{itemize}
+    
+        \item \textbf{pontosPorAcerto}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Quantidade de pontos concedidos por resposta correta.
+              \end{itemize}
+    
+        \item \textbf{pontosPorVitoria}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Quantidade de pontos concedidos ao vencedor da partida.
+              \end{itemize}
+    
+        \item \textbf{limiteMaximoJogadores}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Número máximo de jogadores por sala.
+              \end{itemize}
+    
+        \item \textbf{moedasPorVitoria}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Quantidade de moedas concedidas por vitória.
+              \end{itemize}
+    
+        \item \textbf{modoRankedAtivo}: boolean  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Indica se o modo competitivo está ativo.
+              \end{itemize}
+    
+        \item \textbf{recompensasAtivas}: boolean  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Indica se o sistema de recompensas está ativo.
+              \end{itemize}
+    
+        \item \textbf{musicasPermitidasPorFonte}: MusicasPermitidas  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Limita a quantidade de músicas importadas por plataforma (Spotify, YouTube, etc.).
+              \end{itemize}
+    
+        \item \textbf{dataUltimaAtualizacao}: DataHora  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Data e hora da última atualização das configurações.
+              \end{itemize}
+    \end{itemize}
+    
+    \subsubsection{TemporadaRanking}
+    A TemporadaRanking gerencia o ciclo de competições sazonais do jogo, garantindo que os rankings sejam resetados periodicamente e que os jogadores possam competir por posições e prêmios a cada nova temporada.
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único da temporada do ranking.
+              \end{itemize}
+    
+        \item \textbf{nomeTemporada}: Texto  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Nome da temporada (ex: "Desafio dos Clássicos").
+              \end{itemize}
+    
+        \item \textbf{dataInicio}: DataHora  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Data e hora de início da temporada.
+              \end{itemize}
+    
+        \item \textbf{dataFim}: DataHora  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Data e hora do término da temporada.
+              \end{itemize}
+    
+        \item \textbf{statusTemporada}: StatusTemporada (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Estado atual da temporada, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{ATIVA}: Temporada em andamento.
+                      \item \textbf{ENCERRADA}: Temporada finalizada, aguardando nova abertura.
+                      \item \textbf{FUTURA}: Temporada programada para iniciar em breve.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{recompensasDistribuidas}: boolean  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Indica se as recompensas já foram distribuídas.
+              \end{itemize}
+    \end{itemize}
+
+    \subsubsection{HistóricoRanking}
+    A HistóricoRanking representa o registro das classificações passadas dos jogadores ao longo das temporadas do ranking, permitindo que os jogadores visualizem sua progressão e conquistas ao longo do tempo. Essa entidade é essencial para acompanhar o desempenho dos jogadores em cada temporada e fornecer estatísticas históricas.
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único do registro no histórico de ranking.
+              \end{itemize}
+    
+        \item \textbf{jogadorId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência ao jogador ranqueado.
+              \end{itemize}
+    
+        \item \textbf{temporadaId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência à temporada correspondente.
+              \end{itemize}
+    
+        \item \textbf{posicaoFinal}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Posição final do jogador ao término da temporada.
+              \end{itemize}
+    
+        \item \textbf{pontuacaoFinal}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Pontuação final acumulada pelo jogador na temporada.
+              \end{itemize}
+    
+        \item \textbf{nivelEloFinal}: NivelElo (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item ELO final do jogador ao término da temporada, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{INICIANTE}
+                      \item \textbf{AMADOR}
+                      \item \textbf{COVER\_DE\_BARZINHO}
+                      \item \textbf{MUSICO\_DE\_BAILE}
+                      \item \textbf{ARTISTA\_INDIE\_LOCAL}
+                      \item \textbf{REVELAÇÃO\_NACIONAL}
+                      \item \textbf{SUCESSO\_DE\_TURNE}
+                      \item \textbf{LENDA\_DA\_MUSICA}
+                      \item \textbf{ÍCONE\_IMORTAL}
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{vitoriasNaTemporada}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Número total de vitórias do jogador na temporada.
+              \end{itemize}
+    
+        \item \textbf{taxaAcertosTemporada}: float  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Percentual de acertos do jogador durante a temporada.
+              \end{itemize}
+    
+        \item \textbf{dataRegistro}: DataHora  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Data e hora do registro final da temporada.
+              \end{itemize}
+    \end{itemize}
+
+    
+    \subsubsection{MedalhaJogador}
+    A MedalhaJogador representa as medalhas e distintivos concedidos aos jogadores por conquistas e marcos importantes dentro do jogo, como vitórias consecutivas, número de partidas jogadas ou participação em eventos especiais. Essa entidade permite que os jogadores exibam suas conquistas e progridam no jogo de forma mais visual e motivadora.
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único da medalha do jogador.
+              \end{itemize}
+    
+        \item \textbf{jogadorId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência ao jogador que recebeu a medalha.
+              \end{itemize}
+    
+        \item \textbf{medalhaId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência à medalha conquistada.
+              \end{itemize}
+    
+        \item \textbf{dataConquista}: DataHora  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Data e hora em que a medalha foi concedida.
+              \end{itemize}
+    \end{itemize}
+
+    \subsubsection{DesafioJogador}
+    A DesafioJogador representa os desafios individuais que um jogador pode enfrentar dentro do jogo, podendo ser propostos pelo próprio sistema ou por outros jogadores. Esses desafios podem incluir cumprir certas condições dentro de partidas, vencer contra um adversário específico ou completar tarefas dentro de um tempo determinado.
+
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único do desafio do jogador.
+              \end{itemize}
+    
+        \item \textbf{jogadorId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência ao jogador que recebeu o desafio.
+              \end{itemize}
+    
+        \item \textbf{desafianteId}: UUID (opcional)  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Jogador que desafiou (caso seja um desafio entre jogadores).
+              \end{itemize}
+    
+        \item \textbf{tipoDesafio}: TipoDesafio (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Tipo de desafio, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{VITORIAS}: Vencer um número específico de partidas.
+                      \item \textbf{ACERTOS}: Acertar um número específico de músicas.
+                      \item \textbf{PARTIDA\_ESPECIFICA}: Vencer uma partida contra um jogador específico.
+                      \item \textbf{TEMPO\_JOGO}: Jogar um determinado tempo dentro de uma sessão.
+                      \item \textbf{OUTRO}: Missão personalizada pelo sistema ou jogador.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{progressoAtual}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Progresso do jogador no desafio.
+              \end{itemize}
+    
+        \item \textbf{meta}: int  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Meta necessária para completar o desafio.
+              \end{itemize}
+    
+        \item \textbf{statusDesafio}: StatusDesafio (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Estado atual do desafio, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{EM\_ANDAMENTO}: O desafio ainda está em progresso.
+                      \item \textbf{COMPLETO}: O desafio foi concluído com sucesso.
+                      \item \textbf{EXPIRADO}: O desafio não foi completado antes da data limite.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{recompensa}: RecompensaJogador  
+              \begin{itemize}
+                  \item Referência a Outras Entidades
+                  \item Recompensa recebida ao completar o desafio.
+              \end{itemize}
+    
+        \item \textbf{dataExpiracao}: DataHora (opcional)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Data limite para concluir o desafio, se aplicável.
+              \end{itemize}
+    \end{itemize}
+
+    
+    \subsubsection{AmigosJogador}
+    A AmigosJogador representa o sistema de amizade dentro do jogo, permitindo que os jogadores adicionem, removam e gerenciem seus amigos para partidas privadas, desafios e interação social. Essa entidade possibilita a criação de conexões entre os jogadores, melhorando a experiência multiplayer.
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único da relação de amizade.
+              \end{itemize}
+    
+        \item \textbf{jogadorId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência ao jogador que enviou ou recebeu a solicitação.
+              \end{itemize}
+    
+        \item \textbf{amigoId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência ao jogador que está na lista de amigos.
+              \end{itemize}
+    
+        \item \textbf{statusAmizade}: StatusAmizade (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Estado da amizade, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{PENDENTE}: Solicitação de amizade enviada, aguardando resposta.
+                      \item \textbf{ACEITA}: A amizade foi confirmada e os jogadores são amigos.
+                      \item \textbf{BLOQUEADA}: Um dos jogadores bloqueou o outro, impedindo interações.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{dataSolicitacao}: DataHora  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Data e hora em que a solicitação foi enviada.
+              \end{itemize}
+    
+        \item \textbf{dataConfirmacao}: DataHora (opcional)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Data e hora em que a amizade foi aceita, se aplicável.
+              \end{itemize}
+    \end{itemize}
+
+    \subsubsection{ChatPrivado}
+    A ChatPrivado representa o sistema de mensagens privadas entre dois jogadores, permitindo que amigos e jogadores que participaram de partidas juntos possam se comunicar dentro do jogo. Essa entidade possibilita interações diretas entre os jogadores, criando um espaço para conversas, desafios e socialização.
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único da conversa.
+              \end{itemize}
+    
+        \item \textbf{jogador1Id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência ao primeiro jogador do chat.
+              \end{itemize}
+    
+        \item \textbf{jogador2Id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência ao segundo jogador do chat.
+              \end{itemize}
+    
+        \item \textbf{mensagens}: Lista<MensagemChat>  
+              \begin{itemize}
+                  \item Referência a Outras Entidades
+                  \item Lista de mensagens trocadas no chat.
+              \end{itemize}
+    
+        \item \textbf{ultimaMensagem}: Texto  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Última mensagem enviada na conversa.
+              \end{itemize}
+    
+        \item \textbf{dataUltimaMensagem}: DataHora  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Data e hora da última mensagem enviada.
+              \end{itemize}
+    \end{itemize}
+
+    \subsubsection{NotificacaoJogador}
+    A NotificacaoJogador representa o sistema de notificações dentro do jogo, permitindo que os jogadores recebam alertas sobre convites, desafios, mensagens, eventos e atualizações. Essa entidade garante que os jogadores sejam informados de maneira eficiente e possam interagir rapidamente com as notificações recebidas.
+
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único da notificação.
+              \end{itemize}
+    
+        \item \textbf{jogadorId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência ao jogador que recebeu a notificação.
+              \end{itemize}
+    
+        \item \textbf{tipoNotificacao}: TipoNotificacao (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Tipo da notificação, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{CONVITE\_SALA}: Convite para entrar em uma sala.
+                      \item \textbf{DESAFIO}: Notificação de um desafio recebido.
+                      \item \textbf{MENSAGEM}: Mensagem de outro jogador.
+                      \item \textbf{EVENTO}: Alerta sobre um evento especial no jogo.
+                      \item \textbf{SISTEMA}: Notificação de mudanças ou avisos do sistema.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{mensagem}: Texto  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Conteúdo da notificação.
+              \end{itemize}
+    
+        \item \textbf{statusLeitura}: StatusLeitura (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Estado da notificação, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{NAO\_LIDA}: O jogador ainda não visualizou a notificação.
+                      \item \textbf{LIDA}: O jogador já viu a notificação.
+                      \item \textbf{DESCARTADA}: O jogador ignorou a notificação.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{dataEnvio}: DataHora  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Data e hora em que a notificação foi enviada.
+              \end{itemize}
+    \end{itemize}
+
+    
+    \subsubsection{LogSistema}
+    A LogSistema representa o registro de eventos e atividades relevantes dentro da aplicação, permitindo que administradores e desenvolvedores monitorem ações críticas, depurem erros e rastreiem eventos importantes. Essa entidade possibilita a auditoria de atividades no sistema, garantindo transparência e segurança.
+
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único do log.
+              \end{itemize}
+    
+        \item \textbf{tipoLog}: TipoLog (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Tipo do evento registrado, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{INFO}: Informação geral sobre eventos do sistema.
+                      \item \textbf{ERRO}: Erro crítico ou falha no sistema.
+                      \item \textbf{AVISO}: Alerta sobre possíveis problemas.
+                      \item \textbf{DEBUG}: Log para depuração e desenvolvimento.
+                      \item \textbf{SEGURANCA}: Eventos relacionados a segurança e acessos.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{mensagem}: Texto  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Descrição detalhada do evento registrado.
+              \end{itemize}
+    
+        \item \textbf{origem}: Texto  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Origem do log (ex: "Sistema", "Banco de Dados", "API").
+              \end{itemize}
+    
+        \item \textbf{usuarioId}: UUID (opcional)  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador do usuário relacionado ao evento, se aplicável.
+              \end{itemize}
+    
+        \item \textbf{dataRegistro}: DataHora  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Data e hora do registro do log.
+              \end{itemize}
+    \end{itemize}
+
+    
+    \subsubsection{ConfiguracaoNotificacao}
+    A ConfiguracaoNotificacao representa as preferências do jogador em relação às notificações do sistema, permitindo que cada usuário configure quais tipos de notificações deseja receber e em quais formatos (sonoro, visual, push, etc.). Essa entidade possibilita personalização e controle sobre a experiência de alertas dentro do jogo.
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único da configuração de notificações do jogador.
+              \end{itemize}
+    
+        \item \textbf{jogadorId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência ao jogador dono da configuração.
+              \end{itemize}
+    
+        \item \textbf{tipoNotificacao}: TipoNotificacao (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Tipo de notificação configurada, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{CONVITE\_SALA}: Notificação de convite para uma sala.
+                      \item \textbf{DESAFIO}: Notificação de desafio recebido.
+                      \item \textbf{MENSAGEM}: Notificação de mensagem de outro jogador.
+                      \item \textbf{EVENTO}: Notificação de evento especial no jogo.
+                      \item \textbf{SISTEMA}: Notificação sobre atualizações e regras do jogo.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{statusNotificacao}: StatusNotificacao (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Estado da notificação, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{ATIVADA}: O jogador receberá todas as notificações desse tipo.
+                      \item \textbf{DESATIVADA}: O jogador não receberá esse tipo de notificação.
+                      \item \textbf{SOMENTE\_IMPORTANTES}: Apenas notificações críticas serão enviadas.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{formatoNotificacao}: FormatoNotificacao (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Formato da notificação, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{VISUAL}: Notificação aparece na interface do jogo.
+                      \item \textbf{SONORA}: Notificação é acompanhada de um som de alerta.
+                      \item \textbf{PUSH}: Notificação é enviada via push notification para dispositivos móveis.
+                      \item \textbf{EMAIL}: Notificação é enviada por e-mail.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{silenciarAte}: DataHora (opcional)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Data e hora até quando as notificações estarão silenciadas.
+              \end{itemize}
+    \end{itemize}
+    
+    \subsubsection{ConfiguracaoPerfilJogador}
+    A ConfiguracaoPerfilJogador representa as preferências e personalizações do perfil de um jogador no jogo, permitindo que ele ajuste configurações de privacidade, aparência e informações visíveis para outros jogadores. Essa entidade possibilita uma experiência mais personalizada e ajustável para cada usuário.
+    \begin{itemize}
+        \item \textbf{id}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Identificador único da configuração do perfil.
+              \end{itemize}
+    
+        \item \textbf{jogadorId}: UUID  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Referência ao jogador dono da configuração.
+              \end{itemize}
+    
+        \item \textbf{avatarUrl}: Texto  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item URL do avatar personalizado do jogador.
+              \end{itemize}
+    
+        \item \textbf{descricao}: Texto  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Texto de apresentação do perfil.
+              \end{itemize}
+    
+        \item \textbf{statusVisibilidade}: StatusVisibilidade (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Controle de privacidade do perfil, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{PUBLICO}: Qualquer jogador pode visualizar o perfil.
+                      \item \textbf{APENAS\_AMIGOS}: Somente amigos podem visualizar o perfil.
+                      \item \textbf{PRIVADO}: Apenas o próprio jogador pode visualizar seu perfil.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{statusOnline}: StatusOnline (enum)  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Define a exibição do status online, podendo ser:
+                  \begin{itemize}
+                      \item \textbf{VISIVEL}: Qualquer jogador pode ver se o jogador está online.
+                      \item \textbf{OCULTO}: O jogador aparece sempre como offline.
+                      \item \textbf{SOMENTE\_AMIGOS}: Apenas amigos podem ver o status online do jogador.
+                  \end{itemize}
+              \end{itemize}
+    
+        \item \textbf{desafiosPermitidos}: boolean  
+              \begin{itemize}
+                  \item Atributo Bruto
+                  \item Indica se o jogador aceita desafios de qualquer pessoa ou só amigos.
+              \end{itemize}
+    
+        \item \textbf{dataUltimaModificacao}: DataHora  
+              \begin{itemize}
+                  \item Objeto de Valor
+                  \item Data e hora da última atualização das configurações.
+              \end{itemize}
+    \end{itemize}
+                 
+
+    \subsection{Subdomínios}
+    Dentro do domínio principal, o sistema é dividido nos seguintes subdomínios:
+
+    \subsubsection{Gerenciamento de Partidas}
+        Responsável por controlar o ciclo de vida das partidas, desde a criação até a finalização. Inclui a seleção de músicas, controle de rodadas e tempo de resposta, e sincronização dos eventos em tempo real.
+        \subsubsection{Contextos delimitados}
+        \begin{itemize}
+            \item Criação de uma partida com base nas configurações da sala.
+            \item Início, pausa e finalização da partida.
+            \item Controle de rodadas e tempo de resposta.
+            \item Manutenção do estado da partida em tempo real.
+        \end{itemize}
+    
+    \subsubsection{Seleção e Reprodução de Músicas}
+        Responsável por buscar e reproduzir as músicas para os jogadores adivinharem. Inclui a integração com serviços de streaming, busca de metadados e reprodução em tempo real.
+        \subsubsection{Contextos delimitados}
+        \begin{itemize}
+            \item Buscar músicas das playlists dos jogadores.
+            \item Criar uma pool de músicas de acordo com as regras da sala.
+            \item Reproduzir trechos das músicas para os jogadores tentarem adivinhar.
+        \end{itemize}
+
+    \subsubsection{Registro de Respostas e Pontuação}
+        Responsável por registrar as respostas dos jogadores, calcular a pontuação e atualizar o ranking. Inclui a validação das respostas, cálculo de tempo e pontuação, e atualização do ranking.
+        \subsubsection{Contextos delimitados}
+        \begin{itemize}
+            \item Capturar e validar respostas dos jogadores.
+            \item Aplicar regras de acerto (Nome da Música ou Artista).
+            \item Controlar tentativas e sistema de "lock" da resposta.
+            \item Cálculo da pontuação baseada no tempo de resposta.
+        \end{itemize}
+    
+    \subsubsection{Ranking e Progressão}
+        Responsável por manter o ranking dos jogadores, calcular o ELO e gerenciar a progressão. Inclui a atualização do ranking, cálculo do ELO e recompensas por progressão.
+        \subsubsection{Contextos delimitados}
+        \begin{itemize}
+            \item Atualizar o ELO dos jogadores no modo ranqueado.
+            \item Atualizar o ranking global.
+            \item Exibir estatísticas pós-partida.
+        \end{itemize}
+    
+    \subsubsection{Sincronização em Tempo Real}
+        Responsável por manter a sincronização dos eventos do jogo em tempo real, garantindo uma experiência multiplayer fluida. Inclui a comunicação entre os jogadores, controle de tempo e eventos em tempo real.
+        \subsubsection{Contextos delimitados}
+        \begin{itemize}
+            \item Gerenciar eventos do jogo via WebSockets.
+            \item Atualizar placar e estado do jogo para todos os jogadores.
+            \item Exibir mensagens de sistema (quem entrou/saiu, tempo restante).
+        \end{itemize}

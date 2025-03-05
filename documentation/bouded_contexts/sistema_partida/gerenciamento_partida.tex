@@ -1,0 +1,62 @@
+\subsubsection{Bounded Context}
+    \begin{itemize}
+        \item Gerenciamento de Partidas: Responsável por criar, configurar e gerenciar o ciclo de vida das partidas, desde o momento em que são criadas até a finalização e exibição dos resultados.  Isso inclui o controle do estado da partida, gerenciamento de jogadores participantes, e aplicação das regras do modo de jogo selecionado.
+        \item Seleção e Reprodução de Músicas: Este contexto lida com a seleção aleatória de músicas a partir das playlists dos jogadores, de acordo com as configurações da partida.  Ele também é responsável por reproduzir os trechos das músicas para os jogadores adivinharem, garantindo a sincronização entre os jogadores.
+        \item Registro de Respostas e Pontuação: Responsável por capturar, validar e processar as respostas dos jogadores durante as rodadas.  Ele aplica as regras de acerto (nome da música, artista ou ambos) e calcula a pontuação de cada jogador com base no tempo de resposta e acertos.
+        \item Ranking e Progressão: Gerencia o ranking dos jogadores dentro das partidas e no sistema como um todo.  Isso inclui o cálculo do ELO em partidas ranqueadas, atualização do ranking global e progressão dos jogadores nos níveis.
+        \item Sincronização em Tempo Real: Este contexto garante que todos os jogadores estejam sincronizados durante a partida, utilizando WebSockets para enviar e receber eventos em tempo real, como atualização do placar, mensagens de chat e status da partida.
+    \end{itemize}
+
+\subsubsection{Gerenciamento de Partidas}
+
+O Bounded Context "Gerenciamento de Partidas" é o coração do domínio "Sistema de Partidas", responsável por orquestrar todo o ciclo de vida de uma partida no jogo "Mermã, a Música!". Ele garante que as partidas sejam criadas, configuradas, iniciadas, jogadas e finalizadas de acordo com as regras estabelecidas.
+\subsubsection{Responsabilidades}
+    \begin{itemize}
+        \item \textbf{Criação e Configuração}: Permite aos jogadores criar novas partidas, definindo o modo de jogo (casual, ranqueado, battle royale), as configurações (número de rodadas, tempo de resposta, tipo de acerto, playlists) e os jogadores participantes.
+        \item \textbf{Gerenciamento do Ciclo de Vida}: Controla o estado da partida, desde a fase de "aguardando jogadores" até a finalização, passando pelos estados "em andamento", "pausada" e "cancelada".
+        \item \textbf{Controle de Jogadores}: Gerencia a entrada e saída de jogadores na partida, garantindo que o número máximo de jogadores não seja excedido e que todos estejam prontos para iniciar.
+        \item \textbf{Gerenciamento de Rodadas}: Divide a partida em rodadas, controla o tempo limite para cada rodada e garante a transição suave entre as rodadas.
+        \item \textbf{Aplicação de Regras}: Aplica as regras específicas de cada modo de jogo, como o sistema de pontuação, o número de vidas no modo Battle Royale e os critérios de vitória.
+        \item \textbf{Finalização e Ranking}: Finaliza a partida quando todas as rodadas forem concluídas ou quando algum critério de finalização for atingido, gera o ranking final da partida e, no caso de partidas ranqueadas, atualiza o ELO dos jogadores.  
+    \end{itemize}
+
+\subsubsection{entidades}
+    \begin{itemize}
+        \item \textbf{Partida}: Representa uma instância do jogo em andamento, armazenando informações sobre o modo de jogo, configurações, estado, jogadores, rodadas, ranking e datas de criação, início e fim.
+        \item \textbf{JogadorPartida}:  Representa um jogador dentro de uma partida específica, armazenando sua pontuação, respostas, vidas (no modo Battle Royale), tempo médio de resposta e estado (ativo, eliminado, desconectado).
+        \item \textbf{Sala}: Representa o ambiente virtual onde os jogadores se reúnem antes de iniciar uma partida, armazenando informações sobre o nome da sala, dono, jogadores, configurações da partida, tipo de sala (pública ou privada), número máximo de jogadores, código de convite e estado.
+    \end{itemize}
+
+\subsubsection{Objetos de Valor}
+    \begin{itemize}
+        \item \textbf{ConfiguracoesPartida}: Armazena as configurações da partida, como o tipo de acerto (música, artista ou ambos), número de rodadas, tempo limite para resposta, playlists selecionadas e visibilidade da sala.
+        \item \textbf{RankingPartida}: Armazena o ranking final da partida, com a lista de jogadores classificados por pontuação, o vencedor, o modo de ranking (normal ou ranqueado) e as variações de ELO (apenas para partidas ranqueadas).
+    \end{itemize}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth]{image/entidades_gerenciamento_partida.png}
+        \caption{Entidades do Bounded Context "Gerenciamento de Partidas"}
+        \label{fig:minha_imagem}
+    \end{figure}
+
+\subsubsection{Relações com outros Bounded Context}
+    \begin{itemize}
+        \item \textbf{Cliente do contexto "Seleção e Reprodução de Músicas"}: Solicita músicas para serem utilizadas nas rodadas da partida.
+        \item \textbf{Fornecedor para os contextos "Registro de Respostas e Pontuação", "Ranking e Progressão" e "Sincronização em Tempo Real"}: Envia informações sobre as respostas dos jogadores, o fim da partida e outros eventos relevantes para esses contextos.
+    \end{itemize}
+
+\input{bouded_contexts/sistema_partida/casos_uso/criar_partida.tex}
+\input{bouded_contexts/sistema_partida/casos_uso/entrar_partida.tex}
+\input{bouded_contexts/sistema_partida/casos_uso/iniciar_partida.tex}
+\input{bouded_contexts/sistema_partida/casos_uso/responder_pergunta.tex}
+\input{bouded_contexts/sistema_partida/casos_uso/finalizar_rodada.tex}
+\input{bouded_contexts/sistema_partida/casos_uso/finalizar_partida.tex}
+
+\subsubsection{MAPA DE CONTEXTO}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth]{image/mapa_contexto_sistema_partida.png}
+        \caption{Mapa de Contexto do Sistema de Partidas; \\ Cliente - Servidor:  O contexto "Clinte" requesita infomações do contexto "Fornecedor" para realizar suas tarefas. \\ "C" -> Cliente || "F" -> Fornecedor}
+        \label{fig:minha_imagem}
+    \end{figure}

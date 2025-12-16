@@ -41,7 +41,7 @@ Aqui está a separação dos principais **Bounded Contexts** e como eles se rela
                        ▼                                                       ▼
          ┌──────────────────────────────┐                        ┌──────────────────────────────┐
          │   ⚙️ Game Engine Context       │                        │     🎵 Playlist Context       │
-         │      (Zig - lógica de jogo)  │                        │ Integrações Spotify/Deezer   │
+         │      (Swift - lógica de jogo)  │                        │ Integrações Spotify/Deezer   │
          └──────────────────────────────┘                        └──────────────────────────────┘
 
                                   ┌──────────────────────────────┐
@@ -55,7 +55,7 @@ Aqui está a separação dos principais **Bounded Contexts** e como eles se rela
 * 💬 **Protocolos de integração**:
 
   * `Gateway ↔ Game Orchestrator`: HTTP/WebSocket
-  * `Orchestrator ↔ Game Engine`: Port ou NIF (JSON / binário)
+  * `Orchestrator ↔ Game Engine`: gRPC
   * `Game Engine ↔ Playlist Context`: Requisição de dados de entrada
 
 ---

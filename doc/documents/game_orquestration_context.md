@@ -102,7 +102,7 @@ Isso permite escalar horizontalmente o jogo sem colisões entre salas.
 
 | Componente externo      | Tipo de comunicação | Propósito                               |
 | ----------------------- | ------------------- | --------------------------------------- |
-| **Game Engine**         | Port / NIF / RPC    | Aplicar regras da partida               |
+| **Game Engine**         | gRPC                | Aplicar regras da partida               |
 | **UI Gateway**          | WebSocket/API       | Receber comandos e enviar atualizações  |
 | **Playlist Context**    | REST/GraphQL        | Buscar playlists válidas por jogador    |
 | **Progressão (futuro)** | Event/Queue         | Enviar eventos como `PartidaFinalizada` |

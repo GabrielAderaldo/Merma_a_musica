@@ -88,7 +88,8 @@ Não existe uma plataforma multiplayer, em tempo real, que permita os jogadores 
 | --------------------- | ----------------- | ------------------------------------------------- |
 | 🖼️ UI                | **Bun + TS/JS**   | Interface, WebSocket e API gateway                |
 | 🔁 Orquestração       | **Elixir (BEAM)** | Gerencia salas, rodadas, mensagens                |
-| ⚙️ Lógica de jogo     | **Zig**           | Engine pura do jogo: rodada, pontuação, validação |
+| ⚙️ Lógica de jogo     | **Swift**         | Engine pura do jogo: rodada, pontuação, validação |
+| 🗣️ Comunicação MS      | **gRPC**          | Comunicação entre os microsserviços                |
 | 🎵 Integração externa | REST/GraphQL      | Spotify, Deezer, etc.                             |
 
 ---

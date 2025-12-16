@@ -11,7 +11,7 @@ Documento consolidado que mantém todas as informações dos arquivos de `doc/`,
 - **Objetivos estratégicos**: experiência rápida e recompensadora; salas privadas para amigos; playlists pessoais como núcleo; arquitetura modular preparada para modos ranqueados/progressão; projeto OSS com guia público.
 - **Perfis de usuário**: jogador casual; host da partida; contribuidor open-source; streamer/influencer.
 - **Escopo MVP**: criação de salas, importação Spotify, rodadas com trechos de 15–30s, respostas validadas (inclui configurações de músicas, tempo, tipo de resposta e regra de pontuação) e placar final. Fora do escopo: modo ranqueado, XP/nível, integrações extras, espectador/chat, matchmaking público.
-- **Tecnologia e arquitetura**: UI/Gateway em Bun + TS/JS; Game Orchestrator em Elixir/Gleam; Game Engine em Zig; integrações REST/GraphQL para plataformas musicais.
+- **Tecnologia e arquitetura**: UI/Gateway em Bun + TS/JS; Game Orchestrator em Elixir/Gleam; Game Engine em **Swift**; comunicação via **gRPC**; integrações REST/GraphQL para plataformas musicais.
 - **Roadmap**: MVP (multiplayer com playlists); v1.1 (estatísticas pós-jogo, modo espectador, integração Discord); v1.2 (XP, ranking, conquistas); v2.0 (matchmaking público, torneios, novas fontes como YouTube/SoundCloud).
 
 ---
@@ -19,16 +19,16 @@ Documento consolidado que mantém todas as informações dos arquivos de `doc/`,
 ## 2. Context Map e Status
 
 - **Contextos principais**: UI Gateway (frontend e APIs); Game Orchestrator (salas, tempo real); Game Engine (regras puras); Playlist Integration (importa/normaliza playlists); Progressão & Ranking (XP, histórico, conquistas); contatos futuros com serviços externos.
-- **Relações**: UI/Gateway ↔ Orchestrator via HTTP/WebSocket; Orchestrator ↔ Game Engine via Port/NIF/JSON/Binário; Orchestrator ↔ Playlist Context via REST/GraphQL; Orchestrator ↔ Progressão via eventos; Playlist fornece dados ao Engine; Progressão escuta resultados.
+- **Relações**: UI/Gateway ↔ Orchestrator via HTTP/WebSocket; Orchestrator ↔ Game Engine via **gRPC**; Orchestrator ↔ Playlist Context via REST/GraphQL; Orchestrator ↔ Progressão via eventos; Playlist fornece dados ao Engine; Progressão escuta resultados.
 - **Design chave**: cada sala = processo isolado no BEAM; Game Engine independente e agnóstico à UI; Playlist Context desacopla integrações; Progressão é plugável; UI pode ser trocada sem tocar o domínio.
-- **Tipos de relacionamento**: Playlist é upstream do Game Engine; protocolos: Gateway ↔ Orchestrator (HTTP/WebSocket), Orchestrator ↔ Engine (Port/NIF), Engine ↔ Playlist (requisições de dados).
+- **Tipos de relacionamento**: Playlist é upstream do Game Engine; protocolos: Gateway ↔ Orchestrator (HTTP/WebSocket), Orchestrator ↔ Engine (**gRPC**), Engine ↔ Playlist (requisições de dados).
 - **Status atual por contexto**: Game Engine (Core, pronto para implementação); Game Orchestrator (Supporting, precisa orquestração); Playlist Integration (Supporting, depende das libs externas); Progressão/Ranking (Future, fora do escopo atual).
 
 ---
 
 ## 3. Bounded Contexts
 
-### 3.1 Game Engine Context — Zig (Core Domain)
+### 3.1 Game Engine Context — Swift (Core Domain)
 
 - **Objetivo**: gerenciar ciclo completo da partida, validar respostas, aplicar regras configuradas, emitir eventos de domínio e garantir invariantes sem conhecer UI ou conexões.
 - **Aggregate `Partida`**: controla rodadas, configuração (`ConfiguracaoDaPartida`), estado (`EsperandoJogadores`, `EmAndamento`, `Finalizada`), lista de `JogadorNaPartida`, `Rodada` e índice atual.
@@ -53,7 +53,7 @@ Documento consolidado que mantém todas as informações dos arquivos de `doc/`,
   - `JogadorNaSala`: id, nome, playlist pré-processada, flag `pronto`, status de conexão (Conectado, Desconectado, Reconectando).
 - **Value Objects**: `CodigoDeSala`, `EstadoDaSala` (`AguardandoJogadores`, `ProntaParaComecar`, `EmJogo`, `Finalizada`), `MensagemDeEstado`.
 - **Comportamentos**: entrada/saída de jogadores, marcação de pronto, início do jogo pelo host, disparo de `RodadaIniciada`, encaminhamento de respostas à Engine, fechamento automático por timeout, finalização e envio de resultados.
-- **Integrações**: Game Engine (Port/NIF/RPC), UI Gateway (WebSocket/API), Playlist Context (REST/GraphQL), Progressão futura (eventos).
+- **Integrações**: Game Engine (gRPC), UI Gateway (WebSocket/API), Playlist Context (REST/GraphQL), Progressão futura (eventos).
 - **Serviços internos**: `GerenciadorDeSalas`, `RelogioDaRodada`, `DispatcherDeMensagens`, `CoordenadorDePartida`.
 - **Invariantes**: apenas host inicia; todos prontos antes de começar; músicas divisíveis por jogadores; jogador único por sala; reconexão com timeout; sala destruída após inatividade.
 - **Glossário**: sala = processo, jogador = entrada ativa, código de convite = identificador público, estado da sala = estágios, timer da rodada = contador, comando/evento = mensagens da UI/Engine.
@@ -95,49 +95,43 @@ Documento consolidado que mantém todas as informações dos arquivos de `doc/`,
 
 ---
 
-## 4. Integração Zig ↔ Elixir (Ports / NIF / FFI)
+## 4. Integração Swift ↔ Elixir (gRPC)
 
-- **Objetivo**: permitir que o processo Elixir (sala) invoque a lógica pura em Zig com comandos (`iniciar_partida`, `responder`, `avancar_rodada`) e receba eventos/estados.
-- **Modo recomendado**: Port via stdin/stdout usando JSON inicial (legível para debug) com opção futura de formato binário; Port oferece segurança (processo isolado), facilidade e desacoplamento, ao contrário de NIFs.
-- **Contrato**: Elixir → Zig envia comandos; Zig → Elixir retorna eventos (`partida_iniciada`, `resposta_correta`, etc.).
-- **Implementação**:
-  - Zig mantém loop lendo stdin, processa regras de domínio, escreve eventos em stdout.
-  - Elixir usa `Port.open/2`, envia com `Port.command/2`, escuta `handle_info` com eventos.
-- **Testes sugeridos**: mocks de comandos, respostas simuladas e testes de contrato (`ExUnit` + fixtures).
-- **Evolução**: migrar para NIF/Zigler ou FFI + C ABI quando precisar de máxima performance e controle.
+- **Objetivo**: permitir que o processo Elixir (sala) invoque a lógica pura em Swift com comandos (`iniciar_partida`, `responder`, `avancar_rodada`) e receba eventos/estados via gRPC.
+- **Modo recomendado**: **gRPC**, que oferece alta performance com Protocol Buffers, segurança (processo isolado) e um contrato de serviço forte e tipado.
+- **Contrato**: A comunicação é definida por um arquivo `.proto`. Elixir (cliente) envia chamadas RPC para Swift (servidor), que retorna respostas ou streams de eventos.
+- **Implementação**: Swift implementa os serviços gRPC definidos no `.proto`. Elixir usa um cliente gRPC gerado para invocar os serviços remotamente.
+- **Testes sugeridos**: mocks das chamadas gRPC e respostas simuladas em Protobuf.
+- **Evolução**: A arquitetura com gRPC já é altamente performática. A evolução pode focar em otimizar os payloads do Protobuf ou explorar streaming bidirecional.
 
 ---
 
-## 5. Contrato de Comandos e Eventos do Game Engine
+## 5. Contrato de Serviço do Game Engine (gRPC)
 
-- **Estrutura**: comandos (Elixir → Zig) e eventos (Zig → Elixir) serializados em JSON (versões futuras podem usar binário). Todo comando válido gera ao menos um evento; `partida_id` presente em todas as mensagens; contrato versionado (v1, v2...).
+- **Estrutura**: Serviços, comandos (Requests) e eventos (Responses/Streams) são definidos em um arquivo `.proto` e implementados via gRPC. A comunicação é binária e fortemente tipada por padrão. O contrato é versionado (ex: `v1`, `v2`).
 
-### Comandos
+### Comandos (Exemplos de RPCs)
 
-| Comando             | Descrição                                | Campos                                                                 |
-| ------------------- | ---------------------------------------- | ---------------------------------------------------------------------- |
-| `iniciar_partida`   | Cria partida pronta para rodadas         | `partida_id`, `jogadores`, `configuracao`, `musicas_por_jogador`       |
-| `iniciar_rodada`    | Avança para a próxima rodada             | `partida_id`                                                           |
-| `enviar_resposta`   | Registra resposta de jogador             | `partida_id`, `jogador_id`, `resposta`, `tempo_resposta`               |
-| `finalizar_rodada`  | Encerra rodada manualmente/por timeout   | `partida_id`                                                           |
-| `finalizar_partida` | Força término da partida                 | `partida_id`                                                           |
-| `resetar_partida`   | Limpa estado para nova execução          | `partida_id`                                                           |
+| RPC                 | Descrição                                |
+| ------------------- | ---------------------------------------- |
+| `IniciarPartida`    | Cria partida pronta para rodadas         |
+| `IniciarRodada`     | Avança para a próxima rodada             |
+| `EnviarResposta`    | Registra resposta de jogador             |
+| `FinalizarRodada`   | Encerra rodada manualmente/por timeout   |
+| `FinalizarPartida`  | Força término da partida                 |
 
-### Eventos
+### Eventos (Exemplos de Responses/Streams)
 
-| Evento               | Significado                              | Campos                                                                  |
-| -------------------- | ---------------------------------------- | ----------------------------------------------------------------------- |
-| `partida_iniciada`   | Partida começou                          | `rodada_atual`, `musica`, `jogadores`                                   |
-| `rodada_iniciada`    | Nova rodada                              | `numero_rodada`, `musica`, `tempo_limite`                               |
-| `resposta_recebida`  | Resposta registrada                      | `jogador_id`, `resposta`, `valida`, `tempo_resposta`                     |
-| `resposta_certa`     | Jogador acertou                          | `jogador_id`, `ponto`, `musica`                                         |
-| `resposta_errada`    | Jogador errou                            | `jogador_id`                                                            |
-| `rodada_finalizada`  | Rodada encerrada                         | `numero_rodada`, `respostas`, `placar_parcial`                          |
-| `partida_finalizada` | Partida terminou                         | `placar_final`, `vencedor_id`, `resumo_partida`                         |
-| `erro`               | Comando inválido ou falha                | `mensagem`, `tipo_erro`, `dados_recebidos`                              |
+| Evento               | Significado                              |
+| -------------------- | ---------------------------------------- |
+| `PartidaIniciada`    | Partida começou                          |
+| `RodadaIniciada`     | Nova rodada                              |
+| `RespostaProcessada` | Resposta registrada e validada           |
+| `RodadaFinalizada`   | Rodada encerrada                         |
+| `PartidaFinalizada`  | Partida terminou                         |
+| `Error` (Status gRPC) | Comando inválido ou falha                |
 
-- **Exemplos**: comandos como `enviar_resposta` com `partida_id`, `jogador_id`, `resposta`, `tempo_resposta`; eventos como `rodada_finalizada` com lista de respostas e placar parcial.
-- **Modelagem sugerida**: enums/tagged unions no Zig, structs (`%Command{}`/`%Event{}`) no Elixir, facilitando testes isolados e mocks do engine.
+- **Modelagem sugerida**: A definição do contrato é o próprio arquivo `.proto`. As ferramentas de gRPC geram o código do servidor (Swift) e do cliente (Elixir) automaticamente.
 
 ---
 

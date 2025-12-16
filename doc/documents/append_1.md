@@ -1,56 +1,53 @@
-Claro! Aqui vai um **adendo sobre a definição das interfaces (ports) entre Zig ↔ Elixir**, alinhado à arquitetura que você adotou:
+Claro! Aqui vai um **adendo sobre a definição das interfaces entre Swift ↔ Elixir via gRPC**, alinhado à arquitetura que você adotou:
 
 ---
 
-## 📌 Adendo: Interfaces entre Zig ↔ Elixir (Ports / NIF / FFI)
+## 📌 Adendo: Interfaces entre Swift ↔ Elixir (gRPC)
 
 ### 🎯 Objetivo da Integração
 
-Permitir que o processo Elixir (que representa uma sala e orquestra a partida) **chame a lógica pura da engine em Zig**, passando comandos (como "iniciar partida", "responder", "avançar rodada") e recebendo eventos ou estado atualizado.
+Permitir que o processo Elixir (que representa uma sala e orquestra a partida) **chame a lógica pura da engine em Swift**, passando comandos (como "iniciar partida", "responder", "avançar rodada") e recebendo eventos ou estado atualizado de forma performática e segura.
 
 ---
 
-### 🔌 Modo de Integração recomendado: **Port (via stdio)**
+### 🔌 Modo de Integração recomendado: **gRPC**
 
-#### ✅ Por que usar Port (em vez de NIF)?
+#### ✅ Por que usar gRPC?
 
-* **Segurança**: Zig roda em processo separado — se crashar, Elixir continua vivo
-* **Facilidade de implementação**: comunicação via stdin/stdout com JSON ou binário
-* **Desacoplamento natural**: cada parte pode ser testada isoladamente
+*   **Segurança e Desacoplamento**: Swift roda em processo separado — se crashar, Elixir continua vivo. gRPC reforça o desacoplamento com um contrato de serviço forte.
+*   **Performance e Interoperabilidade**: gRPC usa Protocol Buffers para serialização binária eficiente e é otimizado para comunicação de baixa latência entre serviços. O Swift tem excelente suporte para gRPC.
+*   **Contrato bem definido**: a definição do serviço via arquivos `.proto` garante um contrato claro e tipado entre o orquestrador e a engine.
 
 ---
 
-### 🧱 Interface sugerida (Contrato)
+### 🧱 Interface sugerida (Contrato via Protobuf)
 
 #### 🔁 Comunicação:
 
-* **Entrada (Elixir → Zig)**: comandos (ex: `iniciar_partida`, `responder`)
-* **Saída (Zig → Elixir)**: eventos do domínio (ex: `partida_iniciada`, `resposta_correta`, `rodada_finalizada`)
+*   **Entrada (Elixir → Swift)**: Chamadas de serviço RPC (ex: `IniciarPartidaRequest`)
+*   **Saída (Swift → Elixir)**: Respostas RPC ou streams de eventos de domínio (ex: `PartidaIniciadaResponse`, `stream RodadaEvent`)
 
 #### 📦 Formato dos dados:
 
-* Comece com **JSON estruturado** (mais legível para debugging e prototipação)
-* Depois, pode evoluir para formato binário mais eficiente (opcional)
+*   A comunicação será via **Protocol Buffers (Protobuf)**, que é o padrão do gRPC.
 
-#### 📘 Exemplo de contrato:
+#### 📘 Exemplo de contrato (`.proto`):
 
-```json
-// Elixir → Zig (comando)
-{
-  "command": "iniciar_partida",
-  "partida_id": "abc123",
-  "jogadores": [...],
-  "configuracao": { "tipo_resposta": "MUSICA", ... }
+```proto
+// Exemplo de definição de serviço
+service GameEngine {
+  rpc IniciarPartida(IniciarPartidaRequest) returns (PartidaIniciadaResponse);
+  rpc EnviarResposta(EnviarRespostaRequest) returns (stream RespostaEvent);
 }
 
-// Zig → Elixir (evento)
-{
-  "event": "partida_iniciada",
-  "rodada_atual": 1,
-  "musica": {
-    "nome": "Bohemian Rhapsody",
-    "artista": "Queen"
-  }
+message IniciarPartidaRequest {
+  string partida_id = 1;
+  // ... outros campos
+}
+
+message PartidaIniciadaResponse {
+  int32 rodada_atual = 1;
+  // ... outros campos
 }
 ```
 
@@ -58,40 +55,37 @@ Permitir que o processo Elixir (que representa uma sala e orquestra a partida) *
 
 ### 🛠️ Passos para implementar:
 
-1. **Zig**:
+1.  **Swift**:
+    *   Implementa os serviços gRPC definidos no arquivo `.proto`.
+    *   Cada função de serviço aciona a lógica de domínio correspondente.
+    *   Retorna respostas ou transmite eventos via gRPC streams.
 
-   * Escreve uma função principal que fica lendo comandos da `stdin`
-   * Processa usando sua lógica de domínio
-   * Emite eventos para `stdout`
-
-2. **Elixir**:
-
-   * Usa `Port.open/2` para iniciar o binário do Zig como subprocesso
-   * Envia comandos via `Port.command/2`
-   * Escuta eventos com `handle_info({port, {:data, msg}}...)`
+2.  **Elixir**:
+    *   Usa um cliente gRPC gerado a partir do `.proto` para se comunicar com o servidor Swift.
+    *   Chama as funções de serviço remotas (ex: `GameService.Stub.iniciar_partida(request)`).
+    *   Recebe respostas ou escuta streams de eventos do serviço Swift.
 
 ---
 
 ### 🧪 Sugestão de testes
 
-* Mocks de comandos enviados do Elixir → Zig
-* Zig responde com JSON simulado → assert em Elixir
-* Testes de contrato automatizados podem ser adicionados depois (ex: via `ExUnit` + fixtures)
+*   Mocks de chamadas gRPC do Elixir para o servidor Swift.
+*   O servidor Swift responde com mensagens Protobuf simuladas → assert no cliente Elixir.
+*   Testes de contrato automatizados podem ser adicionados para validar o `.proto`.
 
 ---
 
 ### 🔄 Evolução futura
 
-* Migrar para NIF ou Zigler (quando maturar) se quiser performance máxima e controle direto de memória
-* Ou usar **FFI + C ABI** para integração mais direta e robusta
+*   A arquitetura com gRPC já é altamente performática. A evolução pode focar em otimizar os payloads do Protobuf ou explorar streaming bidirecional para comunicação ainda mais reativa.
 
 ---
 
 ## ✅ Resumo
 
-* Use **Port** para segurança, facilidade e isolamento
-* Elixir envia **comandos → Zig aplica lógica → Zig retorna eventos**
-* Mantenha a interface **simples, explícita e baseada em contratos bem definidos**
-* Evolua o formato (JSON → binário) e a estrutura conforme escalar
+*   Use **gRPC** para performance, segurança e um contrato de serviço robusto.
+*   Elixir envia **chamadas RPC → Swift aplica lógica → Swift retorna respostas/eventos**.
+*   Mantenha a interface **simples, explícita e baseada em contratos bem definidos** no arquivo `.proto`.
+*   Evolua o contrato `.proto` de forma versionada conforme a necessidade.
 
 ---

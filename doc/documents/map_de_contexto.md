@@ -38,7 +38,7 @@ Dividir o sistema em **Bounded Contexts** estratégicos, cada um com sua **lingu
        ▼                      ▼
 ┌───────────────┐     ┌──────────────────────────────┐
 │ Game Engine   │     │ Playlist Integration Context │
-│ (Zig)         │     │ - Spotify / Deezer APIs      │
+│ (Swift)       │     │ - Spotify / Deezer APIs      │
 │ - Regras do   │     │ - Autenticação e playlists   │
 │   jogo        │     └──────────────────────────────┘
 │ - Validação   │
@@ -66,9 +66,9 @@ Dividir o sistema em **Bounded Contexts** estratégicos, cada um com sua **lingu
   * Início e fim de rodadas
   * Validação de respostas
   * Pontuação e regras
-* **Tecnologia sugerida**: Zig (alta performance)
+* **Tecnologia sugerida**: Swift (alta performance)
 * **Não conhece nada sobre o mundo externo**: recebe comandos, retorna eventos
-* **Comunicação**: via mensagens binárias/JSON para o `Orchestrator`
+* **Comunicação**: via gRPC para o `Orchestrator`
 
 ---
 
@@ -141,7 +141,7 @@ Dividir o sistema em **Bounded Contexts** estratégicos, cada um com sua **lingu
 | Relacionamento                 | Tipo                        | Exemplo                              |
 | ------------------------------ | --------------------------- | ------------------------------------ |
 | `UI Gateway` → `Orchestrator`  | API/Socket (Cliente)        | Envia comandos, recebe estado        |
-| `Orchestrator` → `Game Engine` | Port/NIF (Processo Interno) | Envia comandos, recebe eventos       |
+| `Orchestrator` → `Game Engine` | gRPC                        | Envia comandos, recebe eventos       |
 | `Orchestrator` → `Playlist`    | Cliente REST                | Solicita músicas para montar rodadas |
 | `Orchestrator` → `Ranking`     | Eventual (event-driven)     | Envia eventos de resultado           |
 

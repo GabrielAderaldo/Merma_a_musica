@@ -1,119 +1,139 @@
-Claro! Aqui vai o **adendo sobre a especificação completa de comandos e eventos no Game Engine**, servindo como **contrato formal** entre o **Game Orchestrator (Elixir)** e a **Game Engine (Zig)**:
+Claro! Aqui vai o **adendo sobre a especificação completa de comandos e eventos no Game Engine**, servindo como **contrato formal** entre o **Game Orchestrator (Elixir)** e a **Game Engine (Swift)** via gRPC:
 
 ---
 
-## 📌 Adendo: Especificação completa de comandos e eventos no **Game Engine** (contrato de integração)
+## 📌 Adendo: Especificação completa de serviços, comandos e eventos no **Game Engine** (contrato gRPC)
 
 ### 🎯 Objetivo
 
-Estabelecer um **contrato claro e completo de comunicação** entre o **orquestrador (Elixir)** e o **motor do jogo (Zig)**, permitindo:
+Estabelecer um **contrato claro e completo de comunicação** entre o **orquestrador (Elixir)** e o **motor do jogo (Swift)**, permitindo:
 
-* Transmitir **comandos estruturados** que controlam o jogo
-* Receber **eventos de domínio** que refletem o que aconteceu na lógica
-* Garantir compatibilidade entre os contextos
-* Testar e evoluir cada lado de forma isolada
+*   Definir **serviços e chamadas (RPCs)** que controlam o jogo.
+*   Estruturar **mensagens (requests/responses)** para comandos e eventos.
+*   Garantir compatibilidade e tipagem forte entre os contextos.
+*   Testar e evoluir cada lado de forma isolada com base no contrato.
 
-> Esse contrato pode ser usado como base para implementar comunicação via `Port`, `FFI`, `NIF` ou até RPC.
+> Esse contrato será definido usando **Protocol Buffers (`.proto`)** e implementado via **gRPC**.
 
 ---
 
 ## 🔁 Estrutura de Comunicação
 
-* **Comandos** são enviados de **Elixir → Zig** (input)
-* **Eventos** são emitidos de **Zig → Elixir** (output)
-* **Formato sugerido**: JSON estruturado (por legibilidade e portabilidade)
-* O protocolo pode ser convertido para **binário** futuramente para performance
+*   **Comandos** são enviados de **Elixir → Swift** (como chamadas de serviço RPC).
+*   **Eventos** são emitidos de **Swift → Elixir** (como respostas de serviço ou streams gRPC).
+*   **Formato**: **Protocol Buffers**, o padrão para gRPC.
+*   gRPC já utiliza uma serialização binária altamente eficiente por padrão.
 
 ---
 
-## ✅ Lista de **Comandos**
+## 📜 Exemplo de Definição do Contrato (`.proto`)
 
-| Comando             | Descrição                                         | Campos esperados                                                 |
+```proto
+syntax = "proto3";
+
+package game_engine.v1;
+
+// O serviço principal da Game Engine
+service GameEngineService {
+  // Comandos que iniciam ou alteram o estado geral
+  rpc IniciarPartida(IniciarPartidaRequest) returns (PartidaIniciadaResponse);
+  rpc FinalizarPartida(FinalizarPartidaRequest) returns (PartidaFinalizadaResponse);
+  
+  // Comandos de rodada
+  rpc IniciarRodada(IniciarRodadaRequest) returns (RodadaIniciadaResponse);
+  rpc EnviarResposta(EnviarRespostaRequest) returns (RespostaProcessadaResponse);
+  rpc FinalizarRodada(FinalizarRodadaRequest) returns (RodadaFinalizadaResponse);
+
+  // Um stream para eventos em tempo real durante a partida (opcional)
+  rpc SubscribeToPartidaEvents(SubscribeRequest) returns (stream PartidaEvent);
+}
+
+// --- Mensagens de Request (Comandos) ---
+
+message IniciarPartidaRequest {
+  string partida_id = 1;
+  // ... Definição de jogadores, configuração, etc.
+}
+
+message EnviarRespostaRequest {
+  string partida_id = 1;
+  string jogador_id = 2;
+  string resposta = 3;
+  double tempo_resposta = 4;
+}
+
+// --- Mensagens de Response (Eventos) ---
+
+message PartidaIniciadaResponse {
+  int32 rodada_atual = 1;
+  Musica musica = 2;
+  // ...
+}
+
+message RodadaFinalizadaResponse {
+  int32 numero_rodada = 1;
+  map<string, Resposta> respostas = 2;
+  map<string, int32> placar_parcial = 3;
+}
+
+message RespostaProcessadaResponse {
+    string jogador_id = 1;
+    bool valida = 2;
+    int32 ponto_ganho = 3;
+}
+
+// ... outras mensagens ...
+```
+
+---
+
+## ✅ Lista de **Serviços/RPCs** (Comandos)
+
+| RPC (Comando)       | Descrição                                         | Mensagem de Request (`Request`)                                  |
 | ------------------- | ------------------------------------------------- | ---------------------------------------------------------------- |
-| `iniciar_partida`   | Cria uma partida pronta para rodadas              | `partida_id`, `jogadores`, `configuracao`, `musicas_por_jogador` |
-| `iniciar_rodada`    | Avança para a próxima rodada                      | `partida_id`                                                     |
-| `enviar_resposta`   | Um jogador envia uma resposta para a rodada atual | `partida_id`, `jogador_id`, `resposta`, `tempo_resposta`         |
-| `finalizar_rodada`  | Finaliza a rodada manualmente ou por timeout      | `partida_id`                                                     |
-| `finalizar_partida` | Força o término do jogo                           | `partida_id`                                                     |
-| `resetar_partida`   | Reseta o estado para uma nova execução            | `partida_id`                                                     |
-
-### 🧪 Exemplo de comando:
-
-```json
-{
-  "command": "enviar_resposta",
-  "partida_id": "abc123",
-  "jogador_id": "user-1",
-  "resposta": "Radiohead",
-  "tempo_resposta": 7.2
-}
-```
+| `IniciarPartida`    | Cria uma partida pronta para rodadas              | `IniciarPartidaRequest` (com `partida_id`, `jogadores`, `config`)  |
+| `IniciarRodada`     | Avança para a próxima rodada                      | `IniciarRodadaRequest` (com `partida_id`)                        |
+| `EnviarResposta`    | Um jogador envia uma resposta para a rodada atual | `EnviarRespostaRequest` (com `partida_id`, `jogador_id`, `resposta`) |
+| `FinalizarRodada`   | Finaliza a rodada manualmente ou por timeout      | `FinalizarRodadaRequest` (com `partida_id`)                      |
+| `FinalizarPartida`  | Força o término do jogo                           | `FinalizarPartidaRequest` (com `partida_id`)                     |
 
 ---
 
-## 📢 Lista de **Eventos**
+## 📢 Lista de **Respostas/Eventos**
 
-| Evento               | O que significa                     | Campos retornados                                    |
-| -------------------- | ----------------------------------- | ---------------------------------------------------- |
-| `partida_iniciada`   | Partida começou com sucesso         | `rodada_atual`, `musica`, `jogadores`                |
-| `rodada_iniciada`    | Nova rodada começou                 | `numero_rodada`, `musica`, `tempo_limite`            |
-| `resposta_recebida`  | Uma resposta foi registrada         | `jogador_id`, `resposta`, `valida`, `tempo_resposta` |
-| `resposta_certa`     | Jogador acertou                     | `jogador_id`, `ponto`, `musica`                      |
-| `resposta_errada`    | Jogador errou                       | `jogador_id`                                         |
-| `rodada_finalizada`  | Rodada foi encerrada                | `numero_rodada`, `respostas`, `placar_parcial`       |
-| `partida_finalizada` | Fim da partida                      | `placar_final`, `vencedor_id`, `resumo_partida`      |
-| `erro`               | Algum comando inválido foi recebido | `mensagem`, `tipo_erro`, `dados_recebidos`           |
-
-### 📢 Exemplo de evento:
-
-```json
-{
-  "event": "rodada_finalizada",
-  "numero_rodada": 3,
-  "respostas": [
-    { "jogador_id": "user-1", "resposta": "Radiohead", "valida": true },
-    { "jogador_id": "user-2", "resposta": "Coldplay", "valida": false }
-  ],
-  "placar_parcial": {
-    "user-1": 3,
-    "user-2": 1
-  }
-}
-```
+| Evento (Response/Stream)   | O que significa                     | Mensagem de Response (`Response`)                                    |
+| -------------------------- | ----------------------------------- | -------------------------------------------------------------------- |
+| `PartidaIniciada`          | Partida começou com sucesso         | `PartidaIniciadaResponse` (com `rodada_atual`, `musica`, `jogadores`)    |
+| `RodadaIniciada`           | Nova rodada começou                 | `RodadaIniciadaResponse` (com `numero_rodada`, `musica`, `tempo_limite`) |
+| `RespostaProcessada`       | Uma resposta foi validada           | `RespostaProcessadaResponse` (com `jogador_id`, `valida`, `ponto_ganho`) |
+| `RodadaFinalizada`         | Rodada foi encerrada                | `RodadaFinalizadaResponse` (com `respostas`, `placar_parcial`)       |
+| `PartidaFinalizada`        | Fim da partida                      | `PartidaFinalizadaResponse` (com `placar_final`, `vencedor_id`)        |
+| `Error` (Status gRPC)      | Algum comando inválido foi recebido | Status gRPC com código de erro e mensagem descritiva.              |
 
 ---
 
 ## ⚠️ Regras Gerais do Contrato
 
-* **Todo comando válido deve gerar ao menos um evento correspondente**
-* **Eventos devem ser emitidos no formato serializado padrão (JSON no MVP)**
-* O `partida_id` deve estar presente em todas as mensagens
-* O contrato deve ser **versão controlada** (`v1`, `v2`, etc.) para garantir compatibilidade futura
+*   **Todo `Request` válido deve gerar um `Response` correspondente** ou um erro gRPC.
+*   O `partida_id` deve estar presente na maioria das mensagens para garantir o contexto.
+*   O contrato `.proto` deve ser **versionado** (ex: `v1`, `v2`) para garantir compatibilidade futura.
 
 ---
 
 ## 🧪 Sugestão de estrutura de contrato em código
 
-Você pode definir esse contrato como **tipos ou structs compartilhados**, mesmo que informalmente no início, como por exemplo:
+A definição do contrato é o próprio arquivo `.proto`. As ferramentas de gRPC geram o código correspondente para cada linguagem:
 
-```text
-[Command]
-type: iniciar_partida | enviar_resposta | ...
-
-[Event]
-type: partida_iniciada | resposta_certa | ...
-```
-
-No Zig, isso pode ser modelado como enums + tagged unions.
-No Elixir, como structs (`%Command{}` / `%Event{}`).
+*   Em **Swift**, o código do servidor e as mensagens são gerados a partir do `.proto`.
+*   Em **Elixir**, o código do cliente e as mensagens também são gerados, garantindo a consistência.
 
 ---
 
 ## ✅ Benefícios de manter esse contrato
 
-* Garante clareza entre engine e orquestração
-* Facilita testes isolados da engine (simulando comandos)
-* Permite mockar engine para UI sem a engine real
-* Ajuda a criar documentação pública para contribuidores (ex: contributors no GitHub)
+*   Garante clareza e forte tipagem entre a engine e a orquestração.
+*   Facilita testes isolados da engine (simulando chamadas RPC).
+*   Permite mockar a engine para a UI sem a engine real.
+*   Serve como documentação viva e automatizável para a API interna.
 
 ---

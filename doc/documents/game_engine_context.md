@@ -6,7 +6,7 @@ Excelente! Vamos agora para o **📦 Ponto 3: Detalhamento de cada Bounded Conte
 
 ---
 
-## 🎮 **Game Engine Context** (⚙️ Zig – Core Domain)
+## 🎮 **Game Engine Context** (⚙️ Swift – Core Domain)
 
 > Responsável por toda a **lógica central do jogo**, controlando a partida, suas rodadas, os jogadores, as respostas e a pontuação.
 > Este contexto não conhece interfaces gráficas, APIs, nem estado de conexão: ele apenas executa as **regras puras do jogo**.

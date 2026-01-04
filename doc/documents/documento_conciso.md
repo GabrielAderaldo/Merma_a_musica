@@ -31,30 +31,30 @@ Documento consolidado que mantém todas as informações dos arquivos de `doc/`,
 ### 3.1 Game Engine Context — Swift (Core Domain)
 
 - **Objetivo**: gerenciar ciclo completo da partida, validar respostas, aplicar regras configuradas, emitir eventos de domínio e garantir invariantes sem conhecer UI ou conexões.
-- **Aggregate `Partida`**: controla rodadas, configuração (`ConfiguracaoDaPartida`), estado (`EsperandoJogadores`, `EmAndamento`, `Finalizada`), lista de `JogadorNaPartida`, `Rodada` e índice atual.
+- **Aggregate `Match`**: controla rodadas, configuração (`MatchConfiguration`), estado (`WaitingForPlayers`, `InProgress`, `Finished`), lista de `PlayerInMatch`, `Round` e índice atual.
 - **Entidades**:
-  - `JogadorNaPartida`: id, nome, playlist (lista de `Musica`), estado (Conectado/Pronto/Respondido), pontuação, histórico de `Resposta`.
-  - `Rodada`: índice, `Musica`, mapa de respostas por jogador, estado (`EmAndamento`, `Encerrada`).
-  - `Musica`: id, nome, artista, `preview_url`.
+  - `PlayerInMatch`: id, nome, playlist (lista de `Song`), estado (Connected/Ready/Answered), pontuação, histórico de `Answer`.
+  - `Round`: índice, `Song`, mapa de respostas por jogador, estado (`InProgress`, `Ended`).
+  - `Song`: id, nome, artista, `preview_url`.
 - **Value Objects**:
-  - `ConfiguracaoDaPartida`: tempo por rodada, total de músicas (divisível pelo número de jogadores para iniciar), tipo de resposta (MÚSICA/ARTISTA/AMBOS), repetição permitida, regra de pontuação (simples ou bônus).
-  - `Resposta`: texto, tempo de resposta, validade.
-  - `ResultadoRodada`: respostas certas/erradas, tempo, pontuação atribuída.
-- **Eventos**: `PartidaIniciada`, `RodadaIniciada`, `RespostaRecebida`, `RespostaCorreta`, `RodadaFinalizada`, `PartidaFinalizada`.
+  - `MatchConfiguration`: tempo por rodada, total de músicas (divisível pelo número de jogadores para iniciar), tipo de resposta (SONG/ARTIST/BOTH), repetição permitida, regra de pontuação (simples ou bônus).
+  - `Answer`: texto, tempo de resposta, validade.
+  - `RoundResult`: respostas certas/erradas, tempo, pontuação atribuída.
+- **Eventos**: `MatchStarted`, `RoundStarted`, `AnswerReceived`, `CorrectAnswer`, `RoundEnded`, `MatchEnded`.
 - **Invariantes**: todos prontos e músicas divisíveis antes de iniciar; uma resposta por jogador por rodada; sem resposta após rodada finalizada; repetição só se permitido.
-- **Linguagem ubíqua**: Partida, Jogador, Rodada, Resposta, Música, Configuração, Evento mapeados para as respectivas entidades/VOs.
+- **Linguagem ubíqua**: Match, Player, Round, Answer, Song, Configuration, Event mapeados para as respectivas entidades/VOs.
 
 ### 3.2 Game Orchestrator Context — Elixir/Gleam
 
 - **Objetivo**: receber comandos da UI, manter jogadores conectados, controlar timers, coordenar transições de estado e acionar a Game Engine, enviando notificações em tempo real.
 - **Modelo de processos**: um processo BEAM por sala ativa mantém estado em memória, timers e comunicação bidirecional com UI e Engine, permitindo escala horizontal.
 - **Entidades**:
-  - `Sala`: id, host_id, jogadores (`JogadorNaSala`), estado (`Aguardando`, `EmPartida`, `Finalizada`), código de convite, estado serializado da partida, timer.
-  - `JogadorNaSala`: id, nome, playlist pré-processada, flag `pronto`, status de conexão (Conectado, Desconectado, Reconectando).
-- **Value Objects**: `CodigoDeSala`, `EstadoDaSala` (`AguardandoJogadores`, `ProntaParaComecar`, `EmJogo`, `Finalizada`), `MensagemDeEstado`.
-- **Comportamentos**: entrada/saída de jogadores, marcação de pronto, início do jogo pelo host, disparo de `RodadaIniciada`, encaminhamento de respostas à Engine, fechamento automático por timeout, finalização e envio de resultados.
+  - `Room`: id, host_id, jogadores (`PlayerInRoom`), estado (`Waiting`, `InMatch`, `Finished`), código de convite, estado serializado da partida, timer.
+  - `PlayerInRoom`: id, nome, playlist pré-processada, flag `ready`, status de conexão (Connected, Disconnected, Reconnecting).
+- **Value Objects**: `RoomCode`, `RoomState` (`WaitingForPlayers`, `ReadyToStart`, `InGame`, `Finished`), `StateMessage`.
+- **Comportamentos**: entrada/saída de jogadores, marcação de pronto, início do jogo pelo host, disparo de `RoundStarted`, encaminhamento de respostas à Engine, fechamento automático por timeout, finalização e envio de resultados.
 - **Integrações**: Game Engine (gRPC), UI Gateway (WebSocket/API), Playlist Context (REST/GraphQL), Progressão futura (eventos).
-- **Serviços internos**: `GerenciadorDeSalas`, `RelogioDaRodada`, `DispatcherDeMensagens`, `CoordenadorDePartida`.
+- **Serviços internos**: `RoomManager`, `RoundTimer`, `MessageDispatcher`, `MatchCoordinator`.
 - **Invariantes**: apenas host inicia; todos prontos antes de começar; músicas divisíveis por jogadores; jogador único por sala; reconexão com timeout; sala destruída após inatividade.
 - **Glossário**: sala = processo, jogador = entrada ativa, código de convite = identificador público, estado da sala = estágios, timer da rodada = contador, comando/evento = mensagens da UI/Engine.
 
@@ -63,12 +63,12 @@ Documento consolidado que mantém todas as informações dos arquivos de `doc/`,
 - **Objetivo**: autenticar jogadores com plataformas (Spotify, Deezer, futuros YouTube/SoundCloud), importar playlists, filtrar músicas com `preview_url`, normalizar dados para o formato esperado pelo Game Engine.
 - **Motivação**: isolar APIs externas para manter domínio limpo, permitir múltiplas fontes e facilitar testes via mocks.
 - **Entidades**:
-  - `ContaConectada`: usuário, plataforma, access/refresh tokens, nome na plataforma.
-  - `PlaylistImportada`: id, nome, músicas válidas (`MusicaNormalizada`), total filtrado, dono.
-  - `MusicaNormalizada`: id externo, nome, artista, `preview_url`, duração, flag `valida`.
-- **Value Objects**: `PlataformaDeStreaming` enum (SPOTIFY, DEEZER, YOUTUBE_MUSIC...), `TokenOAuth` (access, refresh, validade), `ResultadoImportacao` (listas de válidas, inválidas, erros).
-- **Serviços**: `AutenticadorDePlataforma`, `ImportadorDePlaylists`, `FiltradorDeMusicasValidas`, `NormalizadorDeMusicas`.
-- **Fluxo**: OAuth → armazenar `ContaConectada` → escolher playlist → importar/filtrar → entregar `PlaylistImportada` ao Orchestrator → seleção de músicas para partida.
+  - `ConnectedAccount`: usuário, plataforma, access/refresh tokens, nome na plataforma.
+  - `ImportedPlaylist`: id, nome, músicas válidas (`NormalizedSong`), total filtrado, dono.
+  - `NormalizedSong`: id externo, nome, artista, `preview_url`, duração, flag `is_valid`.
+- **Value Objects**: `StreamingPlatform` enum (SPOTIFY, DEEZER, YOUTUBE_MUSIC...), `OAuthToken` (access, refresh, validade), `ImportResult` (listas de válidas, inválidas, erros).
+- **Serviços**: `PlatformAuthenticator`, `PlaylistImporter`, `ValidSongFilter`, `SongNormalizer`.
+- **Fluxo**: OAuth → armazenar `ConnectedAccount` → escolher playlist → importar/filtrar → entregar `ImportedPlaylist` ao Orchestrator → seleção de músicas para partida.
 - **Invariantes**: apenas músicas com preview; cada jogador usa apenas suas playlists; playlists precisam de N músicas válidas; remover playlist externa implica descartar cache local.
 - **Comunicação**: fornece playlists ao Orchestrator, lista opções ao UI Gateway.
 - **Glossário**: plataforma, playlist, música válida, importação, token OAuth conforme descrito.
@@ -76,16 +76,16 @@ Documento consolidado que mantém todas as informações dos arquivos de `doc/`,
 ### 3.4 Progressão e Ranking Context (Futuro)
 
 - **Objetivo**: acompanhar evolução dos jogadores (XP, níveis, ranking, conquistas, histórico), reagindo a eventos do jogo sem interferir na partida.
-- **Papel estratégico**: implementável depois, escuta `PartidaFinalizada`/`JogadorPontuado`, escala separadamente e habilita gamificação/monetização sem tocar o core.
-- **Integrações**: recebe eventos do Orchestrator (`PartidaFinalizada`, `PontuacaoCalculada`), expõe dados ao UI Gateway (ranking, níveis, conquistas).
+- **Papel estratégico**: implementável depois, escuta `MatchEnded`/`PlayerScored`, escala separadamente e habilita gamificação/monetização sem tocar o core.
+- **Integrações**: recebe eventos do Orchestrator (`MatchEnded`, `ScoreCalculated`), expõe dados ao UI Gateway (ranking, níveis, conquistas).
 - **Entidades**:
-  - `JogadorGlobal`: user_id, xp_total, nível, ranking, conquistas (`Medalha`).
-  - `PartidaHistorica`: id, data, participantes (`DesempenhoDoJogador`), configuração, músicas usadas.
-  - `DesempenhoDoJogador`: jogador_id, pontuação, tempo médio de resposta, acertos.
-  - `Medalha`: id, nome, condição, data de desbloqueio.
-- **Value Objects**: `PontosDeExperiencia`, `Nivel`, `RankingGlobal`.
+  - `GlobalPlayer`: user_id, total_xp, nível, ranking, conquistas (`Badge`).
+  - `HistoricalMatch`: id, data, participantes (`PlayerPerformance`), configuração, músicas usadas.
+  - `PlayerPerformance`: player_id, score, average_response_time, correct_answers.
+  - `Badge`: id, nome, condition, unlocked_at.
+- **Value Objects**: `ExperiencePoints`, `Level`, `GlobalRanking`.
 - **Regras**: XP apenas em partidas completas; nível deriva de XP; ranking atualizado periodicamente; XP não diminui; conquistas únicas; histórico imutável.
-- **Serviços**: `XPService`, `NivelService`, `ConquistaService`, `HistoricoService`, `RankingService`.
+- **Serviços**: `XPService`, `LevelService`, `AchievementService`, `HistoryService`, `RankingService`.
 - **Glossário**: XP, nível, conquista, histórico, ranking.
 - **Implementação sugerida**: armazenamento relacional/NoSQL, fila de eventos (RabbitMQ/Kafka/Pub/Sub), API REST, consistência eventual.
 
@@ -97,7 +97,7 @@ Documento consolidado que mantém todas as informações dos arquivos de `doc/`,
 
 ## 4. Integração Swift ↔ Elixir (gRPC)
 
-- **Objetivo**: permitir que o processo Elixir (sala) invoque a lógica pura em Swift com comandos (`iniciar_partida`, `responder`, `avancar_rodada`) e receba eventos/estados via gRPC.
+- **Objetivo**: permitir que o processo Elixir (sala) invoque a lógica pura em Swift com comandos (`StartMatch`, `SubmitAnswer`, `StartRound`) e receba eventos/estados via gRPC.
 - **Modo recomendado**: **gRPC**, que oferece alta performance com Protocol Buffers, segurança (processo isolado) e um contrato de serviço forte e tipado.
 - **Contrato**: A comunicação é definida por um arquivo `.proto`. Elixir (cliente) envia chamadas RPC para Swift (servidor), que retorna respostas ou streams de eventos.
 - **Implementação**: Swift implementa os serviços gRPC definidos no `.proto`. Elixir usa um cliente gRPC gerado para invocar os serviços remotamente.
@@ -114,21 +114,21 @@ Documento consolidado que mantém todas as informações dos arquivos de `doc/`,
 
 | RPC                 | Descrição                                |
 | ------------------- | ---------------------------------------- |
-| `IniciarPartida`    | Cria partida pronta para rodadas         |
-| `IniciarRodada`     | Avança para a próxima rodada             |
-| `EnviarResposta`    | Registra resposta de jogador             |
-| `FinalizarRodada`   | Encerra rodada manualmente/por timeout   |
-| `FinalizarPartida`  | Força término da partida                 |
+| `StartMatch`        | Cria partida pronta para rodadas         |
+| `StartRound`        | Avança para a próxima rodada             |
+| `SubmitAnswer`      | Registra resposta de jogador             |
+| `EndRound`          | Encerra rodada manualmente/por timeout   |
+| `EndMatch`          | Força término da partida                 |
 
 ### Eventos (Exemplos de Responses/Streams)
 
 | Evento               | Significado                              |
 | -------------------- | ---------------------------------------- |
-| `PartidaIniciada`    | Partida começou                          |
-| `RodadaIniciada`     | Nova rodada                              |
-| `RespostaProcessada` | Resposta registrada e validada           |
-| `RodadaFinalizada`   | Rodada encerrada                         |
-| `PartidaFinalizada`  | Partida terminou                         |
+| `MatchStarted`       | Partida começou                          |
+| `RoundStarted`       | Nova rodada                              |
+| `AnswerProcessed`    | Resposta registrada e validada           |
+| `RoundEnded`         | Rodada encerrada                         |
+| `MatchEnded`         | Partida terminou                         |
 | `Error` (Status gRPC) | Comando inválido ou falha                |
 
 - **Modelagem sugerida**: A definição do contrato é o próprio arquivo `.proto`. As ferramentas de gRPC geram o código do servidor (Swift) e do cliente (Elixir) automaticamente.
@@ -139,21 +139,21 @@ Documento consolidado que mantém todas as informações dos arquivos de `doc/`,
 
 | Termo                    | Definição                                                                 |
 | ------------------------ | ------------------------------------------------------------------------- |
-| Partida                  | Sessão composta por rodadas e jogadores                                   |
-| Rodada                   | Momento em que uma música toca e todos respondem                          |
-| Jogador                  | Participante com identidade única na partida                              |
+| Match                    | Sessão composta por rodadas e jogadores                                   |
+| Round                    | Momento em que uma música toca e todos respondem                          |
+| Player                   | Participante com identidade única na partida                              |
 | Playlist                 | Lista de músicas conectada do streaming                                   |
-| Resposta                 | Texto enviado tentando acertar                                            |
-| Configuração da Sala     | Regras (número de músicas, tempo, modo de pontuação, repetição)           |
-| Repetição de música      | Permissão para usar músicas duplicadas entre playlists                    |
-| Pontuação                | Total de acertos do jogador                                               |
+| Answer                   | Texto enviado tentando acertar                                            |
+| Match Configuration      | Regras (número de músicas, tempo, modo de pontuação, repetição)           |
+| Song Repetition          | Permissão para usar músicas duplicadas entre playlists                    |
+| Score                    | Total de acertos do jogador                                               |
 | Ranking                  | Posição do jogador em relação ao sistema inteiro                          |
 | XP                       | Pontos de experiência ganhos por participação/desempenho                  |
-| Sala                     | Processo isolado que coordena jogadores e partida                         |
-| Código de convite        | Identificador público para ingressar em uma sala                          |
-| Timer da rodada          | Contador usado para encerrar rodadas                                      |
-| Música válida            | Música com `preview_url` disponível                                       |
-| Importação               | Processo de buscar playlists/músicas na conta conectada                   |
+| Room                     | Processo isolado que coordena jogadores e partida                         |
+| Invite Code              | Identificador público para ingressar em uma sala                          |
+| Round Timer              | Contador usado para encerrar rodadas                                      |
+| Valid Song               | Música com `preview_url` disponível                                       |
+| Import                   | Processo de buscar playlists/músicas na conta conectada                   |
 
 ---
 

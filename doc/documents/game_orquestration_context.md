@@ -38,7 +38,7 @@ Isso permite escalar horizontalmente o jogo sem colisões entre salas.
 
 ## 📦 Entidades do Contexto
 
-### 1. `Sala`
+### 1. `Room`
 
 > Representa uma sessão multiplayer aguardando ou rodando uma partida.
 
@@ -46,39 +46,39 @@ Isso permite escalar horizontalmente o jogo sem colisões entre salas.
 | --------------------- | ------------------------------------ | --------------------------------------- |
 | `id`                  | UUID                                 | Identificador único da sala             |
 | `host_id`             | UUID                                 | Jogador que criou a sala                |
-| `jogadores`           | Lista de `JogadorNaSala`             | Participantes conectados                |
-| `estado`              | Enum                                 | `Aguardando`, `EmPartida`, `Finalizada` |
-| `codigo_convite`      | String                               | Código usado para entrar na sala        |
-| `partida_em_execucao` | Estado interno do jogo (serializado) |                                         |
+| `players`             | Lista de `PlayerInRoom`              | Participantes conectados                |
+| `state`               | Enum                                 | `Waiting`, `InMatch`, `Finished`        |
+| `invite_code`         | String                               | Código usado para entrar na sala        |
+| `running_match`       | Estado interno do jogo (serializado) |                                         |
 | `timer`               | Ref de tempo                         | Timer de rodada atual                   |
 
 ---
 
-### 2. `JogadorNaSala`
+### 2. `PlayerInRoom`
 
 > Representa o jogador durante o ciclo de vida da sala.
 
-| Campo            | Tipo                               | Descrição                                 |
-| ---------------- | ---------------------------------- | ----------------------------------------- |
-| `id`             | UUID                               | ID único                                  |
-| `nome`           | String                             | Apelido                                   |
-| `playlist`       | Lista de músicas (pré-processadas) |                                           |
-| `pronto`         | Bool                               | Indicador de que está pronto para iniciar |
-| `status_conexao` | Enum                               | Conectado, Desconectado, Reconectando     |
+| Campo               | Tipo                               | Descrição                                 |
+| ------------------- | ---------------------------------- | ----------------------------------------- |
+| `id`                | UUID                               | ID único                                  |
+| `name`              | String                             | Apelido                                   |
+| `playlist`          | Lista de músicas (pré-processadas) |                                           |
+| `ready`             | Bool                               | Indicador de que está pronto para iniciar |
+| `connection_status` | Enum                               | Connected, Disconnected, Reconnecting     |
 
 ---
 
 ## 🧩 Value Objects
 
-### `CodigoDeSala`
+### `RoomCode`
 
 * String curta e única, compartilhada entre jogadores para ingressar na sala
 
-### `EstadoDaSala`
+### `RoomState`
 
-* Enum: `AguardandoJogadores`, `ProntaParaComecar`, `EmJogo`, `Finalizada`
+* Enum: `WaitingForPlayers`, `ReadyToStart`, `InGame`, `Finished`
 
-### `MensagemDeEstado`
+### `StateMessage`
 
 * Estrutura enviada pela WebSocket para a UI refletir o estado atual
 
@@ -91,7 +91,7 @@ Isso permite escalar horizontalmente o jogo sem colisões entre salas.
 | Jogador entra na sala        | Adiciona à lista de jogadores e envia estado da sala   |
 | Jogador marca-se como pronto | Atualiza status, verifica se todos estão prontos       |
 | Host inicia o jogo           | Gera configuração e envia comando para o `Game Engine` |
-| Rodada inicia                | Aciona timer, envia evento `RodadaIniciada` à UI       |
+| Rodada inicia                | Aciona timer, envia evento `RoundStarted` à UI         |
 | Jogador envia resposta       | Encaminha para o `Game Engine`, armazena resultado     |
 | Tempo da rodada acaba        | Fecha rodada automaticamente                           |
 | Última rodada finalizada     | Marca partida como finalizada e envia resultados       |
@@ -105,18 +105,18 @@ Isso permite escalar horizontalmente o jogo sem colisões entre salas.
 | **Game Engine**         | gRPC                | Aplicar regras da partida               |
 | **UI Gateway**          | WebSocket/API       | Receber comandos e enviar atualizações  |
 | **Playlist Context**    | REST/GraphQL        | Buscar playlists válidas por jogador    |
-| **Progressão (futuro)** | Event/Queue         | Enviar eventos como `PartidaFinalizada` |
+| **Progressão (futuro)** | Event/Queue         | Enviar eventos como `MatchEnded`        |
 
 ---
 
 ## 🔧 Serviços internos
 
-| Serviço                 | Responsabilidade                       |
-| ----------------------- | -------------------------------------- |
-| `GerenciadorDeSalas`    | Gerencia o registro de salas ativas    |
-| `RelogioDaRodada`       | Timer central que aciona fim da rodada |
-| `DispatcherDeMensagens` | Envia notificações via WebSocket       |
-| `CoordenadorDePartida`  | Orquestra o início e fim da partida    |
+| Serviço             | Responsabilidade                       |
+| ------------------- | -------------------------------------- |
+| `RoomManager`       | Gerencia o registro de salas ativas    |
+| `RoundTimer`        | Timer central que aciona fim da rodada |
+| `MessageDispatcher` | Envia notificações via WebSocket       |
+| `MatchCoordinator`  | Orquestra o início e fim da partida    |
 
 ---
 

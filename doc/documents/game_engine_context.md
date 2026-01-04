@@ -23,7 +23,7 @@ Excelente! Vamos agora para o **📦 Ponto 3: Detalhamento de cada Bounded Conte
 
 ---
 
-### 📌 Aggregate Principal: `Partida`
+### 📌 Aggregate Principal: `Match`
 
 > Representa uma instância de jogo multiplayer configurado e em andamento.
 
@@ -38,91 +38,91 @@ Excelente! Vamos agora para o **📦 Ponto 3: Detalhamento de cada Bounded Conte
 #### Campos (estado interno):
 
 * `id`: Identificador da partida
-* `estado`: Enum (`EsperandoJogadores`, `EmAndamento`, `Finalizada`)
-* `configuracao`: VO `ConfiguracaoDaPartida`
-* `jogadores`: Lista de `JogadorNaPartida`
-* `rodadas`: Lista de `Rodada`
-* `indiceRodadaAtual`: Inteiro (qual rodada está ativa)
+* `state`: Enum (`WaitingForPlayers`, `InProgress`, `Finished`)
+* `config`: VO `MatchConfiguration`
+* `players`: Lista de `PlayerInMatch`
+* `rounds`: Lista de `Round`
+* `currentRoundIndex`: Inteiro (qual rodada está ativa)
 
 ---
 
 ### 🧱 Entidades
 
-#### 1. `JogadorNaPartida`
+#### 1. `PlayerInMatch`
 
 > Representa um jogador específico dentro de uma partida.
 
 | Campo       | Tipo                | Descrição                     |
 | ----------- | ------------------- | ----------------------------- |
 | `id`        | ID                  | Identificador único           |
-| `nome`      | String              | Apelido visível               |
-| `playlist`  | Lista<`Musica`>     | Músicas extraídas do serviço  |
-| `estado`    | Enum                | Conectado, Pronto, Respondido |
-| `pontuacao` | Int                 | Pontuação acumulada           |
-| `respostas` | Lista de `Resposta` | Histórico da partida          |
+| `name`      | String              | Apelido visível               |
+| `playlist`  | Lista<`Song`>       | Músicas extraídas do serviço  |
+| `state`     | Enum                | Connected, Ready, Answered    |
+| `score`     | Int                 | Pontuação acumulada           |
+| `answers`   | Lista de `Answer`   | Histórico da partida          |
 
 ---
 
-#### 2. `Rodada`
+#### 2. `Round`
 
 > Representa um momento do jogo em que uma música é tocada e os jogadores devem responder.
 
 | Campo       | Tipo                     | Descrição                        |
 | ----------- | ------------------------ | -------------------------------- |
-| `indice`    | Int                      | Número da rodada                 |
-| `musica`    | `Musica`                 | Música sorteada para essa rodada |
-| `respostas` | Map<JogadorId, Resposta> | Respostas dadas pelos jogadores  |
-| `estado`    | Enum                     | EmAndamento, Encerrada           |
+| `index`     | Int                      | Número da rodada                 |
+| `song`      | `Song`                   | Música sorteada para essa rodada |
+| `answers`   | Map<PlayerId, Answer>    | Respostas dadas pelos jogadores  |
+| `state`     | Enum                     | InProgress, Ended                |
 
 ---
 
-#### 3. `Musica`
+#### 3. `Song`
 
 > Dados da música usada na rodada.
 
 | Campo         | Tipo   | Descrição                           |
 | ------------- | ------ | ----------------------------------- |
 | `id`          | ID     | Interno                             |
-| `nome`        | String | Título da música                    |
-| `artista`     | String | Nome do artista                     |
+| `name`        | String | Título da música                    |
+| `artist`      | String | Nome do artista                     |
 | `preview_url` | String | Link para trecho da música (15–30s) |
 
 ---
 
 ### 🧩 Value Objects (VO)
 
-#### 1. `ConfiguracaoDaPartida`
+#### 1. `MatchConfiguration`
 
-| Campo                | Tipo                          | Descrição                                     |
-| -------------------- | ----------------------------- | --------------------------------------------- |
-| `tempoPorRodada`     | Int                           | Em segundos (ex: 15)                          |
-| `totalDeMusicas`     | Int                           | Quantidade total                              |
-| `tipoDeResposta`     | Enum (MUSICA, ARTISTA, AMBOS) | Define o que será aceito como resposta válida |
-| `repeticaoPermitida` | Bool                          | Define se músicas podem se repetir            |
-| `regraPontuacao`     | Enum                          | Simples ou com bônus por velocidade           |
-
----
-
-#### 2. `Resposta`
-
-| Campo           | Tipo   | Descrição                                  |
-| --------------- | ------ | ------------------------------------------ |
-| `texto`         | String | Texto digitado pelo jogador                |
-| `tempoResposta` | Float  | Tempo em segundos desde o início da rodada |
-| `valida`        | Bool   | Resultado da validação contra a música     |
+| Campo            | Tipo                          | Descrição                                     |
+| ---------------- | ----------------------------- | --------------------------------------------- |
+| `timePerRound`   | Int                           | Em segundos (ex: 15)                          |
+| `totalSongs`     | Int                           | Quantidade total                              |
+| `answerType`     | Enum (SONG, ARTIST, BOTH)     | Define o que será aceito como resposta válida |
+| `allowRepeats`   | Bool                          | Define se músicas podem se repetir            |
+| `scoringRule`    | Enum                          | Simples ou com bônus por velocidade           |
 
 ---
 
-### 🔄 Eventos de Domínio (emitidos pelo Aggregate `Partida`)
+#### 2. `Answer`
+
+| Campo         | Tipo   | Descrição                                  |
+| ------------- | ------ | ------------------------------------------ |
+| `text`        | String | Texto digitado pelo jogador                |
+| `answerTime`  | Float  | Tempo em segundos desde o início da rodada |
+| `isValid`     | Bool   | Resultado da validação contra a música     |
+
+---
+
+### 🔄 Eventos de Domínio (emitidos pelo Aggregate `Match`)
 
 | Evento              | Causa                             | Ação esperada                      |
 | ------------------- | --------------------------------- | ---------------------------------- |
-| `PartidaIniciada`   | Todos prontos, regras válidas     | Orquestrador inicia timers         |
-| `RodadaIniciada`    | Avanço de rodada                  | Música tocada, cronômetro iniciado |
-| `RespostaRecebida`  | Jogador enviou resposta           | Validar e armazenar                |
-| `RespostaCorreta`   | Texto bate com valor esperado     | Atribuir ponto                     |
-| `RodadaFinalizada`  | Todos responderam ou tempo acabou | Calcular resultado                 |
-| `PartidaFinalizada` | Última rodada encerrada           | Enviar estatísticas finais         |
+| `MatchStarted`      | Todos prontos, regras válidas     | Orquestrador inicia timers         |
+| `RoundStarted`      | Avanço de rodada                  | Música tocada, cronômetro iniciado |
+| `AnswerReceived`    | Jogador enviou resposta           | Validar e armazenar                |
+| `CorrectAnswer`     | Texto bate com valor esperado     | Atribuir ponto                     |
+| `RoundEnded`        | Todos responderam ou tempo acabou | Calcular resultado                 |
+| `MatchEnded`        | Última rodada encerrada           | Enviar estatísticas finais         |
 
 ---
 
@@ -130,11 +130,11 @@ Excelente! Vamos agora para o **📦 Ponto 3: Detalhamento de cada Bounded Conte
 
 * Partida só pode ser iniciada se:
 
-  * Todos os jogadores estiverem `Prontos`
+  * Todos os jogadores estiverem `Ready`
   * O número de músicas for divisível pelo número de jogadores
 * Jogador só pode responder uma vez por rodada
 * Não se aceita resposta após a rodada ser finalizada
-* Músicas repetidas só são permitidas se `repeticaoPermitida = true`
+* Músicas repetidas só são permitidas se `allowRepeats = true`
 
 ---
 
@@ -142,12 +142,12 @@ Excelente! Vamos agora para o **📦 Ponto 3: Detalhamento de cada Bounded Conte
 
 | Termo de Domínio | Representação no Modelo          |
 | ---------------- | -------------------------------- |
-| Partida          | Aggregate Root `Partida`         |
-| Jogador          | `JogadorNaPartida`               |
-| Rodada           | `Rodada` (entidade)              |
-| Resposta         | `Resposta` (VO)                  |
-| Música           | `Musica` (entidade)              |
-| Configuração     | `ConfiguracaoDaPartida` (VO)     |
-| Evento           | Enum ou struct `EventoDeDominio` |
+| Partida          | Aggregate Root `Match`           |
+| Jogador          | `PlayerInMatch`                  |
+| Rodada           | `Round` (entidade)               |
+| Resposta         | `Answer` (VO)                    |
+| Música           | `Song` (entidade)                |
+| Configuração     | `MatchConfiguration` (VO)        |
+| Evento           | Enum ou struct `DomainEvent`     |
 
 ---

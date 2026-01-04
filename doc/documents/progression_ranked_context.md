@@ -25,7 +25,7 @@ Este contexto tem como missão **acompanhar a evolução dos jogadores ao longo 
 ## 🧠 Papel estratégico
 
 * Pode ser implementado **posteriormente** sem quebrar o domínio principal
-* Pode escutar eventos como `PartidaFinalizada`, `JogadorPontuado`, etc.
+* Pode escutar eventos como `MatchEnded`, `PlayerScored`, etc.
 * Pode ser escalado separadamente como serviço
 * Permite **gamificação leve**, sem afetar o core
 
@@ -33,30 +33,30 @@ Este contexto tem como missão **acompanhar a evolução dos jogadores ao longo 
 
 ## 🔄 Integração com outros contextos
 
-| Fonte               | Evento recebido                           | Ação esperada                        |
-| ------------------- | ----------------------------------------- | ------------------------------------ |
-| `Game Orchestrator` | `PartidaFinalizada`, `PontuacaoCalculada` | Calcular XP, registrar histórico     |
-| `UI Gateway`        | Consulta de ranking, nível e conquistas   | Fornecer dados agregados por jogador |
+| Fonte               | Evento recebido                   | Ação esperada                        |
+| ------------------- | --------------------------------- | ------------------------------------ |
+| `Game Orchestrator` | `MatchEnded`, `ScoreCalculated`   | Calcular XP, registrar histórico     |
+| `UI Gateway`        | Consulta de ranking, nível e conquistas | Fornecer dados agregados por jogador |
 
 ---
 
 ## 📦 Entidades
 
-### 1. `JogadorGlobal`
+### 1. `GlobalPlayer`
 
 > Representa um jogador no sistema de progressão, agregando todos os dados históricos.
 
-| Campo        | Tipo               | Descrição                            |
-| ------------ | ------------------ | ------------------------------------ |
-| `user_id`    | UUID               | Referência ao jogador                |
-| `xp_total`   | Int                | Total acumulado de experiência       |
-| `nivel`      | Int                | Nível atual calculado com base no XP |
-| `ranking`    | Int                | Posição relativa global (opcional)   |
-| `conquistas` | Lista de `Medalha` | Conquistas desbloqueadas             |
+| Campo          | Tipo            | Descrição                            |
+| -------------- | --------------- | ------------------------------------ |
+| `user_id`      | UUID            | Referência ao jogador                |
+| `total_xp`     | Int             | Total acumulado de experiência       |
+| `level`        | Int             | Nível atual calculado com base no XP |
+| `ranking`      | Int             | Posição relativa global (opcional)   |
+| `achievements` | Lista de `Badge`| Conquistas desbloqueadas             |
 
 ---
 
-### 2. `PartidaHistorica`
+### 2. `HistoricalMatch`
 
 > Uma instância passada de uma partida finalizada.
 
@@ -64,45 +64,45 @@ Este contexto tem como missão **acompanhar a evolução dos jogadores ao longo 
 | --------------- | ------------------------------ | ---------------------- |
 | `id`            | UUID                           | ID da partida          |
 | `data`          | DateTime                       | Quando aconteceu       |
-| `participantes` | Lista de `DesempenhoDoJogador` | Resumo de cada jogador |
-| `configuracao`  | Config usada na partida        |                        |
-| `musicasUsadas` | Lista de faixas jogadas        |                        |
+| `participants`  | Lista de `PlayerPerformance`   | Resumo de cada jogador |
+| `config`        | Config usada na partida        |                        |
+| `used_songs`    | Lista de faixas jogadas        |                        |
 
 ---
 
-### 3. `DesempenhoDoJogador`
+### 3. `PlayerPerformance`
 
-| Campo                  | Tipo  | Descrição        |
-| ---------------------- | ----- | ---------------- |
-| `jogador_id`           | UUID  | ID do jogador    |
-| `pontuacao`            | Int   | Pontos finais    |
-| `tempoMedioDeResposta` | Float | Em segundos      |
-| `acertos`              | Int   | Total de acertos |
+| Campo                   | Tipo  | Descrição        |
+| ----------------------- | ----- | ---------------- |
+| `player_id`             | UUID  | ID do jogador    |
+| `score`                 | Int   | Pontos finais    |
+| `average_response_time` | Float | Em segundos      |
+| `correct_answers`       | Int   | Total de acertos |
 
 ---
 
-### 4. `Medalha` (Conquista)
+### 4. `Badge` (Conquista)
 
-| Campo             | Tipo         | Descrição                         |
-| ----------------- | ------------ | --------------------------------- |
-| `id`              | String       | Identificador                     |
-| `nome`            | String       | Nome da medalha                   |
-| `condicao`        | Enum / regra | Ex: "Acertar 10 músicas seguidas" |
-| `dataDesbloqueio` | Date         | Quando foi conquistada            |
+| Campo         | Tipo         | Descrição                         |
+| ------------- | ------------ | --------------------------------- |
+| `id`          | String       | Identificador                     |
+| `name`        | String       | Nome da medalha                   |
+| `condition`   | Enum / regra | Ex: "Acertar 10 músicas seguidas" |
+| `unlocked_at` | Date         | Quando foi conquistada            |
 
 ---
 
 ## 🧩 Value Objects
 
-### `PontosDeExperiencia`
+### `ExperiencePoints`
 
 * Int (com função de cálculo para XP por pontuação e tempo)
 
-### `Nivel`
+### `Level`
 
 * Int (nível do jogador, calculado por XP total)
 
-### `RankingGlobal`
+### `GlobalRanking`
 
 * Tabela ordenada por XP total (opcionalmente segmentada)
 
@@ -121,13 +121,13 @@ Este contexto tem como missão **acompanhar a evolução dos jogadores ao longo 
 
 ## ⚙️ Serviços e funcionalidades
 
-| Serviço            | Responsabilidade                      |
-| ------------------ | ------------------------------------- |
-| `XPService`        | Converte desempenho em pontos de XP   |
-| `NivelService`     | Calcula o nível atual baseado no XP   |
-| `ConquistaService` | Avalia e desbloqueia conquistas       |
-| `HistoricoService` | Armazena e consulta partidas passadas |
-| `RankingService`   | Ordena jogadores com base no XP total |
+| Serviço              | Responsabilidade                      |
+| -------------------- | ------------------------------------- |
+| `XPService`          | Converte desempenho em pontos de XP   |
+| `LevelService`       | Calcula o nível atual baseado no XP   |
+| `AchievementService` | Avalia e desbloqueia conquistas       |
+| `HistoryService`     | Armazena e consulta partidas passadas |
+| `RankingService`     | Ordena jogadores com base no XP total |
 
 ---
 
@@ -136,9 +136,9 @@ Este contexto tem como missão **acompanhar a evolução dos jogadores ao longo 
 | Termo     | Significado                                |
 | --------- | ------------------------------------------ |
 | XP        | Pontos de experiência ganhos em partidas   |
-| Nível     | Representação de progressão, baseada em XP |
-| Conquista | Meta desbloqueada com uma ação notável     |
-| Histórico | Registro completo das partidas jogadas     |
+| Level     | Representação de progressão, baseada em XP |
+| Badge     | Meta desbloqueada com uma ação notável     |
+| History   | Registro completo das partidas jogadas     |
 | Ranking   | Lista ordenada dos melhores jogadores      |
 
 ---

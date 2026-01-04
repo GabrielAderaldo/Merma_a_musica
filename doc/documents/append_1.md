@@ -24,8 +24,8 @@ Permitir que o processo Elixir (que representa uma sala e orquestra a partida) *
 
 #### 🔁 Comunicação:
 
-*   **Entrada (Elixir → Swift)**: Chamadas de serviço RPC (ex: `IniciarPartidaRequest`)
-*   **Saída (Swift → Elixir)**: Respostas RPC ou streams de eventos de domínio (ex: `PartidaIniciadaResponse`, `stream RodadaEvent`)
+*   **Entrada (Elixir → Swift)**: Chamadas de serviço RPC (ex: `StartMatchRequest`)
+*   **Saída (Swift → Elixir)**: Respostas RPC ou streams de eventos de domínio (ex: `MatchStartedResponse`, `stream RoundEvent`)
 
 #### 📦 Formato dos dados:
 
@@ -36,17 +36,17 @@ Permitir que o processo Elixir (que representa uma sala e orquestra a partida) *
 ```proto
 // Exemplo de definição de serviço
 service GameEngine {
-  rpc IniciarPartida(IniciarPartidaRequest) returns (PartidaIniciadaResponse);
-  rpc EnviarResposta(EnviarRespostaRequest) returns (stream RespostaEvent);
+  rpc StartMatch(StartMatchRequest) returns (MatchStartedResponse);
+  rpc SubmitAnswer(SubmitAnswerRequest) returns (stream AnswerEvent);
 }
 
-message IniciarPartidaRequest {
-  string partida_id = 1;
+message StartMatchRequest {
+  string match_id = 1;
   // ... outros campos
 }
 
-message PartidaIniciadaResponse {
-  int32 rodada_atual = 1;
+message MatchStartedResponse {
+  int32 current_round = 1;
   // ... outros campos
 }
 ```
@@ -62,7 +62,7 @@ message PartidaIniciadaResponse {
 
 2.  **Elixir**:
     *   Usa um cliente gRPC gerado a partir do `.proto` para se comunicar com o servidor Swift.
-    *   Chama as funções de serviço remotas (ex: `GameService.Stub.iniciar_partida(request)`).
+    *   Chama as funções de serviço remotas (ex: `GameService.Stub.start_match(request)`).
     *   Recebe respostas ou escuta streams de eventos do serviço Swift.
 
 ---
@@ -87,5 +87,3 @@ message PartidaIniciadaResponse {
 *   Elixir envia **chamadas RPC → Swift aplica lógica → Swift retorna respostas/eventos**.
 *   Mantenha a interface **simples, explícita e baseada em contratos bem definidos** no arquivo `.proto`.
 *   Evolua o contrato `.proto` de forma versionada conforme a necessidade.
-
----

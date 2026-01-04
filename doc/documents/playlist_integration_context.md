@@ -46,58 +46,58 @@ Com esse contexto:
 
 ## 📦 Entidades
 
-### 1. `ContaConectada`
+### 1. `ConnectedAccount`
 
 | Campo           | Tipo                      | Descrição                   |
 | --------------- | ------------------------- | --------------------------- |
-| `usuario_id`    | UUID                      | Relacionado ao jogador      |
-| `plataforma`    | Enum (Spotify, Deezer...) | Origem dos dados            |
+| `user_id`       | UUID                      | Relacionado ao jogador      |
+| `platform`      | Enum (Spotify, Deezer...) | Origem dos dados            |
 | `access_token`  | String                    | Token de acesso (OAuth)     |
 | `refresh_token` | String                    | Usado para renovar sessão   |
-| `nome_usuario`  | String                    | Nome da conta na plataforma |
+| `username`      | String                    | Nome da conta na plataforma |
 
 ---
 
-### 2. `PlaylistImportada`
+### 2. `ImportedPlaylist`
 
 > Representa uma playlist da conta do jogador, com dados normalizados.
 
 | Campo     | Tipo                         | Descrição                       |
 | --------- | ---------------------------- | ------------------------------- |
 | `id`      | String                       | ID da playlist na plataforma    |
-| `nome`    | String                       | Nome da playlist                |
-| `musicas` | Lista de `MusicaNormalizada` | Faixas válidas para o jogo      |
+| `name`    | String                       | Nome da playlist                |
+| `songs`   | Lista de `NormalizedSong`    | Faixas válidas para o jogo      |
 | `total`   | Int                          | Total de músicas após filtragem |
-| `dono`    | `usuario_id`                 | Proprietário da playlist        |
+| `owner`   | `user_id`                    | Proprietário da playlist        |
 
 ---
 
-### 3. `MusicaNormalizada`
+### 3. `NormalizedSong`
 
 > Música extraída e limpa, pronta para uso no jogo.
 
 | Campo         | Tipo   | Descrição                                            |
 | ------------- | ------ | ---------------------------------------------------- |
-| `id_externo`  | String | ID na plataforma (ex: Spotify ID)                    |
-| `nome`        | String | Nome da música                                       |
-| `artista`     | String | Nome do artista                                      |
+| `external_id` | String | ID na plataforma (ex: Spotify ID)                    |
+| `name`        | String | Nome da música                                       |
+| `artist`      | String | Nome do artista                                      |
 | `preview_url` | URL    | Trecho de 15–30s                                     |
-| `duração_ms`  | Int    | Duração total da faixa                               |
-| `valida`      | Bool   | Se pode ser usada (baseada na existência de preview) |
+| `duration_ms` | Int    | Duração total da faixa                               |
+| `is_valid`    | Bool   | Se pode ser usada (baseada na existência de preview) |
 
 ---
 
 ## 🧩 Value Objects
 
-### `PlataformaDeStreaming`
+### `StreamingPlatform`
 
 * Enum: `SPOTIFY`, `DEEZER`, `YOUTUBE_MUSIC`, etc.
 
-### `TokenOAuth`
+### `OAuthToken`
 
 * Struct com access + refresh + validade
 
-### `ResultadoImportacao`
+### `ImportResult`
 
 * Struct contendo listas: válidas, inválidas, erro
 
@@ -105,12 +105,12 @@ Com esse contexto:
 
 ## 📡 Comportamentos / Serviços
 
-| Serviço                     | Responsabilidade                                       |
-| --------------------------- | ------------------------------------------------------ |
-| `AutenticadorDePlataforma`  | Realiza OAuth e armazena tokens                        |
-| `ImportadorDePlaylists`     | Lista as playlists da conta conectada                  |
-| `FiltradorDeMusicasValidas` | Remove músicas sem `preview_url`                       |
-| `NormalizadorDeMusicas`     | Converte formato da API externa para o domínio interno |
+| Serviço                 | Responsabilidade                                       |
+| ----------------------- | ------------------------------------------------------ |
+| `PlatformAuthenticator` | Realiza OAuth e armazena tokens                        |
+| `PlaylistImporter`      | Lista as playlists da conta conectada                  |
+| `ValidSongFilter`       | Remove músicas sem `preview_url`                       |
+| `SongNormalizer`        | Converte formato da API externa para o domínio interno |
 
 ---
 
@@ -118,10 +118,10 @@ Com esse contexto:
 
 ```text
 1. Jogador autentica com Spotify (OAuth)
-2. Plataforma retorna tokens → armazenados como `ContaConectada`
+2. Plataforma retorna tokens → armazenados como `ConnectedAccount`
 3. Jogador escolhe uma playlist
 4. Serviço importa e filtra músicas
-5. `PlaylistImportada` é retornada ao `Game Orchestrator`
+5. `ImportedPlaylist` é retornada ao `Game Orchestrator`
 6. Orquestrador seleciona músicas para a partida
 ```
 
@@ -149,10 +149,10 @@ Com esse contexto:
 
 | Termo             | Significado                                    |
 | ----------------- | ---------------------------------------------- |
-| **Plataforma**    | Sistema de streaming conectado                 |
+| **Platform**      | Sistema de streaming conectado                 |
 | **Playlist**      | Lista de músicas de um jogador                 |
-| **Música válida** | Música com preview_url                         |
-| **Importação**    | Processo de buscar playlists/músicas da conta  |
-| **Token OAuth**   | Credencial de acesso segura para a API externa |
+| **Valid Song**    | Música com preview_url                         |
+| **Import**        | Processo de buscar playlists/músicas da conta  |
+| **OAuth Token**   | Credencial de acesso segura para a API externa |
 
 ---

@@ -36,50 +36,50 @@ package game_engine.v1;
 // O serviço principal da Game Engine
 service GameEngineService {
   // Comandos que iniciam ou alteram o estado geral
-  rpc IniciarPartida(IniciarPartidaRequest) returns (PartidaIniciadaResponse);
-  rpc FinalizarPartida(FinalizarPartidaRequest) returns (PartidaFinalizadaResponse);
+  rpc StartMatch(StartMatchRequest) returns (MatchStartedResponse);
+  rpc EndMatch(EndMatchRequest) returns (MatchEndedResponse);
   
   // Comandos de rodada
-  rpc IniciarRodada(IniciarRodadaRequest) returns (RodadaIniciadaResponse);
-  rpc EnviarResposta(EnviarRespostaRequest) returns (RespostaProcessadaResponse);
-  rpc FinalizarRodada(FinalizarRodadaRequest) returns (RodadaFinalizadaResponse);
+  rpc StartRound(StartRoundRequest) returns (RoundStartedResponse);
+  rpc SubmitAnswer(SubmitAnswerRequest) returns (AnswerProcessedResponse);
+  rpc EndRound(EndRoundRequest) returns (RoundEndedResponse);
 
   // Um stream para eventos em tempo real durante a partida (opcional)
-  rpc SubscribeToPartidaEvents(SubscribeRequest) returns (stream PartidaEvent);
+  rpc SubscribeToMatchEvents(SubscribeRequest) returns (stream MatchEvent);
 }
 
 // --- Mensagens de Request (Comandos) ---
 
-message IniciarPartidaRequest {
-  string partida_id = 1;
+message StartMatchRequest {
+  string match_id = 1;
   // ... Definição de jogadores, configuração, etc.
 }
 
-message EnviarRespostaRequest {
-  string partida_id = 1;
-  string jogador_id = 2;
-  string resposta = 3;
-  double tempo_resposta = 4;
+message SubmitAnswerRequest {
+  string match_id = 1;
+  string player_id = 2;
+  string answer = 3;
+  double response_time = 4;
 }
 
 // --- Mensagens de Response (Eventos) ---
 
-message PartidaIniciadaResponse {
-  int32 rodada_atual = 1;
-  Musica musica = 2;
+message MatchStartedResponse {
+  int32 current_round = 1;
+  Song song = 2;
   // ...
 }
 
-message RodadaFinalizadaResponse {
-  int32 numero_rodada = 1;
-  map<string, Resposta> respostas = 2;
-  map<string, int32> placar_parcial = 3;
+message RoundEndedResponse {
+  int32 round_number = 1;
+  map<string, Answer> answers = 2;
+  map<string, int32> partial_scores = 3;
 }
 
-message RespostaProcessadaResponse {
-    string jogador_id = 1;
-    bool valida = 2;
-    int32 ponto_ganho = 3;
+message AnswerProcessedResponse {
+    string player_id = 1;
+    bool is_valid = 2;
+    int32 points_earned = 3;
 }
 
 // ... outras mensagens ...
@@ -91,11 +91,11 @@ message RespostaProcessadaResponse {
 
 | RPC (Comando)       | Descrição                                         | Mensagem de Request (`Request`)                                  |
 | ------------------- | ------------------------------------------------- | ---------------------------------------------------------------- |
-| `IniciarPartida`    | Cria uma partida pronta para rodadas              | `IniciarPartidaRequest` (com `partida_id`, `jogadores`, `config`)  |
-| `IniciarRodada`     | Avança para a próxima rodada                      | `IniciarRodadaRequest` (com `partida_id`)                        |
-| `EnviarResposta`    | Um jogador envia uma resposta para a rodada atual | `EnviarRespostaRequest` (com `partida_id`, `jogador_id`, `resposta`) |
-| `FinalizarRodada`   | Finaliza a rodada manualmente ou por timeout      | `FinalizarRodadaRequest` (com `partida_id`)                      |
-| `FinalizarPartida`  | Força o término do jogo                           | `FinalizarPartidaRequest` (com `partida_id`)                     |
+| `StartMatch`        | Cria uma partida pronta para rodadas              | `StartMatchRequest` (com `match_id`, `players`, `config`)        |
+| `StartRound`        | Avança para a próxima rodada                      | `StartRoundRequest` (com `match_id`)                             |
+| `SubmitAnswer`      | Um jogador envia uma resposta para a rodada atual | `SubmitAnswerRequest` (com `match_id`, `player_id`, `answer`)    |
+| `EndRound`          | Finaliza a rodada manualmente ou por timeout      | `EndRoundRequest` (com `match_id`)                               |
+| `EndMatch`          | Força o término do jogo                           | `EndMatchRequest` (com `match_id`)                               |
 
 ---
 
@@ -103,19 +103,19 @@ message RespostaProcessadaResponse {
 
 | Evento (Response/Stream)   | O que significa                     | Mensagem de Response (`Response`)                                    |
 | -------------------------- | ----------------------------------- | -------------------------------------------------------------------- |
-| `PartidaIniciada`          | Partida começou com sucesso         | `PartidaIniciadaResponse` (com `rodada_atual`, `musica`, `jogadores`)    |
-| `RodadaIniciada`           | Nova rodada começou                 | `RodadaIniciadaResponse` (com `numero_rodada`, `musica`, `tempo_limite`) |
-| `RespostaProcessada`       | Uma resposta foi validada           | `RespostaProcessadaResponse` (com `jogador_id`, `valida`, `ponto_ganho`) |
-| `RodadaFinalizada`         | Rodada foi encerrada                | `RodadaFinalizadaResponse` (com `respostas`, `placar_parcial`)       |
-| `PartidaFinalizada`        | Fim da partida                      | `PartidaFinalizadaResponse` (com `placar_final`, `vencedor_id`)        |
-| `Error` (Status gRPC)      | Algum comando inválido foi recebido | Status gRPC com código de erro e mensagem descritiva.              |
+| `MatchStarted`             | Partida começou com sucesso         | `MatchStartedResponse` (com `current_round`, `song`, `players`)      |
+| `RoundStarted`             | Nova rodada começou                 | `RoundStartedResponse` (com `round_number`, `song`, `time_limit`)    |
+| `AnswerProcessed`          | Uma resposta foi validada           | `AnswerProcessedResponse` (com `player_id`, `is_valid`, `points_earned`)|
+| `RoundEnded`               | Rodada foi encerrada                | `RoundEndedResponse` (com `answers`, `partial_scores`)               |
+| `MatchEnded`               | Fim da partida                      | `MatchEndedResponse` (com `final_scores`, `winner_id`)               |
+| `Error` (Status gRPC)      | Algum comando inválido foi recebido | Status gRPC com código de erro e mensagem descritiva.                |
 
 ---
 
 ## ⚠️ Regras Gerais do Contrato
 
 *   **Todo `Request` válido deve gerar um `Response` correspondente** ou um erro gRPC.
-*   O `partida_id` deve estar presente na maioria das mensagens para garantir o contexto.
+*   O `match_id` deve estar presente na maioria das mensagens para garantir o contexto.
 *   O contrato `.proto` deve ser **versionado** (ex: `v1`, `v2`) para garantir compatibilidade futura.
 
 ---

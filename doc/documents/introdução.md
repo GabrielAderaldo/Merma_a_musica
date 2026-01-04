@@ -70,47 +70,47 @@ Aqui está a separação dos principais **Bounded Contexts** e como eles se rela
 
 #### 📦 Aggregates:
 
-* `Partida`
+* `Match`
 
   * Controla estado do jogo, jogadores, rodadas e regras
-* `Rodada`
+* `Round`
 
   * Responsável por reproduzir trecho e aceitar respostas
-* `Placar`
+* `Scoreboard`
 
   * Mantém pontuação dos jogadores
 
 #### 🧱 Entidades:
 
-* `JogadorNaPartida`
+* `PlayerInMatch`
 
   * Identidade única, estado (pronto, respondido), playlist
 
-* `Musica`
+* `Song`
 
   * ID, nome, artista, trecho disponível
 
 #### 🎯 Value Objects:
 
-* `ConfiguracaoDaPartida`
+* `MatchConfiguration`
 
   * Número de músicas, tempo por rodada, tipo de resposta (musica/artista/ambos), se permite repetição
 
-* `Resposta`
+* `Answer`
 
   * Texto enviado pelo jogador (validado estritamente)
 
-* `ResultadoRodada`
+* `RoundResult`
 
   * Respostas certas/erradas, tempos de resposta, pontuação atribuída
 
 #### 🔄 Eventos de domínio:
 
-* `PartidaIniciada`
-* `RodadaIniciada`
-* `RespostaRecebida`
-* `RodadaFinalizada`
-* `PartidaFinalizada`
+* `MatchStarted`
+* `RoundStarted`
+* `AnswerReceived`
+* `RoundEnded`
+* `MatchEnded`
 
 ---
 
@@ -120,24 +120,24 @@ Aqui está a separação dos principais **Bounded Contexts** e como eles se rela
 
 #### 📦 Entidades:
 
-* `Sala`
+* `Room`
 
   * ID, host, estado (esperando, jogando, finalizada), jogadores
 
-* `JogadorNaSala`
+* `PlayerInRoom`
 
   * Conectado, pronto, playlist associada
 
 #### 🎯 Value Objects:
 
-* `CodigoDaSala`
-* `EstadoDoJogador`
+* `RoomCode`
+* `PlayerState`
 
 #### Serviços:
 
-* `GerenciadorDeSalas`
-* `RelogioDaRodada` (timer de execução)
-* `WebSocketDispatcher`
+* `RoomManager`
+* `RoundTimer` (timer de execução)
+* `MessageDispatcher`
 
 ---
 
@@ -147,11 +147,11 @@ Aqui está a separação dos principais **Bounded Contexts** e como eles se rela
 
 #### 🧱 Entidades:
 
-* `PlaylistExterna`
+* `ExternalPlaylist`
 
   * ID da plataforma, nome, dono, músicas com trecho disponível
 
-* `MusicaDaPlaylist`
+* `PlaylistSong`
 
   * Nome, artista, preview_url (15–30s), gênero (opcional)
 
@@ -173,19 +173,19 @@ Aqui está a separação dos principais **Bounded Contexts** e como eles se rela
 
 #### 📦 Entidades:
 
-* `JogadorGlobal`
+* `GlobalPlayer`
 
   * userId, XP, ranking, conquistas
 
-* `PartidaHistorica`
+* `HistoricalMatch`
 
   * Data, resultado, pontuação, tempo de resposta médio
 
 #### 🎯 Value Objects:
 
-* `PontosDeExperiencia`
-* `NivelDoJogador`
-* `Medalha`
+* `ExperiencePoints`
+* `PlayerLevel`
+* `Badge`
 
 ---
 
@@ -193,14 +193,14 @@ Aqui está a separação dos principais **Bounded Contexts** e como eles se rela
 
 | Termo                    | Significado                                                                  |
 | ------------------------ | ---------------------------------------------------------------------------- |
-| **Partida**              | Sessão de jogo, composta por rodadas e jogadores                             |
-| **Rodada**               | Um momento único onde uma música é tocada e os jogadores respondem           |
-| **Jogador**              | Participante com identidade única na partida                                 |
+| **Match**                | Sessão de jogo, composta por rodadas e jogadores                             |
+| **Round**                | Um momento único onde uma música é tocada e os jogadores respondem           |
+| **Player**               | Participante com identidade única na partida                                 |
 | **Playlist**             | Lista de músicas conectada do streaming                                      |
-| **Resposta**             | Texto enviado pelo jogador tentando acertar                                  |
-| **Configuração da Sala** | Conjunto de regras da partida (número de músicas, tempo, modo de pontuação)  |
-| **Repetição de música**  | Define se músicas repetidas entre playlists podem ser usadas mais de uma vez |
-| **Pontuação**            | Total de acertos atribuídos ao jogador                                       |
+| **Answer**               | Texto enviado pelo jogador tentando acertar                                  |
+| **Match Configuration**  | Conjunto de regras da partida (número de músicas, tempo, modo de pontuação)  |
+| **Song Repetition**      | Define se músicas repetidas entre playlists podem ser usadas mais de uma vez |
+| **Score**                | Total de acertos atribuídos ao jogador                                       |
 | **Ranking**              | Posição do jogador entre todos os participantes do sistema                   |
 | **XP**                   | Sistema de progressão baseado em participação e desempenho                   |
 

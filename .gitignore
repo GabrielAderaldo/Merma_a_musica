@@ -15,7 +15,6 @@ apps/game_engine/build/
 # === Deno / Node ===
 node_modules/
 .svelte-kit/
-deno.lock
 
 # === IDE ===
 .vscode/

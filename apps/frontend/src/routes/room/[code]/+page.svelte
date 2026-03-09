@@ -24,6 +24,7 @@
 		joinRoom,
 		disconnectSocket,
 		markReady,
+		markUnready,
 		startGame,
 		submitAnswer
 	} from '$lib/socket';
@@ -123,6 +124,15 @@
 					return { ...r };
 				});
 			},
+			onPlayerUnready(data) {
+				room.update((r) => {
+					if (!r) return r;
+					r.players = r.players.map((pl: Player) =>
+						pl.id === data.player_id ? { ...pl, ready: false } : pl
+					);
+					return { ...r };
+				});
+			},
 			onGameStarted(data) {
 				room.update((r) => (r ? { ...r, status: 'in_game' } : r));
 				// Se o servidor enviar a lista de todas as músicas para autocomplete
@@ -179,9 +189,14 @@
 		stopTimer();
 	});
 
-	function handleMarkReady() {
-		markReady();
-		myReady = true;
+	function handleToggleReady() {
+		if (myReady) {
+			markUnready();
+			myReady = false;
+		} else {
+			markReady();
+			myReady = true;
+		}
 	}
 
 	function handleStartGame() {
@@ -330,19 +345,15 @@
 
 			<!-- Actions -->
 			<div class="space-y-3">
-				{#if !myReady}
-					<button
-						onclick={handleMarkReady}
-						class="w-full py-3 bg-success hover:bg-green-600 text-white font-semibold rounded-xl
-							transition-colors cursor-pointer"
-					>
-						Estou Pronto!
-					</button>
-				{:else}
-					<div class="text-center text-success font-medium py-3">
-						Voce esta pronto!
-					</div>
-				{/if}
+				<button
+					onclick={handleToggleReady}
+					class="w-full py-3 font-semibold rounded-xl transition-colors cursor-pointer
+						{myReady
+						? 'bg-bg-input hover:bg-red-900/30 text-success border border-success/30'
+						: 'bg-success hover:bg-green-600 text-white'}"
+				>
+					{myReady ? 'Pronto! (clique para cancelar)' : 'Estou Pronto!'}
+				</button>
 
 				{#if amHost}
 					<button

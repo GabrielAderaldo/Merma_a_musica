@@ -96,6 +96,18 @@ defmodule GameOrchestratorWeb.RoomChannel do
   end
 
   @impl true
+  def handle_in("mark_unready", _payload, socket) do
+    case Server.mark_unready(socket.assigns.invite_code, socket.assigns.player_id) do
+      :ok ->
+        broadcast!(socket, "player_unready", %{player_id: socket.assigns.player_id})
+        {:reply, :ok, socket}
+
+      {:error, reason} ->
+        {:reply, {:error, %{reason: to_string(reason)}}, socket}
+    end
+  end
+
+  @impl true
   def handle_in("start_game", _payload, socket) do
     case Server.start_game(socket.assigns.invite_code, socket.assigns.player_id) do
       {:ok, :game_started} ->

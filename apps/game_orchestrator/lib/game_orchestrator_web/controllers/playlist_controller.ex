@@ -21,26 +21,50 @@ defmodule GameOrchestratorWeb.PlaylistController do
     end
   end
 
-  @doc "POST /api/auth/:platform/callback — Troca code por tokens."
+  @doc "GET /auth/:platform/callback — OAuth callback, retorna HTML que envia token via postMessage."
   def auth_callback(conn, %{"platform" => platform, "code" => code}) do
     case Playlist.exchange_code(platform, code) do
       {:ok, tokens} ->
-        json(conn, %{access_token: tokens.access_token})
+        conn
+        |> put_resp_content_type("text/html")
+        |> send_resp(200, oauth_callback_html(tokens.access_token, nil))
 
       {:error, :unsupported_platform} ->
-        conn |> put_status(:bad_request) |> json(%{error: "unsupported platform: #{platform}"})
+        conn
+        |> put_resp_content_type("text/html")
+        |> send_resp(400, oauth_callback_html(nil, "Plataforma não suportada: #{platform}"))
 
       {:error, reason} ->
         conn
-        |> put_status(:unprocessable_entity)
-        |> json(%{error: inspect(reason)})
+        |> put_resp_content_type("text/html")
+        |> send_resp(422, oauth_callback_html(nil, inspect(reason)))
     end
   end
 
   def auth_callback(conn, %{"platform" => _platform}) do
     conn
-    |> put_status(:bad_request)
-    |> json(%{error: "missing code parameter"})
+    |> put_resp_content_type("text/html")
+    |> send_resp(400, oauth_callback_html(nil, "Parâmetro 'code' ausente"))
+  end
+
+  defp oauth_callback_html(token, error) do
+    payload =
+      if token,
+        do: ~s({"type":"oauth_callback","access_token":"#{token}"}),
+        else: ~s({"type":"oauth_callback","error":"#{error}"})
+
+    """
+    <!DOCTYPE html>
+    <html><body>
+    <p style="font-family:sans-serif;text-align:center;margin-top:40px">Autenticação concluída. Fechando...</p>
+    <script>
+      if (window.opener) {
+        window.opener.postMessage(#{payload}, "*");
+      }
+      setTimeout(function() { window.close(); }, 1500);
+    </script>
+    </body></html>
+    """
   end
 
   @doc "GET /api/playlists/:platform — Lista playlists do usuário."

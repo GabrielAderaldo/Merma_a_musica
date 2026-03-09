@@ -16,7 +16,23 @@
 	// Token input para dev/mock (sem OAuth real)
 	let tokenInput = $state('');
 
+	import { onMount } from 'svelte';
+
 	const platforms = Object.entries(PLATFORM_LABELS);
+
+	onMount(() => {
+		function handleOAuthMessage(event: MessageEvent) {
+			if (event.data?.type !== 'oauth_callback') return;
+			if (event.data.access_token) {
+				accessToken = event.data.access_token;
+				loadPlaylists();
+			} else if (event.data.error) {
+				error = event.data.error;
+			}
+		}
+		window.addEventListener('message', handleOAuthMessage);
+		return () => window.removeEventListener('message', handleOAuthMessage);
+	});
 
 	function selectPlatform(platform: string) {
 		selectedPlatform = platform;

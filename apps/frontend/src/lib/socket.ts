@@ -39,6 +39,7 @@ interface RoomCallbacks {
 	onPlayerJoined?: (player: { id: string; name: string }) => void;
 	onPlayerLeft?: (data: { player_id: string }) => void;
 	onPlayerReady?: (data: { player_id: string }) => void;
+	onPlayerUnready?: (data: { player_id: string }) => void;
 	onGameStarted?: (data: { round: { song: Song; round_index: number; total_rounds: number } }) => void;
 	onRoundStarted?: (data: { round: { song: Song; round_index: number; total_rounds: number } }) => void;
 	onAnswerResult?: (data: { player_id: string; is_correct: boolean; points: number }) => void;
@@ -71,6 +72,7 @@ export function joinRoom(
 	on('player_joined', (msg) => callbacks.onPlayerJoined?.(msg));
 	on('player_left', (msg) => callbacks.onPlayerLeft?.(msg));
 	on('player_ready', (msg) => callbacks.onPlayerReady?.(msg));
+	on('player_unready', (msg) => callbacks.onPlayerUnready?.(msg));
 	on('game_started', (msg) => callbacks.onGameStarted?.(msg));
 	on('round_started', (msg) => callbacks.onRoundStarted?.(msg));
 	on('answer_result', (msg) => callbacks.onAnswerResult?.(msg));
@@ -82,6 +84,10 @@ export function joinRoom(
 
 export function markReady() {
 	channel?.push('mark_ready', {});
+}
+
+export function markUnready() {
+	channel?.push('mark_unready', {});
 }
 
 export function startGame() {

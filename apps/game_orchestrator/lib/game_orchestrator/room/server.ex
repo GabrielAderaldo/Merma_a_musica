@@ -46,6 +46,10 @@ defmodule GameOrchestrator.Room.Server do
     GenServer.call(via(invite_code), {:mark_ready, player_id})
   end
 
+  def mark_unready(invite_code, player_id) do
+    GenServer.call(via(invite_code), {:mark_unready, player_id})
+  end
+
   def start_game(invite_code, player_id) do
     GenServer.call(via(invite_code), {:start_game, player_id})
   end
@@ -122,6 +126,25 @@ defmodule GameOrchestrator.Room.Server do
     {:reply, {:error, :invalid_state}, state}
   end
 
+  # --- Mark Unready ---
+
+  @impl true
+  def handle_call({:mark_unready, player_id}, _from, %{status: :lobby} = state) do
+    case find_player(state, player_id) do
+      nil ->
+        {:reply, {:error, :player_not_found}, state}
+
+      player ->
+        updated_players = update_player(state.players, player_id, %{player | ready: false})
+        new_state = %{state | players: updated_players} |> reset_inactivity()
+        {:reply, :ok, new_state}
+    end
+  end
+
+  def handle_call({:mark_unready, _}, _from, state) do
+    {:reply, {:error, :invalid_state}, state}
+  end
+
   # --- Start Game (só host) ---
 
   @impl true
@@ -129,9 +152,6 @@ defmodule GameOrchestrator.Room.Server do
     cond do
       player_id != state.host_id ->
         {:reply, {:error, :not_host}, state}
-
-      length(state.players) < 2 ->
-        {:reply, {:error, :not_enough_players}, state}
 
       not all_players_ready?(state) ->
         {:reply, {:error, :not_all_ready}, state}

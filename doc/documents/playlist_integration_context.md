@@ -141,7 +141,7 @@ Com esse contexto:
 | Destino             | Propósito                                                   |
 | ------------------- | ----------------------------------------------------------- |
 | `Game Orchestrator` | Solicita playlists e músicas válidas para montar as rodadas |
-| `UI Gateway`        | Exibe playlists disponíveis para o jogador escolher         |
+| `Frontend`        | Exibe playlists disponíveis para o jogador escolher         |
 
 ---
 

@@ -1,89 +1,85 @@
-Claro! Aqui vai um **adendo sobre a definição das interfaces entre Swift ↔ Elixir via gRPC**, alinhado à arquitetura que você adotou:
-
----
-
-## 📌 Adendo: Interfaces entre Swift ↔ Elixir (gRPC)
+## 📌 Adendo: Interfaces entre Gleam (Engine) ↔ Elixir (Orchestrator) no BEAM
 
 ### 🎯 Objetivo da Integração
 
-Permitir que o processo Elixir (que representa uma sala e orquestra a partida) **chame a lógica pura da engine em Swift**, passando comandos (como "iniciar partida", "responder", "avançar rodada") e recebendo eventos ou estado atualizado de forma performática e segura.
+Permitir que o processo Elixir (que representa uma sala e orquestra a partida) **chame a lógica pura da engine em Gleam**, passando comandos (como "iniciar partida", "responder", "avançar rodada") e recebendo eventos ou estado atualizado de forma direta e eficiente.
 
 ---
 
-### 🔌 Modo de Integração recomendado: **gRPC**
+### 🔌 Modo de Integração: **Chamadas diretas no BEAM**
 
-#### ✅ Por que usar gRPC?
+#### ✅ Por que usar o mesmo nó BEAM?
 
-*   **Segurança e Desacoplamento**: Swift roda em processo separado — se crashar, Elixir continua vivo. gRPC reforça o desacoplamento com um contrato de serviço forte.
-*   **Performance e Interoperabilidade**: gRPC usa Protocol Buffers para serialização binária eficiente e é otimizado para comunicação de baixa latência entre serviços. O Swift tem excelente suporte para gRPC.
-*   **Contrato bem definido**: a definição do serviço via arquivos `.proto` garante um contrato claro e tipado entre o orquestrador e a engine.
+*   **Zero overhead de rede/serialização**: Gleam compila para Erlang bytecode — Elixir chama módulos Gleam diretamente, sem gRPC, HTTP ou qualquer protocolo de rede.
+*   **Economia de recursos**: Em um servidor com 2GB de RAM, eliminar um serviço separado e a camada gRPC economiza memória significativa.
+*   **Deploy unificado**: Uma única release OTP contém Engine + Orchestrator, simplificando operações.
+*   **Contrato tipado em tempo de compilação**: Gleam tem type safety forte — erros de contrato são detectados pelo compilador.
+*   **Desacoplamento lógico mantido**: A separação é feita via módulos/aplicações OTP, não processos físicos separados.
 
 ---
 
-### 🧱 Interface sugerida (Contrato via Protobuf)
+### 🧱 Interface sugerida (Contrato via tipos Gleam)
 
 #### 🔁 Comunicação:
 
-*   **Entrada (Elixir → Swift)**: Chamadas de serviço RPC (ex: `StartMatchRequest`)
-*   **Saída (Swift → Elixir)**: Respostas RPC ou streams de eventos de domínio (ex: `MatchStartedResponse`, `stream RoundEvent`)
+*   **Entrada (Elixir → Gleam)**: Chamadas diretas de função (ex: `game_engine.start_match(config, players)`)
+*   **Saída (Gleam → Elixir)**: Retorno de `Result(Event, EngineError)` ou envio de mensagens via message passing
 
 #### 📦 Formato dos dados:
 
-*   A comunicação será via **Protocol Buffers (Protobuf)**, que é o padrão do gRPC.
+*   Custom types Gleam nativos — sem necessidade de serialização. Elixir recebe como tuples/records Erlang.
 
-#### 📘 Exemplo de contrato (`.proto`):
+#### 📘 Exemplo de interface:
 
-```proto
-// Exemplo de definição de serviço
-service GameEngine {
-  rpc StartMatch(StartMatchRequest) returns (MatchStartedResponse);
-  rpc SubmitAnswer(SubmitAnswerRequest) returns (stream AnswerEvent);
-}
+```gleam
+// Exemplo de função pública do Game Engine
+pub fn start_match(
+  config: MatchConfiguration,
+  players: List(Player),
+) -> Result(MatchStarted, EngineError)
 
-message StartMatchRequest {
-  string match_id = 1;
-  // ... outros campos
-}
-
-message MatchStartedResponse {
-  int32 current_round = 1;
-  // ... outros campos
-}
+pub fn submit_answer(
+  match: Match,
+  player_id: String,
+  answer: String,
+  response_time: Float,
+) -> Result(AnswerProcessed, EngineError)
 ```
 
 ---
 
-### 🛠️ Passos para implementar:
+### 🛠️ Como funciona na prática:
 
-1.  **Swift**:
-    *   Implementa os serviços gRPC definidos no arquivo `.proto`.
-    *   Cada função de serviço aciona a lógica de domínio correspondente.
-    *   Retorna respostas ou transmite eventos via gRPC streams.
+1.  **Gleam (Engine)**:
+    *   Expõe funções públicas nos módulos do Game Engine.
+    *   Cada função recebe dados tipados e retorna `Result` com o evento ou erro.
+    *   Lógica pura, sem side effects — fácil de testar.
 
-2.  **Elixir**:
-    *   Usa um cliente gRPC gerado a partir do `.proto` para se comunicar com o servidor Swift.
-    *   Chama as funções de serviço remotas (ex: `GameService.Stub.start_match(request)`).
-    *   Recebe respostas ou escuta streams de eventos do serviço Swift.
+2.  **Elixir (Orchestrator)**:
+    *   Chama os módulos Gleam compilados diretamente (ex: `:game_engine.start_match(config, players)`).
+    *   Trata os resultados no processo da sala.
+    *   Sem necessidade de client stubs ou geração de código.
 
 ---
 
 ### 🧪 Sugestão de testes
 
-*   Mocks de chamadas gRPC do Elixir para o servidor Swift.
-*   O servidor Swift responde com mensagens Protobuf simuladas → assert no cliente Elixir.
-*   Testes de contrato automatizados podem ser adicionados para validar o `.proto`.
+*   Testes unitários em Gleam puro para a engine (sem dependência de Elixir).
+*   Testes de integração no Orchestrator chamando a engine diretamente.
+*   Property-based testing para validar invariantes do domínio.
 
 ---
 
 ### 🔄 Evolução futura
 
-*   A arquitetura com gRPC já é altamente performática. A evolução pode focar em otimizar os payloads do Protobuf ou explorar streaming bidirecional para comunicação ainda mais reativa.
+*   Se necessário escalar a engine separadamente no futuro, pode-se extrair para um nó BEAM separado usando distributed Erlang ou migrar para gRPC — a interface lógica permanece a mesma.
+*   A arquitetura atual prioriza simplicidade e economia de recursos para o MVP.
 
 ---
 
 ## ✅ Resumo
 
-*   Use **gRPC** para performance, segurança e um contrato de serviço robusto.
-*   Elixir envia **chamadas RPC → Swift aplica lógica → Swift retorna respostas/eventos**.
-*   Mantenha a interface **simples, explícita e baseada em contratos bem definidos** no arquivo `.proto`.
-*   Evolua o contrato `.proto` de forma versionada conforme a necessidade.
+*   Engine em **Gleam** roda no **mesmo nó BEAM** que o Orchestrator em Elixir.
+*   Comunicação via **chamadas diretas de módulo** — sem gRPC, sem serialização.
+*   Contrato garantido pela **tipagem forte do Gleam** em tempo de compilação.
+*   Mantenha a interface **simples, explícita e baseada em funções puras com Result types**.

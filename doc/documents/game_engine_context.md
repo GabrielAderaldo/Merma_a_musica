@@ -6,10 +6,11 @@ Excelente! Vamos agora para o **📦 Ponto 3: Detalhamento de cada Bounded Conte
 
 ---
 
-## 🎮 **Game Engine Context** (⚙️ Swift – Core Domain)
+## 🎮 **Game Engine Context** (⚙️ Gleam/BEAM – Core Domain)
 
 > Responsável por toda a **lógica central do jogo**, controlando a partida, suas rodadas, os jogadores, as respostas e a pontuação.
 > Este contexto não conhece interfaces gráficas, APIs, nem estado de conexão: ele apenas executa as **regras puras do jogo**.
+> Roda no **mesmo nó BEAM** que o Game Orchestrator, comunicando-se via chamadas diretas de módulo e message passing nativo.
 
 ---
 
@@ -37,12 +38,13 @@ Excelente! Vamos agora para o **📦 Ponto 3: Detalhamento de cada Bounded Conte
 
 #### Campos (estado interno):
 
-* `id`: Identificador da partida
+* `id`: String — Identificador da partida
 * `state`: Enum (`WaitingForPlayers`, `InProgress`, `Finished`)
 * `config`: VO `MatchConfiguration`
-* `players`: Lista de `PlayerInMatch`
+* `players`: Lista de `Player`
 * `rounds`: Lista de `Round`
-* `currentRoundIndex`: Inteiro (qual rodada está ativa)
+* `current_round_index`: Int (qual rodada está ativa)
+* `songs`: Lista de `Song` (músicas selecionadas para a partida)
 
 ---
 
@@ -54,12 +56,13 @@ Excelente! Vamos agora para o **📦 Ponto 3: Detalhamento de cada Bounded Conte
 
 | Campo       | Tipo                | Descrição                     |
 | ----------- | ------------------- | ----------------------------- |
-| `id`        | ID                  | Identificador único           |
+| `id`        | String              | Identificador único           |
 | `name`      | String              | Apelido visível               |
 | `playlist`  | Lista<`Song`>       | Músicas extraídas do serviço  |
 | `state`     | Enum                | Connected, Ready, Answered    |
 | `score`     | Int                 | Pontuação acumulada           |
-| `answers`   | Lista de `Answer`   | Histórico da partida          |
+
+> **Nota**: O histórico de respostas é mantido dentro de cada `Round` (campo `answers: Dict(String, Answer)`), não no jogador.
 
 ---
 
@@ -108,8 +111,9 @@ Excelente! Vamos agora para o **📦 Ponto 3: Detalhamento de cada Bounded Conte
 | Campo         | Tipo   | Descrição                                  |
 | ------------- | ------ | ------------------------------------------ |
 | `text`        | String | Texto digitado pelo jogador                |
-| `answerTime`  | Float  | Tempo em segundos desde o início da rodada |
-| `isValid`     | Bool   | Resultado da validação contra a música     |
+| `answer_time` | Float  | Tempo em segundos desde o início da rodada |
+| `is_correct`  | Bool   | Resultado da validação contra a música     |
+| `points`      | Int    | Pontos ganhos pela resposta                |
 
 ---
 
@@ -119,10 +123,9 @@ Excelente! Vamos agora para o **📦 Ponto 3: Detalhamento de cada Bounded Conte
 | ------------------- | --------------------------------- | ---------------------------------- |
 | `MatchStarted`      | Todos prontos, regras válidas     | Orquestrador inicia timers         |
 | `RoundStarted`      | Avanço de rodada                  | Música tocada, cronômetro iniciado |
-| `AnswerReceived`    | Jogador enviou resposta           | Validar e armazenar                |
-| `CorrectAnswer`     | Texto bate com valor esperado     | Atribuir ponto                     |
-| `RoundEnded`        | Todos responderam ou tempo acabou | Calcular resultado                 |
-| `MatchEnded`        | Última rodada encerrada           | Enviar estatísticas finais         |
+| `AnswerProcessed`   | Jogador enviou resposta           | Validar, pontuar e armazenar       |
+| `RoundCompleted`    | Todos responderam ou tempo acabou | Calcular resultado, scores parciais|
+| `MatchCompleted`    | Última rodada encerrada           | Enviar estatísticas finais         |
 
 ---
 

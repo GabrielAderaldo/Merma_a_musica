@@ -86,10 +86,10 @@ Não existe uma plataforma multiplayer, em tempo real, que permita os jogadores 
 
 | Camada                | Tecnologia        | Responsabilidade                                  |
 | --------------------- | ----------------- | ------------------------------------------------- |
-| 🖼️ UI                | **Bun + TS/JS**   | Interface, WebSocket e API gateway                |
+| 🖼️ UI                | **SvelteKit + Deno** | Frontend web (Tailwind CSS), conecta via Phoenix Channels + REST |
 | 🔁 Orquestração       | **Elixir (BEAM)** | Gerencia salas, rodadas, mensagens                |
-| ⚙️ Lógica de jogo     | **Swift**         | Engine pura do jogo: rodada, pontuação, validação |
-| 🗣️ Comunicação MS      | **gRPC**          | Comunicação entre os microsserviços                |
+| ⚙️ Lógica de jogo     | **Gleam (BEAM)**  | Engine pura do jogo: rodada, pontuação, validação (mesmo nó BEAM que o Orchestrator) |
+| 🗣️ Comunicação interna | **BEAM nativo**   | Engine ↔ Orchestrator via chamadas de módulo/message passing |
 | 🎵 Integração externa | REST/GraphQL      | Spotify, Deezer, etc.                             |
 
 ---

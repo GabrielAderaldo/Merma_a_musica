@@ -1,0 +1,31 @@
+# === Elixir / Mix ===
+_build/
+cover/
+deps/
+doc/
+.fetch
+erl_crash.dump
+*.ez
+/tmp/
+*.tar
+
+# === Gleam ===
+apps/game_engine/build/
+
+# === Deno / Node ===
+node_modules/
+.svelte-kit/
+deno.lock
+
+# === IDE ===
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# === OS ===
+.DS_Store
+Thumbs.db
+
+# === Debug logs ===
+firebase-debug.log

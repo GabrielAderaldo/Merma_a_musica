@@ -13,9 +13,9 @@ Guia rápido explicando o objetivo de cada diretório do monolito modular.
 
 ## apps/
 
-- `apps/gateway/`: UI Gateway e APIs (HTTP/WebSocket) construídas em Bun/TypeScript.
+- `apps/frontend/`: Frontend SvelteKit + Deno. Conecta com o backend via Phoenix Channels (WebSocket) e REST.
 - `apps/game_orchestrator/`: serviço em Elixir/Gleam que gerencia salas, timers e integração com o engine.
-- `apps/game_engine/`: lógica pura da partida escrita em Zig (regras, pontuação, rodadas).
+- `apps/game_engine/`: lógica pura da partida escrita em Gleam (regras, pontuação, rodadas), roda no mesmo nó BEAM que o orchestrator.
 - `apps/playlist_integration/`: integrações com Spotify, Deezer e futuros serviços de música.
 - `apps/progression_ranking/`: serviço futuro dedicado a XP, ranking global, conquistas e histórico.
 

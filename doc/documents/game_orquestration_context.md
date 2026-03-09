@@ -16,7 +16,7 @@ Esse contexto é responsável por **controlar o ciclo de vida de uma sala e da p
 * Coordena transições de estado da partida
 * Mantém os jogadores conectados
 * Garante o tempo das rodadas
-* Comunica-se com o `Game Engine` para aplicar regras
+* Comunica-se com o `Game Engine` (Gleam) para aplicar regras via chamadas diretas no BEAM
 * Dispara notificações para a UI em tempo real
 
 > Ele **não implementa regras de jogo** — isso é papel do `Game Engine` — mas **é quem diz quando essas regras devem ser aplicadas**.
@@ -30,7 +30,7 @@ Usando o modelo de processos do BEAM (Erlang VM), você pode criar **um processo
 * Mantém o estado da sala na memória
 * Controla timers de rodada
 * Escuta eventos de entrada (via WebSocket/API)
-* Reage aos eventos emitidos pela `Game Engine`
+* Reage aos eventos retornados pela `Game Engine` (Gleam)
 
 Isso permite escalar horizontalmente o jogo sem colisões entre salas.
 
@@ -102,8 +102,8 @@ Isso permite escalar horizontalmente o jogo sem colisões entre salas.
 
 | Componente externo      | Tipo de comunicação | Propósito                               |
 | ----------------------- | ------------------- | --------------------------------------- |
-| **Game Engine**         | gRPC                | Aplicar regras da partida               |
-| **UI Gateway**          | WebSocket/API       | Receber comandos e enviar atualizações  |
+| **Game Engine**         | Chamadas diretas de módulo Gleam (BEAM) | Aplicar regras da partida               |
+| **Frontend (SvelteKit)**| Phoenix Channels + REST | Receber comandos e enviar atualizações  |
 | **Playlist Context**    | REST/GraphQL        | Buscar playlists válidas por jogador    |
 | **Progressão (futuro)** | Event/Queue         | Enviar eventos como `MatchEnded`        |
 

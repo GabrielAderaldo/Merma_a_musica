@@ -36,7 +36,7 @@ Este contexto tem como missão **acompanhar a evolução dos jogadores ao longo 
 | Fonte               | Evento recebido                   | Ação esperada                        |
 | ------------------- | --------------------------------- | ------------------------------------ |
 | `Game Orchestrator` | `MatchEnded`, `ScoreCalculated`   | Calcular XP, registrar histórico     |
-| `UI Gateway`        | Consulta de ranking, nível e conquistas | Fornecer dados agregados por jogador |
+| `Frontend`        | Consulta de ranking, nível e conquistas | Fornecer dados agregados por jogador |
 
 ---
 

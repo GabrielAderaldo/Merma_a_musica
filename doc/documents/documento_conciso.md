@@ -11,36 +11,36 @@ Documento consolidado que mantém todas as informações dos arquivos de `doc/`,
 - **Objetivos estratégicos**: experiência rápida e recompensadora; salas privadas para amigos; playlists pessoais como núcleo; arquitetura modular preparada para modos ranqueados/progressão; projeto OSS com guia público.
 - **Perfis de usuário**: jogador casual; host da partida; contribuidor open-source; streamer/influencer.
 - **Escopo MVP**: criação de salas, importação Spotify, rodadas com trechos de 15–30s, respostas validadas (inclui configurações de músicas, tempo, tipo de resposta e regra de pontuação) e placar final. Fora do escopo: modo ranqueado, XP/nível, integrações extras, espectador/chat, matchmaking público.
-- **Tecnologia e arquitetura**: UI/Gateway em Bun + TS/JS; Game Orchestrator em Elixir/Gleam; Game Engine em **Swift**; comunicação via **gRPC**; integrações REST/GraphQL para plataformas musicais.
+- **Tecnologia e arquitetura**: Frontend em **SvelteKit + Deno** (Tailwind CSS); Game Orchestrator em **Elixir + Phoenix Channels** (BEAM); Game Engine em **Gleam (BEAM)**; Engine e Orchestrator no **mesmo nó BEAM** com comunicação via chamadas de módulo/message passing; Frontend conecta via **Phoenix Channels (WebSocket) + REST**; integrações REST/GraphQL para plataformas musicais.
 - **Roadmap**: MVP (multiplayer com playlists); v1.1 (estatísticas pós-jogo, modo espectador, integração Discord); v1.2 (XP, ranking, conquistas); v2.0 (matchmaking público, torneios, novas fontes como YouTube/SoundCloud).
 
 ---
 
 ## 2. Context Map e Status
 
-- **Contextos principais**: UI Gateway (frontend e APIs); Game Orchestrator (salas, tempo real); Game Engine (regras puras); Playlist Integration (importa/normaliza playlists); Progressão & Ranking (XP, histórico, conquistas); contatos futuros com serviços externos.
-- **Relações**: UI/Gateway ↔ Orchestrator via HTTP/WebSocket; Orchestrator ↔ Game Engine via **gRPC**; Orchestrator ↔ Playlist Context via REST/GraphQL; Orchestrator ↔ Progressão via eventos; Playlist fornece dados ao Engine; Progressão escuta resultados.
-- **Design chave**: cada sala = processo isolado no BEAM; Game Engine independente e agnóstico à UI; Playlist Context desacopla integrações; Progressão é plugável; UI pode ser trocada sem tocar o domínio.
-- **Tipos de relacionamento**: Playlist é upstream do Game Engine; protocolos: Gateway ↔ Orchestrator (HTTP/WebSocket), Orchestrator ↔ Engine (**gRPC**), Engine ↔ Playlist (requisições de dados).
+- **Contextos principais**: Frontend (SvelteKit + Deno); Game Orchestrator (salas, tempo real, Phoenix Channels); Game Engine (regras puras); Playlist Integration (importa/normaliza playlists); Progressão & Ranking (XP, histórico, conquistas); contatos futuros com serviços externos.
+- **Relações**: Frontend ↔ Orchestrator via **Phoenix Channels (WebSocket) + REST**; Orchestrator ↔ Game Engine via **chamadas diretas de módulo/message passing no BEAM**; Orchestrator ↔ Playlist Context via REST/GraphQL; Orchestrator ↔ Progressão via eventos; Playlist fornece dados ao Engine; Progressão escuta resultados.
+- **Design chave**: cada sala = processo isolado no BEAM; Game Engine e Orchestrator no **mesmo nó BEAM** (separação lógica via módulos/aplicações OTP); Game Engine independente e agnóstico à UI; Playlist Context desacopla integrações; Progressão é plugável; UI pode ser trocada sem tocar o domínio.
+- **Tipos de relacionamento**: Playlist é upstream do Game Engine; protocolos: Frontend ↔ Orchestrator (**Phoenix Channels + REST**), Orchestrator ↔ Engine (**chamadas de módulo BEAM**), Engine ↔ Playlist (requisições de dados).
 - **Status atual por contexto**: Game Engine (Core, pronto para implementação); Game Orchestrator (Supporting, precisa orquestração); Playlist Integration (Supporting, depende das libs externas); Progressão/Ranking (Future, fora do escopo atual).
 
 ---
 
 ## 3. Bounded Contexts
 
-### 3.1 Game Engine Context — Swift (Core Domain)
+### 3.1 Game Engine Context — Gleam/BEAM (Core Domain)
 
 - **Objetivo**: gerenciar ciclo completo da partida, validar respostas, aplicar regras configuradas, emitir eventos de domínio e garantir invariantes sem conhecer UI ou conexões.
 - **Aggregate `Match`**: controla rodadas, configuração (`MatchConfiguration`), estado (`WaitingForPlayers`, `InProgress`, `Finished`), lista de `PlayerInMatch`, `Round` e índice atual.
 - **Entidades**:
-  - `PlayerInMatch`: id, nome, playlist (lista de `Song`), estado (Connected/Ready/Answered), pontuação, histórico de `Answer`.
+  - `Player`: id, nome, playlist (lista de `Song`), estado (Connected/Ready/Answered), pontuação. Histórico de respostas mantido em cada `Round`.
   - `Round`: índice, `Song`, mapa de respostas por jogador, estado (`InProgress`, `Ended`).
   - `Song`: id, nome, artista, `preview_url`.
 - **Value Objects**:
   - `MatchConfiguration`: tempo por rodada, total de músicas (divisível pelo número de jogadores para iniciar), tipo de resposta (SONG/ARTIST/BOTH), repetição permitida, regra de pontuação (simples ou bônus).
-  - `Answer`: texto, tempo de resposta, validade.
+  - `Answer`: texto, tempo de resposta (`answer_time`), validade (`is_correct`), pontos (`points`).
   - `RoundResult`: respostas certas/erradas, tempo, pontuação atribuída.
-- **Eventos**: `MatchStarted`, `RoundStarted`, `AnswerReceived`, `CorrectAnswer`, `RoundEnded`, `MatchEnded`.
+- **Eventos**: `MatchStarted`, `RoundStarted`, `AnswerProcessed`, `RoundCompleted`, `MatchCompleted`.
 - **Invariantes**: todos prontos e músicas divisíveis antes de iniciar; uma resposta por jogador por rodada; sem resposta após rodada finalizada; repetição só se permitido.
 - **Linguagem ubíqua**: Match, Player, Round, Answer, Song, Configuration, Event mapeados para as respectivas entidades/VOs.
 
@@ -53,9 +53,9 @@ Documento consolidado que mantém todas as informações dos arquivos de `doc/`,
   - `PlayerInRoom`: id, nome, playlist pré-processada, flag `ready`, status de conexão (Connected, Disconnected, Reconnecting).
 - **Value Objects**: `RoomCode`, `RoomState` (`WaitingForPlayers`, `ReadyToStart`, `InGame`, `Finished`), `StateMessage`.
 - **Comportamentos**: entrada/saída de jogadores, marcação de pronto, início do jogo pelo host, disparo de `RoundStarted`, encaminhamento de respostas à Engine, fechamento automático por timeout, finalização e envio de resultados.
-- **Integrações**: Game Engine (gRPC), UI Gateway (WebSocket/API), Playlist Context (REST/GraphQL), Progressão futura (eventos).
-- **Serviços internos**: `RoomManager`, `RoundTimer`, `MessageDispatcher`, `MatchCoordinator`.
-- **Invariantes**: apenas host inicia; todos prontos antes de começar; músicas divisíveis por jogadores; jogador único por sala; reconexão com timeout; sala destruída após inatividade.
+- **Integrações**: Game Engine (chamadas diretas de módulo no BEAM), Frontend via Phoenix Channels (WebSocket) + REST, Playlist Context (REST/GraphQL), Progressão futura (eventos).
+- **Módulos implementados**: `Room.Server` (GenServer por sala), `Room.Registry` (DynamicSupervisor + Registry), `Room.Coordinator` (bridge Elixir↔Gleam Engine).
+- **Invariantes implementadas**: apenas host inicia (`{:error, :not_host}`); todos prontos antes de começar (`{:error, :not_all_ready}`); músicas divisíveis por jogadores; jogador único por sala (`{:error, :already_joined}`); reconexão com timeout de 2 min; sala destruída após 30 min de inatividade.
 - **Glossário**: sala = processo, jogador = entrada ativa, código de convite = identificador público, estado da sala = estágios, timer da rodada = contador, comando/evento = mensagens da UI/Engine.
 
 ### 3.3 Playlist Integration Context
@@ -70,14 +70,14 @@ Documento consolidado que mantém todas as informações dos arquivos de `doc/`,
 - **Serviços**: `PlatformAuthenticator`, `PlaylistImporter`, `ValidSongFilter`, `SongNormalizer`.
 - **Fluxo**: OAuth → armazenar `ConnectedAccount` → escolher playlist → importar/filtrar → entregar `ImportedPlaylist` ao Orchestrator → seleção de músicas para partida.
 - **Invariantes**: apenas músicas com preview; cada jogador usa apenas suas playlists; playlists precisam de N músicas válidas; remover playlist externa implica descartar cache local.
-- **Comunicação**: fornece playlists ao Orchestrator, lista opções ao UI Gateway.
+- **Comunicação**: fornece playlists ao Orchestrator, lista opções ao Frontend.
 - **Glossário**: plataforma, playlist, música válida, importação, token OAuth conforme descrito.
 
 ### 3.4 Progressão e Ranking Context (Futuro)
 
 - **Objetivo**: acompanhar evolução dos jogadores (XP, níveis, ranking, conquistas, histórico), reagindo a eventos do jogo sem interferir na partida.
 - **Papel estratégico**: implementável depois, escuta `MatchEnded`/`PlayerScored`, escala separadamente e habilita gamificação/monetização sem tocar o core.
-- **Integrações**: recebe eventos do Orchestrator (`MatchEnded`, `ScoreCalculated`), expõe dados ao UI Gateway (ranking, níveis, conquistas).
+- **Integrações**: recebe eventos do Orchestrator (`MatchEnded`, `ScoreCalculated`), expõe dados ao Frontend (ranking, níveis, conquistas).
 - **Entidades**:
   - `GlobalPlayer`: user_id, total_xp, nível, ranking, conquistas (`Badge`).
   - `HistoricalMatch`: id, data, participantes (`PlayerPerformance`), configuração, músicas usadas.
@@ -89,49 +89,53 @@ Documento consolidado que mantém todas as informações dos arquivos de `doc/`,
 - **Glossário**: XP, nível, conquista, histórico, ranking.
 - **Implementação sugerida**: armazenamento relacional/NoSQL, fila de eventos (RabbitMQ/Kafka/Pub/Sub), API REST, consistência eventual.
 
-### 3.5 UI Gateway Context
+### 3.5 Frontend Context
 
-- **Tipo**: domínio genérico que expõe WebSocket e REST para o frontend, faz ponte com o Orchestrator e suporta Bun/TypeScript, podendo ser trocado sem afetar o domínio.
-
----
-
-## 4. Integração Swift ↔ Elixir (gRPC)
-
-- **Objetivo**: permitir que o processo Elixir (sala) invoque a lógica pura em Swift com comandos (`StartMatch`, `SubmitAnswer`, `StartRound`) e receba eventos/estados via gRPC.
-- **Modo recomendado**: **gRPC**, que oferece alta performance com Protocol Buffers, segurança (processo isolado) e um contrato de serviço forte e tipado.
-- **Contrato**: A comunicação é definida por um arquivo `.proto`. Elixir (cliente) envia chamadas RPC para Swift (servidor), que retorna respostas ou streams de eventos.
-- **Implementação**: Swift implementa os serviços gRPC definidos no `.proto`. Elixir usa um cliente gRPC gerado para invocar os serviços remotamente.
-- **Testes sugeridos**: mocks das chamadas gRPC e respostas simuladas em Protobuf.
-- **Evolução**: A arquitetura com gRPC já é altamente performática. A evolução pode focar em otimizar os payloads do Protobuf ou explorar streaming bidirecional.
+- **Tipo**: domínio genérico. Frontend em **SvelteKit + Deno** com **Tailwind CSS**. Conecta diretamente com o Orchestrator via **Phoenix Channels (WebSocket)** para tempo real e **REST** para operações pontuais. Totalmente desacoplado do domínio — pode ser trocado sem afetar a lógica de negócio.
 
 ---
 
-## 5. Contrato de Serviço do Game Engine (gRPC)
+## 4. Integração Engine ↔ Orchestrator (BEAM nativo)
 
-- **Estrutura**: Serviços, comandos (Requests) e eventos (Responses/Streams) são definidos em um arquivo `.proto` e implementados via gRPC. A comunicação é binária e fortemente tipada por padrão. O contrato é versionado (ex: `v1`, `v2`).
+- **Objetivo**: permitir que o processo Elixir (sala) invoque a lógica pura em Gleam com comandos (`start_match`, `submit_answer`, `start_round`) e receba eventos/estados diretamente.
+- **Modo de integração**: **Chamadas diretas de módulo e message passing no BEAM**. Engine e Orchestrator rodam no mesmo nó BEAM, eliminando a necessidade de gRPC ou serialização.
+- **Contrato**: Definido pelos tipos Gleam exportados (functions, custom types). A tipagem forte do Gleam garante o contrato em tempo de compilação.
+- **Implementação**: Engine expõe funções públicas Gleam que o Orchestrator (Elixir) chama diretamente. Gleam compila para Erlang bytecode, sendo interoperável nativamente com Elixir.
+- **Testes sugeridos**: testes unitários da engine em Gleam puro; testes de integração no Orchestrator chamando a engine diretamente.
+- **Vantagens**: zero overhead de rede/serialização, deploy unificado, economia de RAM no servidor.
 
-### Comandos (Exemplos de RPCs)
+---
 
-| RPC                 | Descrição                                |
+## 5. Contrato de Serviço do Game Engine (API de módulo Gleam)
+
+- **Estrutura**: Funções públicas, custom types (comandos e eventos) definidos em módulos Gleam. A tipagem forte do Gleam garante o contrato em tempo de compilação.
+
+### Comandos (Funções públicas — módulo `game_engine`)
+
+| Função              | Descrição                                |
 | ------------------- | ---------------------------------------- |
-| `StartMatch`        | Cria partida pronta para rodadas         |
-| `StartRound`        | Avança para a próxima rodada             |
-| `SubmitAnswer`      | Registra resposta de jogador             |
-| `EndRound`          | Encerra rodada manualmente/por timeout   |
-| `EndMatch`          | Força término da partida                 |
+| `new_match`         | Cria nova partida                        |
+| `set_player_ready`  | Marca jogador como pronto                |
+| `start_match`       | Inicia partida (todos prontos)           |
+| `start_round`       | Avança para a próxima rodada             |
+| `submit_answer`     | Registra resposta de jogador             |
+| `end_round`         | Encerra rodada manualmente/por timeout   |
+| `end_match`         | Força término da partida                 |
+| `all_answered`      | Verifica se todos responderam            |
+| `is_last_round`     | Verifica se é a última rodada            |
 
-### Eventos (Exemplos de Responses/Streams)
+### Eventos (Custom types retornados)
 
 | Evento               | Significado                              |
 | -------------------- | ---------------------------------------- |
 | `MatchStarted`       | Partida começou                          |
 | `RoundStarted`       | Nova rodada                              |
 | `AnswerProcessed`    | Resposta registrada e validada           |
-| `RoundEnded`         | Rodada encerrada                         |
-| `MatchEnded`         | Partida terminou                         |
-| `Error` (Status gRPC) | Comando inválido ou falha                |
+| `RoundCompleted`     | Rodada encerrada                         |
+| `MatchCompleted`     | Partida terminou                         |
+| `EngineError`        | Comando inválido ou falha                |
 
-- **Modelagem sugerida**: A definição do contrato é o próprio arquivo `.proto`. As ferramentas de gRPC geram o código do servidor (Swift) e do cliente (Elixir) automaticamente.
+- **Modelagem**: Os tipos são definidos em Gleam com custom types e Result. O compilador Gleam garante que todos os casos são tratados (exhaustive pattern matching).
 
 ---
 

@@ -1,0 +1,3 @@
+%{
+  "mix_gleam": {:hex, :mix_gleam, "0.6.2", "267b31b50028185dfb540f08aac1587dd74105fe46b59069d80814b1d534c0b9", [:mix], [], "hexpm", "d354680229729387d329248eabf10739748ebe3c0b2781c79f98ec772a62af6e"},
+}

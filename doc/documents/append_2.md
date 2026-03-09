@@ -1,139 +1,138 @@
-Claro! Aqui vai o **adendo sobre a especificação completa de comandos e eventos no Game Engine**, servindo como **contrato formal** entre o **Game Orchestrator (Elixir)** e a **Game Engine (Swift)** via gRPC:
-
----
-
-## 📌 Adendo: Especificação completa de serviços, comandos e eventos no **Game Engine** (contrato gRPC)
+## 📌 Adendo: Especificação completa de comandos e eventos no **Game Engine** (contrato de módulo Gleam)
 
 ### 🎯 Objetivo
 
-Estabelecer um **contrato claro e completo de comunicação** entre o **orquestrador (Elixir)** e o **motor do jogo (Swift)**, permitindo:
+Estabelecer um **contrato claro e completo de comunicação** entre o **orquestrador (Elixir)** e o **motor do jogo (Gleam)**, permitindo:
 
-*   Definir **serviços e chamadas (RPCs)** que controlam o jogo.
-*   Estruturar **mensagens (requests/responses)** para comandos e eventos.
-*   Garantir compatibilidade e tipagem forte entre os contextos.
+*   Definir **funções públicas** que controlam o jogo.
+*   Estruturar **custom types** para comandos e eventos.
+*   Garantir compatibilidade e tipagem forte via compilador Gleam.
 *   Testar e evoluir cada lado de forma isolada com base no contrato.
 
-> Esse contrato será definido usando **Protocol Buffers (`.proto`)** e implementado via **gRPC**.
+> Esse contrato é definido pelos **tipos exportados dos módulos Gleam** e verificado em tempo de compilação.
 
 ---
 
 ## 🔁 Estrutura de Comunicação
 
-*   **Comandos** são enviados de **Elixir → Swift** (como chamadas de serviço RPC).
-*   **Eventos** são emitidos de **Swift → Elixir** (como respostas de serviço ou streams gRPC).
-*   **Formato**: **Protocol Buffers**, o padrão para gRPC.
-*   gRPC já utiliza uma serialização binária altamente eficiente por padrão.
+*   **Comandos** são enviados de **Elixir → Gleam** (como chamadas de função direta).
+*   **Eventos** são retornados de **Gleam → Elixir** (como `Result` types ou custom types).
+*   **Formato**: Custom types Gleam nativos — sem serialização necessária.
+*   Zero overhead de rede, pois tudo roda no mesmo nó BEAM.
 
 ---
 
-## 📜 Exemplo de Definição do Contrato (`.proto`)
+## 📜 Exemplo de Definição do Contrato (tipos Gleam)
 
-```proto
-syntax = "proto3";
-
-package game_engine.v1;
-
-// O serviço principal da Game Engine
-service GameEngineService {
-  // Comandos que iniciam ou alteram o estado geral
-  rpc StartMatch(StartMatchRequest) returns (MatchStartedResponse);
-  rpc EndMatch(EndMatchRequest) returns (MatchEndedResponse);
-  
-  // Comandos de rodada
-  rpc StartRound(StartRoundRequest) returns (RoundStartedResponse);
-  rpc SubmitAnswer(SubmitAnswerRequest) returns (AnswerProcessedResponse);
-  rpc EndRound(EndRoundRequest) returns (RoundEndedResponse);
-
-  // Um stream para eventos em tempo real durante a partida (opcional)
-  rpc SubscribeToMatchEvents(SubscribeRequest) returns (stream MatchEvent);
+```gleam
+// Tipos de configuração
+pub type AnswerType {
+  SongName
+  ArtistName
+  Both
 }
 
-// --- Mensagens de Request (Comandos) ---
-
-message StartMatchRequest {
-  string match_id = 1;
-  // ... Definição de jogadores, configuração, etc.
+pub type ScoringRule {
+  Simple
+  SpeedBonus
 }
 
-message SubmitAnswerRequest {
-  string match_id = 1;
-  string player_id = 2;
-  string answer = 3;
-  double response_time = 4;
+pub type MatchConfiguration {
+  MatchConfiguration(
+    time_per_round: Int,
+    total_songs: Int,
+    answer_type: AnswerType,
+    allow_repeats: Bool,
+    scoring_rule: ScoringRule,
+  )
 }
 
-// --- Mensagens de Response (Eventos) ---
-
-message MatchStartedResponse {
-  int32 current_round = 1;
-  Song song = 2;
-  // ...
+// Tipos de evento retornados
+pub type MatchEvent {
+  MatchStarted(match: Match)
+  RoundStarted(match: Match, round: Round)
+  AnswerProcessed(match: Match, player_id: String, is_correct: Bool, points_earned: Int)
+  RoundCompleted(match: Match, round: Round, scores: Dict(String, Int))
+  MatchCompleted(match: Match, final_scores: Dict(String, Int), winner_id: String)
 }
 
-message RoundEndedResponse {
-  int32 round_number = 1;
-  map<string, Answer> answers = 2;
-  map<string, int32> partial_scores = 3;
+pub type EngineError {
+  InvalidState(message: String)
+  PlayerNotFound(player_id: String)
+  NotEnoughPlayers
+  NotAllPlayersReady
+  NotEnoughSongs
+  SongsDivisibilityError(total_songs: Int, total_players: Int)
+  RoundAlreadyEnded
+  PlayerAlreadyAnswered(player_id: String)
+  NoMoreRounds
 }
 
-message AnswerProcessedResponse {
-    string player_id = 1;
-    bool is_valid = 2;
-    int32 points_earned = 3;
-}
-
-// ... outras mensagens ...
+// Funções públicas (contrato) — módulo game_engine
+pub fn new_match(id: String, config: MatchConfiguration, players: List(Player), songs: List(Song)) -> Result(Match, EngineError)
+pub fn set_player_ready(match: Match, player_id: String) -> Result(Match, EngineError)
+pub fn start_match(match: Match) -> Result(MatchEvent, EngineError)
+pub fn start_round(match: Match) -> Result(MatchEvent, EngineError)
+pub fn submit_answer(match: Match, player_id: String, answer: String, response_time: Float) -> Result(MatchEvent, EngineError)
+pub fn end_round(match: Match) -> Result(MatchEvent, EngineError)
+pub fn end_match(match: Match) -> Result(MatchEvent, EngineError)
+pub fn all_answered(match: Match) -> Bool
+pub fn is_last_round(match: Match) -> Bool
 ```
 
 ---
 
-## ✅ Lista de **Serviços/RPCs** (Comandos)
+## ✅ Lista de **Funções públicas** (Comandos)
 
-| RPC (Comando)       | Descrição                                         | Mensagem de Request (`Request`)                                  |
-| ------------------- | ------------------------------------------------- | ---------------------------------------------------------------- |
-| `StartMatch`        | Cria uma partida pronta para rodadas              | `StartMatchRequest` (com `match_id`, `players`, `config`)        |
-| `StartRound`        | Avança para a próxima rodada                      | `StartRoundRequest` (com `match_id`)                             |
-| `SubmitAnswer`      | Um jogador envia uma resposta para a rodada atual | `SubmitAnswerRequest` (com `match_id`, `player_id`, `answer`)    |
-| `EndRound`          | Finaliza a rodada manualmente ou por timeout      | `EndRoundRequest` (com `match_id`)                               |
-| `EndMatch`          | Força o término do jogo                           | `EndMatchRequest` (com `match_id`)                               |
+| Função              | Descrição                                         | Parâmetros principais                                    |
+| ------------------- | ------------------------------------------------- | -------------------------------------------------------- |
+| `new_match`         | Cria uma nova partida                             | `id`, `config`, `players`, `songs`                       |
+| `set_player_ready`  | Marca jogador como pronto                         | `match`, `player_id`                                     |
+| `start_match`       | Inicia a partida (todos devem estar prontos)      | `match`                                                  |
+| `start_round`       | Avança para a próxima rodada                      | `match`                                                  |
+| `submit_answer`     | Um jogador envia uma resposta para a rodada atual | `match`, `player_id`, `answer`, `response_time`          |
+| `end_round`         | Finaliza a rodada manualmente ou por timeout      | `match`                                                  |
+| `end_match`         | Força o término do jogo                           | `match`                                                  |
+| `all_answered`      | Verifica se todos responderam na rodada           | `match`                                                  |
+| `is_last_round`     | Verifica se é a última rodada                     | `match`                                                  |
 
 ---
 
-## 📢 Lista de **Respostas/Eventos**
+## 📢 Lista de **Eventos** (Custom types retornados)
 
-| Evento (Response/Stream)   | O que significa                     | Mensagem de Response (`Response`)                                    |
-| -------------------------- | ----------------------------------- | -------------------------------------------------------------------- |
-| `MatchStarted`             | Partida começou com sucesso         | `MatchStartedResponse` (com `current_round`, `song`, `players`)      |
-| `RoundStarted`             | Nova rodada começou                 | `RoundStartedResponse` (com `round_number`, `song`, `time_limit`)    |
-| `AnswerProcessed`          | Uma resposta foi validada           | `AnswerProcessedResponse` (com `player_id`, `is_valid`, `points_earned`)|
-| `RoundEnded`               | Rodada foi encerrada                | `RoundEndedResponse` (com `answers`, `partial_scores`)               |
-| `MatchEnded`               | Fim da partida                      | `MatchEndedResponse` (com `final_scores`, `winner_id`)               |
-| `Error` (Status gRPC)      | Algum comando inválido foi recebido | Status gRPC com código de erro e mensagem descritiva.                |
+| Evento               | O que significa                     | Campos principais                                        |
+| -------------------- | ----------------------------------- | -------------------------------------------------------- |
+| `MatchStarted`       | Partida começou com sucesso         | `match`                                                  |
+| `RoundStarted`       | Nova rodada começou                 | `match`, `round`                                         |
+| `AnswerProcessed`    | Uma resposta foi validada           | `match`, `player_id`, `is_correct`, `points_earned`      |
+| `RoundCompleted`     | Rodada foi encerrada                | `match`, `round`, `scores`                               |
+| `MatchCompleted`     | Fim da partida                      | `match`, `final_scores`, `winner_id`                     |
+| `EngineError`        | Algum comando inválido              | Variant com mensagem descritiva                          |
 
 ---
 
 ## ⚠️ Regras Gerais do Contrato
 
-*   **Todo `Request` válido deve gerar um `Response` correspondente** ou um erro gRPC.
-*   O `match_id` deve estar presente na maioria das mensagens para garantir o contexto.
-*   O contrato `.proto` deve ser **versionado** (ex: `v1`, `v2`) para garantir compatibilidade futura.
+*   **Toda função retorna `Result(MatchEvent, EngineError)`** — sucesso ou erro tipado.
+*   O compilador Gleam garante que **todos os casos de erro são tratados** (exhaustive pattern matching).
+*   O contrato é **versionado pelos módulos** — mudanças breaking são detectadas em tempo de compilação.
 
 ---
 
-## 🧪 Sugestão de estrutura de contrato em código
+## 🧪 Sugestão de testes
 
-A definição do contrato é o próprio arquivo `.proto`. As ferramentas de gRPC geram o código correspondente para cada linguagem:
-
-*   Em **Swift**, o código do servidor e as mensagens são gerados a partir do `.proto`.
-*   Em **Elixir**, o código do cliente e as mensagens também são gerados, garantindo a consistência.
+*   **Gleam**: testes unitários puros para cada função da engine, validando invariantes.
+*   **Elixir**: testes de integração chamando os módulos Gleam e verificando os retornos.
+*   **Property-based testing**: usando bibliotecas como `qcheck` (Gleam) para testar combinações de estados.
 
 ---
 
 ## ✅ Benefícios de manter esse contrato
 
-*   Garante clareza e forte tipagem entre a engine e a orquestração.
-*   Facilita testes isolados da engine (simulando chamadas RPC).
-*   Permite mockar a engine para a UI sem a engine real.
-*   Serve como documentação viva e automatizável para a API interna.
+*   Garante clareza e **forte tipagem em tempo de compilação**.
+*   Facilita testes isolados da engine (funções puras sem side effects).
+*   Permite mockar a engine para testes do Orchestrator.
+*   Serve como documentação viva — os tipos Gleam **são** o contrato.
+*   **Zero overhead**: sem serialização, sem rede, sem geração de código.
 
 ---

@@ -22,9 +22,9 @@ Dividir o sistema em **Bounded Contexts** estratégicos, cada um com sua **lingu
 
 ```plaintext
 ┌────────────────────────────────────────────────────┐
-│                    UI Gateway (Bun)                │
-│ - Frontend                                          │
-│ - WebSocket/API interface                           │
+│              Frontend (SvelteKit + Deno)            │
+│ - UI do jogo (Tailwind CSS)                         │
+│ - Phoenix Channels (WebSocket) + REST               │
 └────────────────────────┬────────────────────────────┘
                          │
                          ▼
@@ -38,7 +38,7 @@ Dividir o sistema em **Bounded Contexts** estratégicos, cada um com sua **lingu
        ▼                      ▼
 ┌───────────────┐     ┌──────────────────────────────┐
 │ Game Engine   │     │ Playlist Integration Context │
-│ (Swift)       │     │ - Spotify / Deezer APIs      │
+│ (Gleam/BEAM)  │     │ - Spotify / Deezer APIs      │
 │ - Regras do   │     │ - Autenticação e playlists   │
 │   jogo        │     └──────────────────────────────┘
 │ - Validação   │
@@ -66,9 +66,9 @@ Dividir o sistema em **Bounded Contexts** estratégicos, cada um com sua **lingu
   * Início e fim de rodadas
   * Validação de respostas
   * Pontuação e regras
-* **Tecnologia sugerida**: Swift (alta performance)
+* **Tecnologia**: Gleam (BEAM) — roda no mesmo nó que o Orchestrator
 * **Não conhece nada sobre o mundo externo**: recebe comandos, retorna eventos
-* **Comunicação**: via gRPC para o `Orchestrator`
+* **Comunicação**: chamadas diretas de módulo e message passing no BEAM
 
 ---
 
@@ -85,7 +85,7 @@ Dividir o sistema em **Bounded Contexts** estratégicos, cada um com sua **lingu
 * **Interage com**:
 
   * `Game Engine` (para lógica de jogo)
-  * `UI Gateway` (para enviar estado ao frontend)
+  * `Frontend` (para enviar estado ao frontend)
   * `Playlist Context` (para buscar músicas)
 * **Design natural**: cada **sala = processo isolado**
 
@@ -124,15 +124,15 @@ Dividir o sistema em **Bounded Contexts** estratégicos, cada um com sua **lingu
 
 ---
 
-### 5. 🎨 **UI Gateway Context**
+### 5. 🎨 **Frontend Context**
 
 * **Tipo**: Generic Domain
 * **Responsável por**:
 
-  * Expor WebSocket para tempo real
-  * Fornecer endpoints REST para o frontend
-  * Fazer ponte com o Orquestrador
-* **Tecnologia**: Bun (rápido, moderno, ideal para TypeScript)
+  * Interface do jogo (lobby, sala, partida, placar)
+  * Comunicação em tempo real via Phoenix Channels (WebSocket)
+  * Chamadas REST para operações pontuais (auth, playlists, perfil)
+* **Tecnologia**: SvelteKit + Deno (Tailwind CSS)
 
 ---
 
@@ -140,8 +140,8 @@ Dividir o sistema em **Bounded Contexts** estratégicos, cada um com sua **lingu
 
 | Relacionamento                 | Tipo                        | Exemplo                              |
 | ------------------------------ | --------------------------- | ------------------------------------ |
-| `UI Gateway` → `Orchestrator`  | API/Socket (Cliente)        | Envia comandos, recebe estado        |
-| `Orchestrator` → `Game Engine` | gRPC                        | Envia comandos, recebe eventos       |
+| `Frontend` → `Orchestrator`    | Phoenix Channels + REST     | Envia comandos, recebe estado        |
+| `Orchestrator` → `Game Engine` | Chamadas de módulo (BEAM)   | Envia comandos, recebe eventos       |
 | `Orchestrator` → `Playlist`    | Cliente REST                | Solicita músicas para montar rodadas |
 | `Orchestrator` → `Ranking`     | Eventual (event-driven)     | Envia eventos de resultado           |
 
@@ -153,6 +153,6 @@ Dividir o sistema em **Bounded Contexts** estratégicos, cada um com sua **lingu
 * **Orchestrator é o integrador**: sabe de todos os contextos, mas isola responsabilidades
 * **Playlist é utilitário externo**: importante, mas não precisa estar sempre ativo
 * **Ranking é plugável**: pode ser acoplado depois sem quebrar a base
-* **UI é totalmente desacoplada da lógica**: pode trocar o front ou canal de comunicação no futuro
+* **Frontend (SvelteKit) é totalmente desacoplado da lógica**: pode trocar o front ou canal de comunicação no futuro
 
 ---

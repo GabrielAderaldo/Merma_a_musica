@@ -28,8 +28,8 @@ Aqui está a separação dos principais **Bounded Contexts** e como eles se rela
 
 ```text
                                       ┌──────────────────────────────┐
-                                      │     🎨 UI / Gateway (Bun)     │
-                                      │ Frontend + WebSocket/HTTP API│
+                                      │  🎨 Frontend (SvelteKit+Deno)  │
+                                      │  Phoenix Channels + REST      │
                                       └────────────┬─────────────────┘
                                                    │
                          ┌─────────────────────────┴──────────────────────────┐
@@ -41,7 +41,7 @@ Aqui está a separação dos principais **Bounded Contexts** e como eles se rela
                        ▼                                                       ▼
          ┌──────────────────────────────┐                        ┌──────────────────────────────┐
          │   ⚙️ Game Engine Context       │                        │     🎵 Playlist Context       │
-         │      (Swift - lógica de jogo)  │                        │ Integrações Spotify/Deezer   │
+         │    (Gleam/BEAM - lógica de jogo)│                        │ Integrações Spotify/Deezer   │
          └──────────────────────────────┘                        └──────────────────────────────┘
 
                                   ┌──────────────────────────────┐
@@ -54,8 +54,8 @@ Aqui está a separação dos principais **Bounded Contexts** e como eles se rela
 * 🔗 **Upstream / Downstream**: `Playlist Context` é fornecedor para o `Game Engine Context`
 * 💬 **Protocolos de integração**:
 
-  * `Gateway ↔ Game Orchestrator`: HTTP/WebSocket
-  * `Orchestrator ↔ Game Engine`: gRPC
+  * `Frontend ↔ Game Orchestrator`: Phoenix Channels (WebSocket) + REST
+  * `Orchestrator ↔ Game Engine`: Chamadas diretas de módulo / message passing (BEAM)
   * `Game Engine ↔ Playlist Context`: Requisição de dados de entrada
 
 ---

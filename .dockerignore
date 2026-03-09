@@ -1,0 +1,17 @@
+.git/
+doc/
+infra/
+tools/
+libs/
+scripts/
+*.md
+.env
+.vscode/
+apps/frontend/node_modules/
+apps/frontend/.svelte-kit/
+apps/frontend/build/
+apps/game_orchestrator/_build/
+apps/game_orchestrator/deps/
+apps/game_engine/_build/
+apps/game_engine/build/
+apps/game_engine/deps/

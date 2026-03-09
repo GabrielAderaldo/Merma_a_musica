@@ -57,9 +57,8 @@ export function joinRoom(
 
 	channel
 		.join()
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		.receive('ok', (resp: any) => {
-			callbacks.onJoin?.(resp.room_state);
+		.receive('ok', () => {
+			// room_state is sent separately via push after join
 		})
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		.receive('error', (resp: any) => {
@@ -68,6 +67,7 @@ export function joinRoom(
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const on = (event: string, cb: (msg: any) => void) => channel!.on(event, cb);
+	on('room_state', (msg) => callbacks.onJoin?.(msg));
 	on('player_joined', (msg) => callbacks.onPlayerJoined?.(msg));
 	on('player_left', (msg) => callbacks.onPlayerLeft?.(msg));
 	on('player_ready', (msg) => callbacks.onPlayerReady?.(msg));

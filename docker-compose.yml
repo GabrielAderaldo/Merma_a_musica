@@ -48,9 +48,12 @@ services:
     build:
       context: apps/frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-/api}
+        VITE_WS_URL: ${VITE_WS_URL:-wss://localhost/socket}
     environment:
       PORT: "3000"
-      ORIGIN: ${ORIGIN:-http://localhost}
+      ORIGIN: ${ORIGIN:-https://localhost}
     restart: unless-stopped
 
   # Caddy reverse proxy (HTTPS automático via Let's Encrypt)

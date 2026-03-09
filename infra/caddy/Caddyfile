@@ -4,6 +4,11 @@
 		reverse_proxy backend:4000
 	}
 
+	# Auth callbacks (OAuth) -> backend
+	handle /auth/* {
+		reverse_proxy backend:4000
+	}
+
 	# Health check -> backend
 	handle /health {
 		reverse_proxy backend:4000

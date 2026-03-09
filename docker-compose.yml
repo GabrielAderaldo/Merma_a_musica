@@ -22,9 +22,9 @@ services:
     environment:
       DATABASE_URL: ecto://postgres:postgres@db/game_orchestrator_prod
       SECRET_KEY_BASE: ${SECRET_KEY_BASE:-gN8xJ3kT2vP9sR4wQ7yZ1cF6hA0mD5bE8uL3nX2jW4kS7tY0pI9oG6rV1fM8qH}
-      PHX_HOST: ${PHX_HOST:-localhost}
-      PHX_SCHEME: ${PHX_SCHEME:-http}
-      PHX_URL_PORT: ${PHX_URL_PORT:-80}
+      PHX_HOST: ${DOMAIN:-localhost}
+      PHX_SCHEME: https
+      PHX_URL_PORT: "443"
       PHX_SERVER: "true"
       PORT: "4000"
       POOL_SIZE: "5"
@@ -53,13 +53,19 @@ services:
       ORIGIN: ${ORIGIN:-http://localhost}
     restart: unless-stopped
 
-  # Nginx reverse proxy
-  nginx:
-    image: nginx:alpine
+  # Caddy reverse proxy (HTTPS automático via Let's Encrypt)
+  caddy:
+    image: caddy:2-alpine
     ports:
-      - "${HTTP_PORT:-80}:80"
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
     volumes:
-      - ./infra/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
     depends_on:
       - backend
       - frontend
@@ -67,3 +73,5 @@ services:
 
 volumes:
   pgdata:
+  caddy_data:
+  caddy_config:

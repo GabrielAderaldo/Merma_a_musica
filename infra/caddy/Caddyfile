@@ -1,0 +1,21 @@
+{$DOMAIN:localhost} {
+	# API and auth routes -> backend
+	handle /api/* {
+		reverse_proxy backend:4000
+	}
+
+	# Health check -> backend
+	handle /health {
+		reverse_proxy backend:4000
+	}
+
+	# WebSocket -> backend
+	handle /socket/* {
+		reverse_proxy backend:4000
+	}
+
+	# Everything else -> frontend
+	handle {
+		reverse_proxy frontend:3000
+	}
+}

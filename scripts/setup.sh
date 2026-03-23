@@ -1,22 +1,21 @@
 #!/usr/bin/env bash
-set -euo pipefail
+# setup.sh — Setup inicial do ambiente de desenvolvimento
+#
+# RESPONSABILIDADES:
+# - Instalar dependências do Game Engine (Gleam)
+# - Instalar dependências do Game Orchestrator (Mix + Gleam)
+# - Instalar dependências do Frontend (Bun)
 
-ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+set -e
 
-echo "==> Instalando dependências do Game Engine (Gleam)..."
-cd "$ROOT_DIR/apps/game_engine"
-gleam deps download
+echo "=== Setup: Game Engine (Gleam) ==="
+cd apps/game_engine && gleam deps download && cd ../..
 
-echo ""
-echo "==> Instalando dependências do Game Orchestrator (Elixir)..."
-cd "$ROOT_DIR/apps/game_orchestrator"
-mix deps.get
-mix ecto.setup
+echo "=== Setup: Game Orchestrator (Elixir + Gleam) ==="
+cd apps/game_orchestrator && mix deps.get && cd ../..
 
-echo ""
-echo "==> Instalando dependências do Frontend (Deno + SvelteKit)..."
-cd "$ROOT_DIR/apps/frontend"
-deno install
+echo "=== Setup: Frontend (SolidJS + Bun) ==="
+cd apps/frontend && bun install && cd ../..
 
-echo ""
-echo "==> Setup completo!"
+echo "=== Setup completo! ==="
+echo "Use ./scripts/dev.sh para iniciar o desenvolvimento."

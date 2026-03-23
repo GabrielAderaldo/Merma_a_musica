@@ -1,42 +1,40 @@
-defmodule GameOrchestrator.Application do
-  # See https://hexdocs.pm/elixir/Application.html
-  # for more information on OTP Applications
-  @moduledoc false
+# application.ex — Supervisor Tree
+#
+# O QUE É: Entry point da aplicação OTP. Inicia toda a infraestrutura
+# que o Gleam consome via phoenix_bridge.
+#
+# LIMITES ARQUITETURAIS:
+# - Apenas inicia supervisores, registries e o endpoint Phoenix
+# - NÃO inicia lógica de negócio — isso é feito pelo Gleam quando necessário
+# - SEM Ecto.Repo — sem banco de dados no MVP
+#
+# RESPONSABILIDADES:
+# - Iniciar Phoenix.PubSub (para broadcast de eventos)
+# - Iniciar Registry (para lookup de salas por invite_code)
+# - Iniciar DynamicSupervisor (para processos de salas)
+# - Criar tabelas ETS (cache de playlists, ISRC→Deezer, audio tokens)
+# - Iniciar Phoenix Endpoint (HTTP + WebSocket)
 
+defmodule GameOrchestrator.Application do
   use Application
 
   @impl true
   def start(_type, _args) do
-    repo_children =
-      if Application.get_env(:game_orchestrator, :skip_repo, false),
-        do: [],
-        else: [GameOrchestrator.Repo]
-
     children = [
-      GameOrchestratorWeb.Telemetry
-    ] ++ repo_children ++ [
-      {DNSCluster, query: Application.get_env(:game_orchestrator, :dns_cluster_query) || :ignore},
+      # PubSub para broadcast de eventos entre processos
       {Phoenix.PubSub, name: GameOrchestrator.PubSub},
-      # Cache ETS para playlists importadas
-      GameOrchestrator.Playlist.Cache,
-      # Room Registry + DynamicSupervisor para salas de jogo
-      {Registry, keys: :unique, name: GameOrchestrator.Room.Registry.registry_name()},
-      {DynamicSupervisor, name: GameOrchestrator.Room.Registry.supervisor_name(), strategy: :one_for_one},
-      # Start to serve requests, typically the last entry
-      GameOrchestratorWeb.Endpoint
+
+      # Registry para lookup de salas por invite_code
+      {Registry, keys: :unique, name: GameOrchestrator.RoomRegistry},
+
+      # DynamicSupervisor para processos de salas
+      {DynamicSupervisor, name: GameOrchestrator.RoomSupervisor, strategy: :one_for_one},
+
+      # Phoenix Endpoint (HTTP + WebSocket)
+      GameOrchestratorWeb.Endpoint,
     ]
 
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
     opts = [strategy: :one_for_one, name: GameOrchestrator.Supervisor]
     Supervisor.start_link(children, opts)
-  end
-
-  # Tell Phoenix to update the endpoint configuration
-  # whenever the application is updated.
-  @impl true
-  def config_change(changed, _new, removed) do
-    GameOrchestratorWeb.Endpoint.config_change(changed, removed)
-    :ok
   end
 end

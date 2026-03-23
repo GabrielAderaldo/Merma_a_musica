@@ -1,0 +1,51 @@
+{
+  "tab_size": 2,
+  "formatter": "language_server",
+  "format_on_save": "on",
+  "languages": {
+    "TypeScript": {
+      "tab_size": 2,
+      "formatter": "language_server",
+      "format_on_save": "on"
+    },
+    "CSS": {
+      "tab_size": 2,
+      "formatter": "language_server"
+    },
+    "Elixir": {
+      "tab_size": 2,
+      "formatter": "language_server",
+      "format_on_save": "on"
+    },
+    "Gleam": {
+      "tab_size": 2,
+      "formatter": "language_server",
+      "format_on_save": "on"
+    },
+    "HTML": {
+      "tab_size": 2
+    },
+    "JSON": {
+      "tab_size": 2
+    },
+    "TOML": {
+      "tab_size": 2
+    }
+  },
+  "file_scan_exclusions": [
+    "**/.git",
+    "**/node_modules",
+    "**/dist",
+    "**/_build",
+    "**/deps",
+    "**/build",
+    "**/.vinxi",
+    "**/.output"
+  ],
+  "terminal": {
+    "shell": {
+      "program": "zsh"
+    },
+    "working_directory": "current_project_directory"
+  }
+}

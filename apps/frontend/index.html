@@ -1,0 +1,23 @@
+<!-- index.html — Entry point do SPA
+
+  Servido diretamente pelo Bun: `bun ./index.html`
+  Bun processa <script> e <link> automaticamente (bundle, minify, HMR).
+  Em produção: `bun build ./index.html - -minify - -outdir=dist`
+
+  O div#app é o mount point onde o router renderiza as pages.
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0F172A" />
+    <title>Mermã, a Música!</title>
+    <link rel="icon" href="./public/favicon.ico" />
+    <link rel="stylesheet" href="./src/styles/global.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

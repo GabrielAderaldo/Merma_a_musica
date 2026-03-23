@@ -1,0 +1,12 @@
+# bunfig.toml — Configuração do Bun
+#
+# O QUE É: Config do dev server e bundler nativo do Bun.
+# Sem Vite, sem Webpack — 100% Bun.
+#
+# RESPONSABILIDADES:
+# - Plugin de Tailwind CSS
+# - Inline de env vars com prefixo PUBLIC_
+
+[serve.static]
+plugins = ["bun-plugin-tailwind"]
+env = "PUBLIC_*"

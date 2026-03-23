@@ -1,0 +1,1078 @@
+asyncapi: 3.1.0
+id: "urn:com:merma-a-musica:game-server"
+info:
+  title: "Mermã, a Música! — WebSocket API"
+  version: 1.0.0
+  description: |
+    API de eventos em tempo real do jogo "Mermã, a Música!" via Phoenix Channels (WebSocket).
+    Este documento descreve todos os canais, mensagens e operações trocadas entre o frontend (SvelteKit) e o backend (BEAM).
+
+    A API REST está documentada separadamente no arquivo `openapi_spec.yaml`.
+  license:
+    name: MIT
+  contact:
+    name: Mermã, a Música! Team
+  tags:
+    - name: lobby
+      description: Eventos relacionados ao lobby da sala (antes da partida)
+    - name: game
+      description: Eventos relacionados à partida em andamento
+    - name: system
+      description: Eventos de sistema (erros, reconexão, host)
+
+defaultContentType: application/json
+
+servers:
+  production:
+    host: "{domain}"
+    pathname: /socket/websocket
+    protocol: ws
+    protocolVersion: "13"
+    description: Servidor WebSocket via Phoenix Channels
+    variables:
+      domain:
+        default: merma.example.com
+        description: Domínio do servidor
+    security:
+      - $ref: "#/components/securitySchemes/playerUuid"
+    tags:
+      - name: "env:production"
+
+channels:
+  # ============================================================
+  # ROOM CHANNEL
+  # ============================================================
+  room:
+    address: "room:{invite_code}"
+    title: Canal da Sala
+    description: |
+      Canal principal de comunicação de uma sala de jogo.
+      Cada sala tem um canal único baseado no código de convite (6 caracteres alfanuméricos).
+      Todos os jogadores da sala se inscrevem neste canal ao conectar.
+
+      **Join params:** `{ "player_uuid": "...", "nickname": "..." }`
+    parameters:
+      invite_code:
+        description: Código de convite da sala (6 caracteres alfanuméricos maiúsculos)
+        examples:
+          - ABC123
+          - XYZ789
+    messages:
+      # ---- CLIENT → SERVER ----
+      playerReady:
+        $ref: "#/components/messages/playerReady"
+      playerUnready:
+        $ref: "#/components/messages/playerUnready"
+      configureMatch:
+        $ref: "#/components/messages/configureMatch"
+      startGame:
+        $ref: "#/components/messages/startGame"
+      submitAnswer:
+        $ref: "#/components/messages/submitAnswer"
+      voteSkip:
+        $ref: "#/components/messages/voteSkip"
+      selectPlaylist:
+        $ref: "#/components/messages/selectPlaylist"
+      playerLeave:
+        $ref: "#/components/messages/playerLeave"
+      autocompleteSearch:
+        $ref: "#/components/messages/autocompleteSearch"
+      # ---- SERVER → CLIENT ----
+      roomState:
+        $ref: "#/components/messages/roomState"
+      playerJoined:
+        $ref: "#/components/messages/playerJoined"
+      playerLeft:
+        $ref: "#/components/messages/playerLeft"
+      playerReadyChanged:
+        $ref: "#/components/messages/playerReadyChanged"
+      configUpdated:
+        $ref: "#/components/messages/configUpdated"
+      hostChanged:
+        $ref: "#/components/messages/hostChanged"
+      gameStarting:
+        $ref: "#/components/messages/gameStarting"
+      roundStarting:
+        $ref: "#/components/messages/roundStarting"
+      timerStarted:
+        $ref: "#/components/messages/timerStarted"
+      answerConfirmed:
+        $ref: "#/components/messages/answerConfirmed"
+      playerVotedSkip:
+        $ref: "#/components/messages/playerVotedSkip"
+      roundEnded:
+        $ref: "#/components/messages/roundEnded"
+      gameEnded:
+        $ref: "#/components/messages/gameEnded"
+      autocompleteResults:
+        $ref: "#/components/messages/autocompleteResults"
+      error:
+        $ref: "#/components/messages/error"
+    bindings:
+      ws:
+        method: GET
+
+# ============================================================
+# OPERATIONS
+# ============================================================
+operations:
+  # ---- CLIENT → SERVER (send) ----
+  sendPlayerReady:
+    action: send
+    channel:
+      $ref: "#/channels/room"
+    title: Marcar como pronto
+    summary: Jogador marca-se como pronto para iniciar a partida.
+    tags:
+      - name: lobby
+    messages:
+      - $ref: "#/channels/room/messages/playerReady"
+
+  sendPlayerUnready:
+    action: send
+    channel:
+      $ref: "#/channels/room"
+    title: Desmarcar pronto
+    summary: Jogador desmarca o status de pronto.
+    tags:
+      - name: lobby
+    messages:
+      - $ref: "#/channels/room/messages/playerUnready"
+
+  sendConfigureMatch:
+    action: send
+    channel:
+      $ref: "#/channels/room"
+    title: Configurar partida
+    summary: Host define configurações da partida. Rejeitado se não for o host.
+    tags:
+      - name: lobby
+    messages:
+      - $ref: "#/channels/room/messages/configureMatch"
+
+  sendStartGame:
+    action: send
+    channel:
+      $ref: "#/channels/room"
+    title: Iniciar partida
+    summary: Host inicia a partida. Requer que todos estejam prontos e músicas suficientes.
+    tags:
+      - name: lobby
+    messages:
+      - $ref: "#/channels/room/messages/startGame"
+
+  sendSubmitAnswer:
+    action: send
+    channel:
+      $ref: "#/channels/room"
+    title: Enviar resposta
+    summary: |
+      Jogador envia ou atualiza sua resposta. Pode ser enviado múltiplas vezes durante a rodada.
+      Para SpeedBonus, conta o tempo da última submissão.
+    tags:
+      - name: game
+    messages:
+      - $ref: "#/channels/room/messages/submitAnswer"
+
+  sendVoteSkip:
+    action: send
+    channel:
+      $ref: "#/channels/room"
+    title: Votar pular rodada
+    summary: Jogador vota para pular a rodada. Só disponível após ter respondido.
+    tags:
+      - name: game
+    messages:
+      - $ref: "#/channels/room/messages/voteSkip"
+
+  sendSelectPlaylist:
+    action: send
+    channel:
+      $ref: "#/channels/room"
+    title: Selecionar playlist
+    summary: Jogador seleciona uma playlist validada para usar na partida.
+    tags:
+      - name: lobby
+    messages:
+      - $ref: "#/channels/room/messages/selectPlaylist"
+
+  sendPlayerLeave:
+    action: send
+    channel:
+      $ref: "#/channels/room"
+    title: Sair da sala
+    summary: Jogador sai voluntariamente da sala.
+    tags:
+      - name: system
+    messages:
+      - $ref: "#/channels/room/messages/playerLeave"
+
+  sendAutocompleteSearch:
+    action: send
+    channel:
+      $ref: "#/channels/room"
+    title: Busca autocomplete
+    summary: |
+      Jogador digita no campo de resposta e solicita sugestões.
+      Frontend deve aplicar debounce de 300ms. Backend retorna máximo 10 resultados.
+    tags:
+      - name: game
+    messages:
+      - $ref: "#/channels/room/messages/autocompleteSearch"
+
+  # ---- SERVER → CLIENT (receive) ----
+  receiveRoomState:
+    action: receive
+    channel:
+      $ref: "#/channels/room"
+    title: Estado da sala
+    summary: Estado completo da sala. Enviado ao entrar ou reconectar.
+    tags:
+      - name: system
+    messages:
+      - $ref: "#/channels/room/messages/roomState"
+
+  receivePlayerJoined:
+    action: receive
+    channel:
+      $ref: "#/channels/room"
+    title: Jogador entrou
+    summary: Novo jogador entrou na sala.
+    tags:
+      - name: lobby
+    messages:
+      - $ref: "#/channels/room/messages/playerJoined"
+
+  receivePlayerLeft:
+    action: receive
+    channel:
+      $ref: "#/channels/room"
+    title: Jogador saiu
+    summary: Jogador saiu voluntariamente ou foi removido por timeout (2 minutos).
+    tags:
+      - name: system
+    messages:
+      - $ref: "#/channels/room/messages/playerLeft"
+
+  receivePlayerReadyChanged:
+    action: receive
+    channel:
+      $ref: "#/channels/room"
+    title: Status de pronto mudou
+    summary: Um jogador mudou seu status de pronto.
+    tags:
+      - name: lobby
+    messages:
+      - $ref: "#/channels/room/messages/playerReadyChanged"
+
+  receiveConfigUpdated:
+    action: receive
+    channel:
+      $ref: "#/channels/room"
+    title: Configuração atualizada
+    summary: Host alterou a configuração da partida.
+    tags:
+      - name: lobby
+    messages:
+      - $ref: "#/channels/room/messages/configUpdated"
+
+  receiveHostChanged:
+    action: receive
+    channel:
+      $ref: "#/channels/room"
+    title: Host mudou
+    summary: Host desconectou e o papel foi transferido ao jogador mais antigo.
+    tags:
+      - name: system
+    messages:
+      - $ref: "#/channels/room/messages/hostChanged"
+
+  receiveGameStarting:
+    action: receive
+    channel:
+      $ref: "#/channels/room"
+    title: Partida iniciando
+    summary: Contagem regressiva para o início da partida.
+    tags:
+      - name: game
+    messages:
+      - $ref: "#/channels/room/messages/gameStarting"
+
+  receiveRoundStarting:
+    action: receive
+    channel:
+      $ref: "#/channels/room"
+    title: Rodada iniciando
+    summary: |
+      Nova rodada. Frontend deve buscar áudio via GET /api/v1/audio/{audio_token}.
+      Grace period de 3 segundos antes do timer oficial.
+    tags:
+      - name: game
+    messages:
+      - $ref: "#/channels/room/messages/roundStarting"
+
+  receiveTimerStarted:
+    action: receive
+    channel:
+      $ref: "#/channels/room"
+    title: Timer iniciou
+    summary: Timer oficial da rodada iniciou (após grace period). Backend é fonte da verdade.
+    tags:
+      - name: game
+    messages:
+      - $ref: "#/channels/room/messages/timerStarted"
+
+  receiveAnswerConfirmed:
+    action: receive
+    channel:
+      $ref: "#/channels/room"
+    title: Resposta confirmada
+    summary: Backend confirma recebimento da resposta. NÃO revela se está correta.
+    tags:
+      - name: game
+    messages:
+      - $ref: "#/channels/room/messages/answerConfirmed"
+
+  receivePlayerVotedSkip:
+    action: receive
+    channel:
+      $ref: "#/channels/room"
+    title: Voto de pular
+    summary: Um jogador votou para pular. Inclui contagem atual de votos.
+    tags:
+      - name: game
+    messages:
+      - $ref: "#/channels/room/messages/playerVotedSkip"
+
+  receiveRoundEnded:
+    action: receive
+    channel:
+      $ref: "#/channels/room"
+    title: Rodada encerrada
+    summary: |
+      Revelação completa: música correta, artista, álbum, dono, respostas de todos, pontos ganhos.
+      Música continua tocando durante a revelação. Próxima rodada em 3 segundos.
+    tags:
+      - name: game
+    messages:
+      - $ref: "#/channels/room/messages/roundEnded"
+
+  receiveGameEnded:
+    action: receive
+    channel:
+      $ref: "#/channels/room"
+    title: Partida encerrada
+    summary: |
+      Ranking final com destaques (melhor streak, resposta mais rápida, mais acertos).
+      Retorno automático ao lobby após 5 segundos.
+    tags:
+      - name: game
+    messages:
+      - $ref: "#/channels/room/messages/gameEnded"
+
+  receiveAutocompleteResults:
+    action: receive
+    channel:
+      $ref: "#/channels/room"
+    title: Resultados autocomplete
+    summary: Sugestões de autocomplete baseadas no pool total de playlists dos jogadores.
+    tags:
+      - name: game
+    messages:
+      - $ref: "#/channels/room/messages/autocompleteResults"
+
+  receiveError:
+    action: receive
+    channel:
+      $ref: "#/channels/room"
+    title: Erro
+    summary: Erro direcionado ao jogador (não é host, sala cheia, etc.).
+    tags:
+      - name: system
+    messages:
+      - $ref: "#/channels/room/messages/error"
+
+# ============================================================
+# COMPONENTS
+# ============================================================
+components:
+  securitySchemes:
+    playerUuid:
+      type: userPassword
+      description: |
+        Identificação do jogador via player_uuid (UUID v4 gerado no browser e salvo em cookie).
+        Enviado como parâmetro no join do canal Phoenix Channel.
+
+  schemas:
+    # ---- SHARED SCHEMAS ----
+    PlayerUuid:
+      type: string
+      format: uuid
+      description: UUID v4 do jogador
+      examples:
+        - "550e8400-e29b-41d4-a716-446655440000"
+
+    Player:
+      type: object
+      required:
+        - player_uuid
+        - nickname
+        - is_host
+        - ready
+        - connection_status
+        - has_playlist
+      properties:
+        player_uuid:
+          $ref: "#/components/schemas/PlayerUuid"
+        nickname:
+          type: string
+          examples:
+            - Gabriel
+        is_host:
+          type: boolean
+        ready:
+          type: boolean
+        connection_status:
+          type: string
+          enum: [connected, disconnected, reconnecting]
+        has_playlist:
+          type: boolean
+        platform:
+          type: string
+          enum: [spotify, deezer, youtube_music]
+          nullable: true
+
+    MatchConfiguration:
+      type: object
+      required:
+        - time_per_round
+        - total_songs
+        - answer_type
+        - allow_repeats
+        - scoring_rule
+      properties:
+        time_per_round:
+          type: integer
+          minimum: 10
+          maximum: 60
+          description: Segundos por rodada
+          examples:
+            - 30
+        total_songs:
+          type: integer
+          minimum: 1
+          description: Total de músicas (dentro do range dinâmico baseado em jogadores)
+        answer_type:
+          type: string
+          enum: [song, artist, both]
+          description: |
+            song = acertar nome da música
+            artist = acertar nome do artista
+            both = acertar qualquer um dos dois (modo mais fácil)
+        allow_repeats:
+          type: boolean
+          default: false
+        scoring_rule:
+          type: string
+          enum: [simple, speed_bonus]
+          description: |
+            simple = 1 ponto por acerto
+            speed_bonus = 1000 (instantâneo) a 100 (último segundo), linear
+
+    SongRange:
+      type: object
+      properties:
+        min:
+          type: integer
+          description: "Mínimo = 1 × total_jogadores"
+        max:
+          type: integer
+          description: "Máximo = 5 × total_jogadores"
+        current_players:
+          type: integer
+        players_with_playlist:
+          type: integer
+
+    RevealedSong:
+      type: object
+      properties:
+        name:
+          type: string
+          examples:
+            - Bohemian Rhapsody
+        artist:
+          type: string
+          examples:
+            - Queen
+        album:
+          type: string
+          examples:
+            - A Night At The Opera
+        cover_url:
+          type: string
+          format: uri
+        contributed_by:
+          type: string
+          description: Nickname do jogador dono da música
+
+    PlayerAnswer:
+      type: object
+      properties:
+        player_uuid:
+          $ref: "#/components/schemas/PlayerUuid"
+        nickname:
+          type: string
+        answer_text:
+          type: string
+          description: O que o jogador digitou (vazio se não respondeu)
+        is_correct:
+          type: boolean
+        points_earned:
+          type: integer
+        response_time:
+          type: number
+          format: float
+          nullable: true
+          description: Tempo em segundos (null se não respondeu)
+
+    Highlight:
+      type: object
+      properties:
+        player_uuid:
+          $ref: "#/components/schemas/PlayerUuid"
+        nickname:
+          type: string
+
+    RankingEntry:
+      type: object
+      properties:
+        position:
+          type: integer
+        player_uuid:
+          $ref: "#/components/schemas/PlayerUuid"
+        nickname:
+          type: string
+        total_points:
+          type: integer
+        correct_answers:
+          type: integer
+        avg_response_time:
+          type: number
+          format: float
+          nullable: true
+
+  # ============================================================
+  # MESSAGES
+  # ============================================================
+  messages:
+    # ---- CLIENT → SERVER ----
+    playerReady:
+      name: player_ready
+      title: Marcar pronto
+      summary: Jogador marca-se como pronto
+      tags:
+        - name: lobby
+      payload:
+        type: object
+        required: [player_uuid]
+        properties:
+          player_uuid:
+            $ref: "#/components/schemas/PlayerUuid"
+
+    playerUnready:
+      name: player_unready
+      title: Desmarcar pronto
+      summary: Jogador desmarca pronto
+      tags:
+        - name: lobby
+      payload:
+        type: object
+        required: [player_uuid]
+        properties:
+          player_uuid:
+            $ref: "#/components/schemas/PlayerUuid"
+
+    configureMatch:
+      name: configure_match
+      title: Configurar partida
+      summary: Host define configurações. Rejeitado com erro not_host se não for o host.
+      tags:
+        - name: lobby
+      payload:
+        type: object
+        required: [player_uuid, config]
+        properties:
+          player_uuid:
+            $ref: "#/components/schemas/PlayerUuid"
+          config:
+            $ref: "#/components/schemas/MatchConfiguration"
+
+    startGame:
+      name: start_game
+      title: Iniciar partida
+      summary: Host inicia a partida
+      tags:
+        - name: lobby
+      payload:
+        type: object
+        required: [player_uuid]
+        properties:
+          player_uuid:
+            $ref: "#/components/schemas/PlayerUuid"
+
+    submitAnswer:
+      name: submit_answer
+      title: Enviar resposta
+      summary: Pode ser enviado múltiplas vezes (atualiza resposta anterior)
+      tags:
+        - name: game
+      payload:
+        type: object
+        required: [player_uuid, answer_text]
+        properties:
+          player_uuid:
+            $ref: "#/components/schemas/PlayerUuid"
+          answer_text:
+            type: string
+            description: Texto da resposta do jogador
+            examples:
+              - Bohemian Rhapsody
+
+    voteSkip:
+      name: vote_skip
+      title: Votar pular
+      summary: Disponível apenas após o jogador ter respondido
+      tags:
+        - name: game
+      payload:
+        type: object
+        required: [player_uuid]
+        properties:
+          player_uuid:
+            $ref: "#/components/schemas/PlayerUuid"
+
+    selectPlaylist:
+      name: select_playlist
+      title: Selecionar playlist
+      summary: Jogador escolhe playlist validada para a partida
+      tags:
+        - name: lobby
+      payload:
+        type: object
+        required: [player_uuid, playlist_id, platform]
+        properties:
+          player_uuid:
+            $ref: "#/components/schemas/PlayerUuid"
+          playlist_id:
+            type: string
+          platform:
+            type: string
+            enum: [spotify, deezer, youtube_music]
+
+    playerLeave:
+      name: player_leave
+      title: Sair da sala
+      tags:
+        - name: system
+      payload:
+        type: object
+        required: [player_uuid]
+        properties:
+          player_uuid:
+            $ref: "#/components/schemas/PlayerUuid"
+
+    autocompleteSearch:
+      name: autocomplete_search
+      title: Busca autocomplete
+      summary: Frontend deve aplicar debounce de 300ms
+      tags:
+        - name: game
+      payload:
+        type: object
+        required: [player_uuid, query]
+        properties:
+          player_uuid:
+            $ref: "#/components/schemas/PlayerUuid"
+          query:
+            type: string
+            minLength: 2
+            description: Texto parcial digitado pelo jogador
+            examples:
+              - bohem
+
+    # ---- SERVER → CLIENT ----
+    roomState:
+      name: room_state
+      title: Estado da sala
+      summary: Estado completo. Enviado ao entrar/reconectar.
+      tags:
+        - name: system
+      payload:
+        type: object
+        properties:
+          room_id:
+            type: string
+            format: uuid
+          invite_code:
+            type: string
+          state:
+            type: string
+            enum: [waiting, in_match, finished]
+          host_player_uuid:
+            $ref: "#/components/schemas/PlayerUuid"
+          config:
+            $ref: "#/components/schemas/MatchConfiguration"
+          players:
+            type: array
+            items:
+              $ref: "#/components/schemas/Player"
+          song_range:
+            $ref: "#/components/schemas/SongRange"
+      examples:
+        - name: LobbyEsperando
+          summary: Sala com 2 jogadores esperando
+          payload:
+            room_id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+            invite_code: ABC123
+            state: waiting
+            host_player_uuid: "550e8400-e29b-41d4-a716-446655440000"
+            config:
+              time_per_round: 30
+              total_songs: 8
+              answer_type: both
+              allow_repeats: false
+              scoring_rule: speed_bonus
+            players:
+              - player_uuid: "550e8400-e29b-41d4-a716-446655440000"
+                nickname: Gabriel
+                is_host: true
+                ready: true
+                connection_status: connected
+                has_playlist: true
+                platform: spotify
+              - player_uuid: "660e8400-e29b-41d4-a716-446655440001"
+                nickname: Maria
+                is_host: false
+                ready: false
+                connection_status: connected
+                has_playlist: false
+                platform: null
+            song_range:
+              min: 2
+              max: 10
+              current_players: 2
+              players_with_playlist: 1
+
+    playerJoined:
+      name: player_joined
+      title: Jogador entrou
+      tags:
+        - name: lobby
+      payload:
+        type: object
+        required: [player]
+        properties:
+          player:
+            $ref: "#/components/schemas/Player"
+
+    playerLeft:
+      name: player_left
+      title: Jogador saiu
+      tags:
+        - name: system
+      payload:
+        type: object
+        required: [player_uuid, reason]
+        properties:
+          player_uuid:
+            $ref: "#/components/schemas/PlayerUuid"
+          reason:
+            type: string
+            enum: [voluntary, timeout, kicked]
+
+    playerReadyChanged:
+      name: player_ready_changed
+      title: Pronto mudou
+      tags:
+        - name: lobby
+      payload:
+        type: object
+        required: [player_uuid, ready]
+        properties:
+          player_uuid:
+            $ref: "#/components/schemas/PlayerUuid"
+          ready:
+            type: boolean
+
+    configUpdated:
+      name: config_updated
+      title: Config atualizada
+      tags:
+        - name: lobby
+      payload:
+        type: object
+        properties:
+          config:
+            $ref: "#/components/schemas/MatchConfiguration"
+          song_range:
+            $ref: "#/components/schemas/SongRange"
+
+    hostChanged:
+      name: host_changed
+      title: Host mudou
+      tags:
+        - name: system
+      payload:
+        type: object
+        required: [new_host_uuid, new_host_nickname]
+        properties:
+          new_host_uuid:
+            $ref: "#/components/schemas/PlayerUuid"
+          new_host_nickname:
+            type: string
+
+    gameStarting:
+      name: game_starting
+      title: Partida iniciando
+      tags:
+        - name: game
+      payload:
+        type: object
+        required: [countdown_seconds]
+        properties:
+          countdown_seconds:
+            type: integer
+            examples:
+              - 3
+
+    roundStarting:
+      name: round_starting
+      title: Rodada iniciando
+      summary: Frontend deve buscar áudio via GET /api/v1/audio/{audio_token}
+      tags:
+        - name: game
+      payload:
+        type: object
+        required:
+          [
+            round_index,
+            total_rounds,
+            audio_token,
+            audio_source,
+            grace_period_seconds,
+          ]
+        properties:
+          round_index:
+            type: integer
+            minimum: 1
+          total_rounds:
+            type: integer
+          audio_token:
+            type: string
+            format: uuid
+            description: Token opaco, single-use, expira com a rodada
+          audio_source:
+            type: string
+            enum: [deezer, spotify_sdk]
+            description: Fonte do áudio (impacta como o frontend reproduz)
+          grace_period_seconds:
+            type: integer
+            default: 3
+
+    timerStarted:
+      name: timer_started
+      title: Timer iniciou
+      summary: Backend é fonte da verdade do timer
+      tags:
+        - name: game
+      payload:
+        type: object
+        required: [duration_seconds]
+        properties:
+          duration_seconds:
+            type: integer
+            minimum: 10
+            maximum: 60
+
+    answerConfirmed:
+      name: answer_confirmed
+      title: Resposta confirmada
+      summary: Confirma recebimento. NÃO revela se está correta.
+      tags:
+        - name: game
+      payload:
+        type: object
+        required: [player_uuid]
+        properties:
+          player_uuid:
+            $ref: "#/components/schemas/PlayerUuid"
+
+    playerVotedSkip:
+      name: player_voted_skip
+      title: Voto de pular
+      tags:
+        - name: game
+      payload:
+        type: object
+        required: [player_uuid, skip_votes, votes_needed]
+        properties:
+          player_uuid:
+            $ref: "#/components/schemas/PlayerUuid"
+          skip_votes:
+            type: integer
+            description: Votos atuais para pular
+          votes_needed:
+            type: integer
+            description: Votos necessários (maioria)
+
+    roundEnded:
+      name: round_ended
+      title: Rodada encerrada
+      summary: Revelação completa com música, respostas e pontos
+      tags:
+        - name: game
+      payload:
+        type: object
+        required: [round_index, song, answers, scores, next_round_in_seconds]
+        properties:
+          round_index:
+            type: integer
+          song:
+            $ref: "#/components/schemas/RevealedSong"
+          answers:
+            type: array
+            items:
+              $ref: "#/components/schemas/PlayerAnswer"
+          scores:
+            type: object
+            description: "Placar acumulado {player_uuid: total_points}"
+            additionalProperties:
+              type: integer
+          next_round_in_seconds:
+            type: integer
+            default: 3
+      examples:
+        - name: RodadaComAcerto
+          summary: Rodada onde Gabriel acertou e Maria errou
+          payload:
+            round_index: 1
+            song:
+              name: Bohemian Rhapsody
+              artist: Queen
+              album: A Night At The Opera
+              cover_url: "https://example.com/cover.jpg"
+              contributed_by: Gabriel
+            answers:
+              - player_uuid: "550e8400-e29b-41d4-a716-446655440000"
+                nickname: Gabriel
+                answer_text: Bohemian Rhapsody
+                is_correct: true
+                points_earned: 850
+                response_time: 5.2
+              - player_uuid: "660e8400-e29b-41d4-a716-446655440001"
+                nickname: Maria
+                answer_text: We Will Rock You
+                is_correct: false
+                points_earned: 0
+                response_time: 12.1
+            scores:
+              "550e8400-e29b-41d4-a716-446655440000": 850
+              "660e8400-e29b-41d4-a716-446655440001": 0
+            next_round_in_seconds: 3
+
+    gameEnded:
+      name: game_ended
+      title: Partida encerrada
+      summary: Ranking final com destaques
+      tags:
+        - name: game
+      payload:
+        type: object
+        required:
+          [final_scores, ranking, highlights, return_to_lobby_in_seconds]
+        properties:
+          final_scores:
+            type: object
+            additionalProperties:
+              type: integer
+          ranking:
+            type: array
+            items:
+              $ref: "#/components/schemas/RankingEntry"
+          highlights:
+            type: object
+            properties:
+              best_streak:
+                allOf:
+                  - $ref: "#/components/schemas/Highlight"
+                  - type: object
+                    properties:
+                      streak:
+                        type: integer
+              fastest_answer:
+                allOf:
+                  - $ref: "#/components/schemas/Highlight"
+                  - type: object
+                    properties:
+                      time:
+                        type: number
+                        format: float
+                      song_name:
+                        type: string
+              most_correct:
+                allOf:
+                  - $ref: "#/components/schemas/Highlight"
+                  - type: object
+                    properties:
+                      count:
+                        type: integer
+          return_to_lobby_in_seconds:
+            type: integer
+            default: 5
+
+    autocompleteResults:
+      name: autocomplete_results
+      title: Resultados autocomplete
+      summary: Máximo 10 resultados do pool de playlists dos jogadores
+      tags:
+        - name: game
+      payload:
+        type: object
+        required: [query, results]
+        properties:
+          query:
+            type: string
+          results:
+            type: array
+            maxItems: 10
+            items:
+              type: object
+              properties:
+                text:
+                  type: string
+                type:
+                  type: string
+                  enum: [song, artist]
+
+    error:
+      name: error
+      title: Erro
+      summary: Erro direcionado ao jogador
+      tags:
+        - name: system
+      payload:
+        type: object
+        required: [code, message]
+        properties:
+          code:
+            type: string
+            description: Código de erro do sistema
+            examples:
+              - not_host
+              - not_all_ready
+              - room_full
+          message:
+            type: string
+            description: Mensagem legível em pt-BR
+            examples:
+              - "Apenas o host pode iniciar a partida."

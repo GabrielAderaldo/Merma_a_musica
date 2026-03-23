@@ -1,0 +1,161 @@
+[
+  // ─── PROJETO COMPLETO ───
+  {
+    "label": "Dev: Tudo (Backend + Frontend)",
+    "command": "./scripts/dev.sh",
+    "use_new_terminal": true,
+    "reveal": "always",
+    "tags": ["dev"]
+  },
+  {
+    "label": "Setup: Instalar tudo",
+    "command": "./scripts/setup.sh",
+    "use_new_terminal": true,
+    "reveal": "always",
+    "tags": ["setup"]
+  },
+
+  // ─── FRONTEND (Vanilla TS + Bun) ───
+  {
+    "label": "Frontend: Dev Server (bun)",
+    "command": "bun",
+    "args": ["./index.html"],
+    "cwd": "apps/frontend",
+    "use_new_terminal": true,
+    "reveal": "always",
+    "tags": ["frontend", "dev"]
+  },
+  {
+    "label": "Frontend: Build Produção",
+    "command": "bun",
+    "args": ["build", "./index.html", "--minify", "--outdir=dist"],
+    "cwd": "apps/frontend",
+    "reveal": "always",
+    "tags": ["frontend", "build"]
+  },
+  {
+    "label": "Frontend: Testes",
+    "command": "bun",
+    "args": ["test"],
+    "cwd": "apps/frontend",
+    "reveal": "always",
+    "tags": ["frontend", "test"]
+  },
+  {
+    "label": "Frontend: Lint (oxlint)",
+    "command": "bunx",
+    "args": ["oxlint", "."],
+    "cwd": "apps/frontend",
+    "reveal": "always",
+    "tags": ["frontend", "lint"]
+  },
+  {
+    "label": "Frontend: Instalar deps",
+    "command": "bun",
+    "args": ["install"],
+    "cwd": "apps/frontend",
+    "reveal": "always",
+    "tags": ["frontend", "setup"]
+  },
+
+  // ─── GAME ENGINE (Gleam) ───
+  {
+    "label": "Engine: Build",
+    "command": "gleam",
+    "args": ["build"],
+    "cwd": "apps/game_engine",
+    "reveal": "always",
+    "tags": ["engine", "build"]
+  },
+  {
+    "label": "Engine: Testes",
+    "command": "gleam",
+    "args": ["test"],
+    "cwd": "apps/game_engine",
+    "reveal": "always",
+    "tags": ["engine", "test"]
+  },
+  {
+    "label": "Engine: Format",
+    "command": "gleam",
+    "args": ["format"],
+    "cwd": "apps/game_engine",
+    "reveal": "always",
+    "tags": ["engine", "lint"]
+  },
+
+  // ─── GAME ORCHESTRATOR (Gleam + Elixir) ───
+  {
+    "label": "Orchestrator: Phoenix Server",
+    "command": "mix",
+    "args": ["phx.server"],
+    "cwd": "apps/game_orchestrator",
+    "use_new_terminal": true,
+    "reveal": "always",
+    "tags": ["orchestrator", "dev"]
+  },
+  {
+    "label": "Orchestrator: Testes",
+    "command": "mix",
+    "args": ["test"],
+    "cwd": "apps/game_orchestrator",
+    "reveal": "always",
+    "tags": ["orchestrator", "test"]
+  },
+  {
+    "label": "Orchestrator: Precommit (format + compile + test)",
+    "command": "mix",
+    "args": ["precommit"],
+    "cwd": "apps/game_orchestrator",
+    "reveal": "always",
+    "tags": ["orchestrator", "lint"]
+  },
+  {
+    "label": "Orchestrator: Deps",
+    "command": "mix",
+    "args": ["deps.get"],
+    "cwd": "apps/game_orchestrator",
+    "reveal": "always",
+    "tags": ["orchestrator", "setup"]
+  },
+  {
+    "label": "Orchestrator: iex Console",
+    "command": "iex",
+    "args": ["-S", "mix"],
+    "cwd": "apps/game_orchestrator",
+    "use_new_terminal": true,
+    "reveal": "always",
+    "tags": ["orchestrator", "dev"]
+  },
+
+  // ─── DOCKER ───
+  {
+    "label": "Docker: Up",
+    "command": "docker",
+    "args": ["compose", "up", "-d"],
+    "reveal": "always",
+    "tags": ["docker", "dev"]
+  },
+  {
+    "label": "Docker: Down",
+    "command": "docker",
+    "args": ["compose", "down"],
+    "reveal": "always",
+    "tags": ["docker"]
+  },
+  {
+    "label": "Docker: Build",
+    "command": "docker",
+    "args": ["compose", "build"],
+    "reveal": "always",
+    "tags": ["docker", "build"]
+  },
+  {
+    "label": "Docker: Logs",
+    "command": "docker",
+    "args": ["compose", "logs", "-f"],
+    "use_new_terminal": true,
+    "reveal": "always",
+    "tags": ["docker"]
+  }
+]

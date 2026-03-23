@@ -1,33 +1,16 @@
 services:
-  # PostgreSQL
-  db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: game_orchestrator_prod
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-  # Backend: Elixir + Phoenix + Gleam Engine
-  backend:
+  # Backend BEAM (Gleam + Elixir/Phoenix) + Frontend estático
+  app:
     build:
       context: .
       dockerfile: apps/game_orchestrator/Dockerfile
     environment:
-      DATABASE_URL: ecto://postgres:postgres@db/game_orchestrator_prod
       SECRET_KEY_BASE: ${SECRET_KEY_BASE:-gN8xJ3kT2vP9sR4wQ7yZ1cF6hA0mD5bE8uL3nX2jW4kS7tY0pI9oG6rV1fM8qH}
-      PHX_HOST: ${DOMAIN:-localhost}
+      PHX_HOST: ${PHX_HOST:-merma-api.caninhagames.fortal.br}
       PHX_SCHEME: https
       PHX_URL_PORT: "443"
       PHX_SERVER: "true"
       PORT: "4000"
-      POOL_SIZE: "5"
       # Streaming platforms (optional)
       SPOTIFY_CLIENT_ID: ${SPOTIFY_CLIENT_ID:-}
       SPOTIFY_CLIENT_SECRET: ${SPOTIFY_CLIENT_SECRET:-}
@@ -38,22 +21,6 @@ services:
       YOUTUBE_CLIENT_ID: ${YOUTUBE_CLIENT_ID:-}
       YOUTUBE_CLIENT_SECRET: ${YOUTUBE_CLIENT_SECRET:-}
       YOUTUBE_REDIRECT_URI: ${YOUTUBE_REDIRECT_URI:-}
-    depends_on:
-      db:
-        condition: service_healthy
-    restart: unless-stopped
-
-  # Frontend: SvelteKit + Deno
-  frontend:
-    build:
-      context: apps/frontend
-      dockerfile: Dockerfile
-      args:
-        VITE_API_URL: ${VITE_API_URL:-/api}
-        VITE_WS_URL: ${VITE_WS_URL:-wss://localhost/socket}
-    environment:
-      PORT: "3000"
-      ORIGIN: ${ORIGIN:-https://localhost}
     restart: unless-stopped
 
   # Caddy reverse proxy (HTTPS automático via Let's Encrypt)
@@ -68,13 +35,11 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     environment:
-      DOMAIN: ${DOMAIN:-localhost}
+      # Caddy usa o Caddyfile com domínios hardcoded
     depends_on:
-      - backend
-      - frontend
+      - app
     restart: unless-stopped
 
 volumes:
-  pgdata:
   caddy_data:
   caddy_config:

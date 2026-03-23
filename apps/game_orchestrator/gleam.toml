@@ -1,0 +1,27 @@
+# Game Orchestrator — Gleam Side
+#
+# O QUE É: Parte Gleam do Orchestrator. Contém TODA a lógica de
+# orquestração, coordenação, playlists, áudio e handlers.
+#
+# LIMITES ARQUITETURAIS:
+# - Gleam é a linguagem PRINCIPAL do Orchestrator
+# - Toda lógica de negócio e decisão está aqui
+# - Comunica com Elixir/Phoenix APENAS via phoenix_bridge (@external)
+# - Consome o Game Engine via chamadas diretas no BEAM
+#
+# NOTA: Este gleam.toml coexiste com mix.exs no mesmo diretório.
+# O Mix compiler customizado compila o Gleam e integra os .beam files.
+# `gleam build` sozinho dá erro nos .ex de test/support (ExUnit não carregado).
+# Isso é esperado — o build completo é via `mix compile` que integra tudo.
+
+name = "game_orchestrator"
+version = "0.1.0"
+target = "erlang"
+
+[dependencies]
+gleam_stdlib = ">= 0.44.0 and < 2.0.0"
+gleam_json = ">= 2.0.0 and < 4.0.0"
+gleam_erlang = ">= 0.34.0 and < 2.0.0"
+
+[dev-dependencies]
+gleeunit = ">= 1.0.0 and < 2.0.0"

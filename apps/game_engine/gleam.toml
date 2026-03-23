@@ -1,16 +1,28 @@
-name = "game_engine"
-version = "1.0.0"
+# Game Engine — Core Domain
+#
+# O QUE É: Motor puro do jogo "Mermã, a Música!".
+# Implementa TODA a lógica de partida: criação, rodadas, respostas,
+# pontuação, validação fuzzy e seleção de músicas.
+#
+# LIMITES ARQUITETURAIS:
+# - 100% Gleam puro — ZERO side effects
+# - NÃO conhece WebSocket, HTTP, banco de dados, timers ou UI
+# - NÃO importa nenhum módulo do Orchestrator ou Phoenix
+# - Recebe dados tipados → retorna Result(Event, Error)
+# - Testável isoladamente sem nenhuma dependência externa
+#
+# RESPONSABILIDADES:
+# - Gerenciar ciclo de vida da partida (Match aggregate)
+# - Validar respostas com fuzzy matching + normalização
+# - Calcular pontuação (Simple e SpeedBonus)
+# - Selecionar e distribuir músicas entre jogadores
+# - Calcular highlights e estatísticas finais
+#
+# QUEM CONSOME: Game Orchestrator (via chamadas diretas no BEAM)
 
-# Fill out these fields if you intend to generate HTML documentation or publish
-# your project to the Hex package manager.
-#
-# description = ""
-# licences = ["Apache-2.0"]
-# repository = { type = "github", user = "", repo = "" }
-# links = [{ title = "Website", href = "" }]
-#
-# For a full reference of all the available options, you can have a look at
-# https://gleam.run/writing-gleam/gleam-toml/.
+name = "game_engine"
+version = "0.1.0"
+target = "erlang"
 
 [dependencies]
 gleam_stdlib = ">= 0.44.0 and < 2.0.0"

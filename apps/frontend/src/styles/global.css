@@ -1,0 +1,8 @@
+/* global.css — Tailwind + Design Tokens
+ *
+ * Processado pelo bun-plugin-tailwind via bunfig.toml.
+ * Dark mode padrão (sem toggle no MVP).
+ *
+ * Tokens definidos como CSS custom properties.
+ * Consumidos por classes Tailwind e estilos inline.
+ */

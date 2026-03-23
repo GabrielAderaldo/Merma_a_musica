@@ -1,12 +1,12 @@
+# prod.exs — Configuração de produção
+
 import Config
 
-# Force SSL only if FORCE_SSL env is set (skip for local Docker testing).
-# In production with a real domain, set FORCE_SSL=true.
-# Note: force_ssl is a compile-time config, so we use a build arg approach.
-# For simplicity, we disable it by default and let Nginx handle SSL termination.
+config :game_orchestrator, GameOrchestratorWeb.Endpoint,
+  url: [host: "merma-api.caninhagames.fortal.br", port: 443, scheme: "https"],
+  check_origin: [
+    "https://merma.caninhagames.fortal.br",
+    "https://merma-api.caninhagames.fortal.br",
+  ]
 
-# Do not print debug messages in production
 config :logger, level: :info
-
-# Runtime production configuration, including reading
-# of environment variables, is done on config/runtime.exs.

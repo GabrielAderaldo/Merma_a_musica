@@ -2,7 +2,6 @@
 _build/
 cover/
 deps/
-doc/
 .fetch
 erl_crash.dump
 *.ez
@@ -11,14 +10,19 @@ erl_crash.dump
 
 # === Gleam ===
 apps/game_engine/build/
+apps/game_orchestrator/build/
 
-# === Deno / Node ===
+# === Bun / Node ===
 node_modules/
-.svelte-kit/
+bun.lock
+
+# === Build output ===
+dist/
 
 # === IDE ===
 .vscode/
 .idea/
+# NOTA: .zed/ é commitado (config do projeto para Zed editor)
 *.swp
 *.swo
 
@@ -26,5 +30,10 @@ node_modules/
 .DS_Store
 Thumbs.db
 
-# === Debug logs ===
+# === Env ===
+.env
+.env.local
+.env.production
+
+# === Debug ===
 firebase-debug.log

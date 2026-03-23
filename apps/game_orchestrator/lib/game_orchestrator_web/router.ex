@@ -1,34 +1,51 @@
+# router.ex — Phoenix Router
+#
+# O QUE É: Mapeamento de rotas HTTP para controllers.
+#
+# LIMITES ARQUITETURAIS:
+# - Apenas mapeamento — NÃO contém lógica
+# - Controllers são thin wrappers que delegam para Gleam handlers
+# - Rotas seguem o contrato definido em Openapi.yaml
+#
+# RESPONSABILIDADES:
+# - /api/v1/* → controllers REST
+# - /auth/* → auth controller (OAuth callbacks)
+# - /health → health controller
+
 defmodule GameOrchestratorWeb.Router do
-  use GameOrchestratorWeb, :router
+  use Phoenix.Router
 
   pipeline :api do
     plug :accepts, ["json"]
   end
 
-  # Health check (sem pipeline para ser mais leve)
-  get "/health", GameOrchestratorWeb.HealthController, :index
-
-  # OAuth callback (GET redirect dos providers — fora do /api)
-  scope "/auth", GameOrchestratorWeb do
+  # Health check
+  scope "/", GameOrchestratorWeb do
     pipe_through :api
-    get "/:platform/callback", PlaylistController, :auth_callback
+    get "/health", HealthController, :index
   end
 
-  scope "/api", GameOrchestratorWeb do
+  # API v1
+  scope "/api/v1", GameOrchestratorWeb do
     pipe_through :api
 
+    # Salas
     post "/rooms", RoomController, :create
-    get "/rooms/:code", RoomController, :show
+    get "/rooms/:invite_code", RoomController, :show
+    post "/rooms/:invite_code/join", RoomController, :join
 
-    # Plataformas suportadas
-    get "/platforms", PlaylistController, :platforms
+    # Auth OAuth
+    get "/auth/:platform/login", AuthController, :login
+    get "/auth/:platform/callback", AuthController, :callback
+    post "/auth/:platform/refresh", AuthController, :refresh
 
-    # Auth OAuth por plataforma (spotify, deezer, youtube_music)
-    get "/auth/:platform", PlaylistController, :auth_url
-    get "/auth/:platform/callback", PlaylistController, :auth_callback
-
-    # Playlists e songs por plataforma
+    # Playlists
     get "/playlists/:platform", PlaylistController, :index
-    get "/playlists/:platform/:id/songs", PlaylistController, :songs
+    post "/playlists/:platform/:playlist_id/import", PlaylistController, :import
+    get "/playlists/validated", PlaylistController, :validated
+
+    # Áudio
+    get "/audio/:audio_token", AudioController, :stream
+    get "/audio/preview/:deezer_track_id", AudioController, :preview
   end
 end

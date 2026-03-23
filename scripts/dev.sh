@@ -1,19 +1,26 @@
 #!/usr/bin/env bash
-set -euo pipefail
+# dev.sh — Inicia ambiente de desenvolvimento
+#
+# RESPONSABILIDADES:
+# - Iniciar backend (Phoenix server na porta 4000)
+# - Iniciar frontend dev server (SolidStart na porta 3000)
+# - Ambos em paralelo
 
-ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+set -e
 
-# Inicia o backend (Phoenix + Game Engine) e o frontend em paralelo
-echo "==> Iniciando Game Orchestrator (Phoenix) na porta 4000..."
-cd "$ROOT_DIR/apps/game_orchestrator"
-mix phx.server &
+echo "=== Iniciando Backend (Phoenix + Gleam) ==="
+cd apps/game_orchestrator && mix phx.server &
 BACKEND_PID=$!
 
-echo "==> Iniciando Frontend (SvelteKit) na porta 5173..."
-cd "$ROOT_DIR/apps/frontend"
-deno task dev &
+echo "=== Iniciando Frontend (SolidJS + Bun) ==="
+cd apps/frontend && bun dev &
 FRONTEND_PID=$!
 
-trap "kill $BACKEND_PID $FRONTEND_PID 2>/dev/null" EXIT
+echo ""
+echo "Backend:  http://localhost:4000"
+echo "Frontend: http://localhost:3000"
+echo ""
+echo "Ctrl+C para parar ambos."
 
+trap "kill $BACKEND_PID $FRONTEND_PID 2>/dev/null" EXIT
 wait

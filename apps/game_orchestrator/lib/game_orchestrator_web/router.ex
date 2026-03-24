@@ -25,6 +25,14 @@ defmodule GameOrchestratorWeb.Router do
     get "/health", HealthController, :index
   end
 
+  # Auth OAuth (fora do /api/v1 — redirect URIs do Spotify/Google usam /auth/)
+  scope "/auth", GameOrchestratorWeb do
+    pipe_through :api
+    get "/:platform/login", AuthController, :login
+    get "/:platform/callback", AuthController, :callback
+    post "/:platform/refresh", AuthController, :refresh
+  end
+
   # API v1
   scope "/api/v1", GameOrchestratorWeb do
     pipe_through :api
@@ -33,11 +41,6 @@ defmodule GameOrchestratorWeb.Router do
     post "/rooms", RoomController, :create
     get "/rooms/:invite_code", RoomController, :show
     post "/rooms/:invite_code/join", RoomController, :join
-
-    # Auth OAuth
-    get "/auth/:platform/login", AuthController, :login
-    get "/auth/:platform/callback", AuthController, :callback
-    post "/auth/:platform/refresh", AuthController, :refresh
 
     # Playlists
     get "/playlists/:platform", PlaylistController, :index

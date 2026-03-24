@@ -60,10 +60,18 @@ defmodule GameOrchestratorWeb.RoomChannel do
     execute_result(result, socket)
   end
 
-  # ─── HANDLE_INFO (PubSub, timers, mensagens internas) ───
+  # ─── HANDLE_INFO (PubSub broadcasts + mensagens internas) ───
 
   @impl true
+  def handle_info({event, payload}, socket) when is_binary(event) do
+    # PubSub broadcast do Room GenServer → serializar EffectPayload → broadcast ao client
+    data = serialize_effect_payload(event, payload)
+    broadcast!(socket, event, data)
+    {:noreply, socket}
+  end
+
   def handle_info(message, socket) do
+    # Outras mensagens (timers, etc.) → delegar ao Gleam
     result = :channel@room_handler.handle_info(message, socket.assigns.gleam_state)
     execute_info_result(result, socket)
   end
@@ -132,4 +140,107 @@ defmodule GameOrchestratorWeb.RoomChannel do
   defp put_state(socket, new_state) do
     assign(socket, :gleam_state, new_state)
   end
+
+  # ═══════════════════════════════════════════════════════════════
+  # EFFECT PAYLOAD SERIALIZER — converte EffectPayload (room/effects.gleam)
+  # para JSON maps. Diferente do EventSerializer que converte OutboundEvent.
+  # ═══════════════════════════════════════════════════════════════
+
+  defp serialize_effect_payload("player_joined", {:player_event, id, nick}) do
+    %{player_uuid: id, nickname: nick}
+  end
+
+  defp serialize_effect_payload("player_left", {:leave_event, id, reason}) do
+    %{player_uuid: id, reason: reason}
+  end
+
+  defp serialize_effect_payload("player_ready_changed", {:ready_event, id, ready}) do
+    %{player_uuid: id, ready: ready}
+  end
+
+  defp serialize_effect_payload("host_changed", {:host_event, id, nick}) do
+    %{new_host_uuid: id, new_host_nickname: nick}
+  end
+
+  defp serialize_effect_payload("config_updated", {:config_payload, time, songs, answer, repeats, scoring}) do
+    %{time_per_round: time, total_songs: songs, answer_type: answer, allow_repeats: repeats, scoring_rule: scoring}
+  end
+
+  defp serialize_effect_payload("game_starting", {:countdown_event, seconds}) do
+    %{countdown_seconds: seconds}
+  end
+
+  defp serialize_effect_payload("round_starting", {:round_starting_payload, index, total, token, grace}) do
+    %{round_index: index, total_rounds: total, audio_token: token, grace_period_seconds: grace}
+  end
+
+  defp serialize_effect_payload("timer_started", {:text_payload, text}) do
+    %{duration_seconds: text}
+  end
+
+  defp serialize_effect_payload("answer_confirmed", {:answer_confirmed_payload, id}) do
+    %{player_uuid: id}
+  end
+
+  defp serialize_effect_payload("round_ended", {:round_ended_payload, index, song, artist, album, cover, by, answers, scores, next_in}) do
+    %{
+      round_index: index,
+      song: %{name: song, artist: artist, album: album, cover_url: cover, contributed_by: by},
+      answers: Enum.map(answers, fn {pid, text, time, correct, points} ->
+        %{player_uuid: pid, answer_text: text, response_time: time, is_correct: correct, points_earned: points}
+      end),
+      scores: gleam_dict_to_map(scores),
+      next_round_in_seconds: next_in
+    }
+  end
+
+  defp serialize_effect_payload("game_ended", {:game_ended_payload, scores, ranking, highlights, return_in}) do
+    %{
+      final_scores: gleam_dict_to_map(scores),
+      ranking: Enum.map(ranking, fn {pos, id, nick, pts, correct, avg} ->
+        %{position: pos, player_uuid: id, nickname: nick, total_points: pts, correct_answers: correct, avg_response_time: avg}
+      end),
+      highlights: serialize_highlights(highlights),
+      return_to_lobby_in_seconds: return_in
+    }
+  end
+
+  defp serialize_effect_payload("tiebreaker_starting", {:tiebreaker_starting_payload, ids, score, grace}) do
+    %{tied_player_ids: ids, tied_score: score, grace_period_seconds: grace}
+  end
+
+  defp serialize_effect_payload("room_destroyed", reason) do
+    %{reason: to_string(reason)}
+  end
+
+  defp serialize_effect_payload("song_range_updated", {:song_range_payload, min, max, total}) do
+    %{min: min, max: max, total_players: total}
+  end
+
+  # Fallback — evento desconhecido, enviar payload raw
+  defp serialize_effect_payload(_event, payload) do
+    %{data: inspect(payload)}
+  end
+
+  # Helper: converte Gleam Dict (Erlang :gleam@dict format) para Elixir map
+  defp gleam_dict_to_map(gleam_dict) do
+    try do
+      :gleam@dict.to_list(gleam_dict)
+      |> Map.new()
+    rescue
+      _ -> %{}
+    end
+  end
+
+  defp serialize_highlights({{streak_id, streak_nick, streak_count},
+                              {fast_id, fast_nick, fast_time, fast_song},
+                              {correct_id, correct_nick, correct_count}}) do
+    %{
+      best_streak: %{player_uuid: streak_id, nickname: streak_nick, streak: streak_count},
+      fastest_answer: %{player_uuid: fast_id, nickname: fast_nick, time: fast_time, song_name: fast_song},
+      most_correct: %{player_uuid: correct_id, nickname: correct_nick, count: correct_count}
+    }
+  end
+
+  defp serialize_highlights(_), do: %{}
 end

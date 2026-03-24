@@ -12,7 +12,7 @@ defmodule GameOrchestratorWeb.AudioController do
       {:stream_url, url} ->
         proxy_audio(conn, url)
 
-      {:http_error, status, code, message} ->
+      {:audio_error, status, code, message} ->
         conn
         |> put_status(status)
         |> put_resp_content_type("application/json")
@@ -26,7 +26,7 @@ defmodule GameOrchestratorWeb.AudioController do
       {:stream_url, url} ->
         proxy_audio(conn, url)
 
-      {:http_error, status, code, message} ->
+      {:audio_error, status, code, message} ->
         conn
         |> put_status(status)
         |> put_resp_content_type("application/json")

@@ -115,6 +115,33 @@ defmodule :phoenix_bridge_backend do
   end
 
   # ═══════════════════════════════════════════════════════════════
+  # ROOM — Interação com GenServer da sala
+  # ═══════════════════════════════════════════════════════════════
+
+  @doc """
+  Enviar comando síncrono ao GenServer da sala.
+  Efeitos (broadcast, timers) são executados automaticamente pelo GenServer.
+  """
+  def call_room(invite_code, command) do
+    case GameOrchestrator.Room.Process.call_command(invite_code, command) do
+      {:ok, _new_state} -> {:ok, nil}
+      {:error, code, message} -> {:error, "#{code}: #{message}"}
+      {:error, reason} when is_binary(reason) -> {:error, reason}
+      other -> {:error, inspect(other)}
+    end
+  end
+
+  @doc """
+  Obter estado completo da sala. Retorna RoomState como Dynamic.
+  """
+  def get_room_state(invite_code) do
+    case GameOrchestrator.Room.Process.get_state(invite_code) do
+      {:ok, state} -> {:ok, state}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  # ═══════════════════════════════════════════════════════════════
   # PROCESS
   # ═══════════════════════════════════════════════════════════════
 
@@ -183,6 +210,68 @@ defmodule :phoenix_bridge_backend do
       _tid ->
         table_atom
     end
+  end
+
+  # ═══════════════════════════════════════════════════════════════
+  # ENVIRONMENT
+  # ═══════════════════════════════════════════════════════════════
+
+  @doc """
+  Ler variável de ambiente. Retorna {:ok, val} ou {:error, nil}.
+  """
+  def get_env(key) do
+    case System.get_env(key) do
+      nil -> {:error, nil}
+      value -> {:ok, value}
+    end
+  end
+
+  # ═══════════════════════════════════════════════════════════════
+  # UTILS
+  # ═══════════════════════════════════════════════════════════════
+
+  @doc """
+  Retorna timestamp atual em milissegundos.
+  """
+  def get_now_ms do
+    System.system_time(:millisecond)
+  end
+
+  @doc """
+  Identity function — retorna o valor sem alteração.
+  Usado pelo Gleam para coercer qualquer valor para Dynamic.
+  """
+  def identity(value), do: value
+
+  @doc """
+  Pausar execução por N milissegundos.
+  """
+  def sleep(ms) do
+    Process.sleep(ms)
+    nil
+  end
+
+  @doc """
+  Gerar string hexadecimal aleatória com N bytes de entropia.
+  """
+  def random_hex(length) do
+    :crypto.strong_rand_bytes(length) |> Base.encode16(case: :lower)
+  end
+
+  @doc """
+  Codificar string em Base64.
+  """
+  def base64_encode(input) do
+    Base.encode64(input)
+  end
+
+  @doc """
+  Codificar lista de pares {key, value} como query string URL-encoded.
+  """
+  def url_encode(params) do
+    params
+    |> Enum.map(fn {k, v} -> {k, v} end)
+    |> URI.encode_query()
   end
 
   # ═══════════════════════════════════════════════════════════════

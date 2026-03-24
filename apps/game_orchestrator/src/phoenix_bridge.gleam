@@ -102,6 +102,26 @@ pub fn start_child(
 pub fn stop_child(pid: Dynamic) -> Result(Nil, String)
 
 // ═══════════════════════════════════════════════════════════════
+// ROOM — Interação com o GenServer da sala
+// ═══════════════════════════════════════════════════════════════
+
+/// Enviar comando ao GenServer da sala via invite_code.
+/// O GenServer executa os efeitos (broadcast, timers) automaticamente.
+/// Retorna Ok(Nil) em sucesso ou Error(reason) em falha.
+///
+/// Exemplo: call_room("ABC123", to_dynamic(#("join", "uuid", "nick")))
+@external(erlang, "phoenix_bridge_backend", "call_room")
+pub fn call_room(
+  invite_code: String,
+  command: Dynamic,
+) -> Result(Nil, String)
+
+/// Obter estado completo da sala como Dynamic.
+/// Usado no handle_join para construir RoomStateEvent.
+@external(erlang, "phoenix_bridge_backend", "get_room_state")
+pub fn get_room_state(invite_code: String) -> Result(Dynamic, String)
+
+// ═══════════════════════════════════════════════════════════════
 // PROCESS — Utilitários de processo BEAM
 // ═══════════════════════════════════════════════════════════════
 
@@ -168,3 +188,45 @@ pub fn http_post(
   headers: List(#(String, String)),
   body: String,
 ) -> Result(#(Int, String), String)
+
+// ═══════════════════════════════════════════════════════════════
+// ENVIRONMENT — Ler variáveis de ambiente
+// ═══════════════════════════════════════════════════════════════
+
+/// Ler variável de ambiente pelo nome.
+/// Retorna Error(Nil) se não definida.
+///
+/// Usado para: credenciais OAuth (SPOTIFY_CLIENT_ID, etc.)
+@external(erlang, "phoenix_bridge_backend", "get_env")
+pub fn get_env(key: String) -> Result(String, Nil)
+
+// ═══════════════════════════════════════════════════════════════
+// UTILS — Funções utilitárias de infra
+// ═══════════════════════════════════════════════════════════════
+
+/// Pausar execução por N milissegundos.
+/// Usado para: rate limiting (Deezer 50 req/5s), delay entre páginas.
+@external(erlang, "phoenix_bridge_backend", "sleep")
+pub fn sleep(ms: Int) -> Nil
+
+/// Gerar string hexadecimal aleatória com N bytes de entropia.
+/// Retorna string com 2*length caracteres hex lowercase.
+/// Usado para: state parameter OAuth (anti-CSRF).
+@external(erlang, "phoenix_bridge_backend", "random_hex")
+pub fn random_hex(length: Int) -> String
+
+/// Codificar string em Base64.
+/// Usado para: header Authorization Basic do Spotify (base64(client_id:client_secret)).
+@external(erlang, "phoenix_bridge_backend", "base64_encode")
+pub fn base64_encode(input: String) -> String
+
+/// Converter qualquer valor Gleam para Dynamic (unsafe coerce via identity).
+/// Usado para armazenar valores no cache ETS e construir respostas JSON.
+@external(erlang, "phoenix_bridge_backend", "identity")
+pub fn to_dynamic(value: a) -> Dynamic
+
+/// Codificar lista de pares chave-valor como query string URL-encoded.
+/// Ex: [#("grant_type", "authorization_code"), #("code", "abc")] → "grant_type=authorization_code&code=abc"
+/// Usado para: body de token exchange OAuth (application/x-www-form-urlencoded).
+@external(erlang, "phoenix_bridge_backend", "url_encode")
+pub fn url_encode(params: List(#(String, String))) -> String

@@ -21,10 +21,20 @@ defmodule GameOrchestratorWeb.AuthController do
     end
   end
 
-  # GET /api/v1/auth/:platform/callback?code=...&state=...
+  # GET /auth/:platform/callback?code=...&state=...
+  # Retorna redirect ao frontend com tokens na URL (não JSON)
   def callback(conn, %{"platform" => platform} = params) do
-    result = :http@auth_handler.handle_callback(platform, params)
-    ResponseHelper.execute(conn, result, &serialize_tokens/1)
+    case :http@auth_handler.handle_callback(platform, params) do
+      {:redirect, url} ->
+        conn
+        |> put_status(302)
+        |> redirect(external: url)
+
+      {:login_error, status, code, message} ->
+        conn
+        |> put_status(status)
+        |> json(%{error: %{code: code, message: message}})
+    end
   end
 
   # POST /api/v1/auth/:platform/refresh

@@ -80,7 +80,7 @@ Quando dois documentos parecerem conflitar, o documento de **nível mais alto** 
 | Runtime | Bun 1.x | [`adrs/0001`](20-architecture/adrs/0001-runtime-bun-and-ts-6.md) |
 | Linguagem | TypeScript 6.0 strict | [`adrs/0001`](20-architecture/adrs/0001-runtime-bun-and-ts-6.md) |
 | HTTP/WS server | Hono | [`adrs/0002`](20-architecture/adrs/0002-server-hono.md) |
-| Frontend | Vanilla TS (sem framework) | [`adrs/0003`](20-architecture/adrs/0003-no-framework-frontend.md) |
+| Frontend | SolidJS 1.x (signals + JSX AOT) | [`adrs/0008`](20-architecture/adrs/0008-frontend-solidjs.md) |
 | Áudio | Deezer (engine) + fallback Spotify Premium | [`adrs/0004`](20-architecture/adrs/0004-audio-deezer-as-engine.md) |
 | Monorepo | Bun Workspaces | [`adrs/0005`](20-architecture/adrs/0005-monorepo-bun-workspaces.md) |
 | Banco | PostgreSQL + Drizzle | [`adrs/0006`](20-architecture/adrs/0006-postgres-drizzle.md) |

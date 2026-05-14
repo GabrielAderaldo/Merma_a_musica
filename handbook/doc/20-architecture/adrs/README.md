@@ -10,11 +10,12 @@ Um ADR documenta **uma decisão arquitetural** — o contexto que levou a ela, a
 |---:|---|---|---|
 | [0001](0001-runtime-bun-and-ts-6.md) | accepted | Runtime: Bun + TypeScript 6.0 strict | 2026-05-13 |
 | [0002](0002-server-hono.md) | accepted | Server HTTP/WS: Hono | 2026-05-13 |
-| [0003](0003-no-framework-frontend.md) | accepted | Frontend sem framework (Vanilla TS + MVVM) | 2026-05-13 |
+| [0003](0003-no-framework-frontend.md) | superseded by 0008 | Frontend sem framework (Vanilla TS + MVVM) | 2026-05-13 |
 | [0004](0004-audio-deezer-as-engine.md) | accepted | Áudio universal via Deezer (ISRC-first) | 2026-05-13 |
 | [0005](0005-monorepo-bun-workspaces.md) | accepted | Monorepo com Bun Workspaces | 2026-05-13 |
 | [0006](0006-postgres-drizzle.md) | accepted | Banco: PostgreSQL + Drizzle | 2026-05-13 |
 | [0007](0007-fuzzy-match-levenshtein.md) | accepted | Fuzzy match in-house (Levenshtein) | 2026-05-13 |
+| [0008](0008-frontend-solidjs.md) | accepted | Frontend reativo com SolidJS (supersedes 0003) | 2026-05-13 |
 
 ## Status possíveis
 

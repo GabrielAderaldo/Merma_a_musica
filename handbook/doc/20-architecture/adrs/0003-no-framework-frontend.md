@@ -1,8 +1,12 @@
 # ADR 0003: Frontend sem framework — Vanilla TS + MVVM
 
-- **Status:** accepted
+- **Status:** superseded by [ADR-0008](0008-frontend-solidjs.md) em 2026-05-13
 - **Data:** 2026-05-13
 - **Decisores:** core
+
+> ⚠️ **Esta decisão foi revisitada no mesmo dia em que foi aceita.** Após comparação prática entre Vanilla TS, Web Components e SolidJS, ficou claro que o "observer in-house" planejado aqui era exatamente o que signals do Solid já entregam (de graça, mais bem testados, com bundle menor no final). Veja o [ADR-0008](0008-frontend-solidjs.md) para a decisão atual. O conteúdo abaixo permanece **inalterado** como registro histórico.
+
+---
 
 ## Contexto
 

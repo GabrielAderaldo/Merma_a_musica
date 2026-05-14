@@ -19,15 +19,16 @@ Termos compartilhados entre produto, design, arquitetura, código e specs. Quand
 | **Sala** | `Room` | Espaço persistente onde jogadores se reúnem antes, durante e depois de partidas. Identificada por **invite code**. Pode hospedar múltiplas partidas sequenciais. |
 | **Partida** | `Match` | Uma execução completa do jogo dentro de uma sala: do start ao ranking final. Composta por rodadas. Uma sala pode ter várias partidas em sequência. |
 | **Rodada** | `Round` | Um ciclo de "ouvir música → responder → revelação". Várias rodadas compõem uma partida. |
-| **Host** | `Host` | Jogador que criou a sala. Tem permissões exclusivas (configurar partida, iniciar). Se desconectar, o papel migra para o jogador conectado há mais tempo. |
+| **Host** | `Host` | Jogador que criou a sala. Tem permissões exclusivas (configurar partida, iniciar). **Sempre conta como ready** (não pode marcar `unready`). Se desconectar, o papel migra para o jogador conectado há mais tempo. |
 | **Lobby** | `Lobby` (estado de `Room`) | Tela onde jogadores esperam, escolhem playlists, marcam ready e o host configura a próxima partida. |
-| **Ready** | `ready: boolean` | Estado por-jogador no lobby. Não bloqueia o início — o host pode iniciar mesmo com jogadores `unready`, contanto que pelo menos 1 jogador esteja na sala. |
+| **Ready** | `ready: boolean` | Estado por-jogador no lobby. **Não se aplica ao host** (host é sempre ready). Não bloqueia o início — o host pode iniciar mesmo com jogadores `unready`, contanto que pelo menos 1 jogador esteja na sala. |
+| **AFK** | `afk: boolean` | Sinalizador por-jogador (inclusive host) de ausência temporária. **Apenas comunicação social** — não muda regras do jogo, não bloqueia início, não auto-skip de rodadas. Volta automaticamente a `false` na próxima interação do jogador. UI deve exibir badge visual. |
 | **Invite code** | `invite_code` | Código curto (6 caracteres alfanuméricos maiúsculos) que identifica a sala em links e em UI. Ex: `ABC123`. |
 | **Streak** | `streak` | Quantidade de acertos consecutivos sem errar dentro de uma partida. Zera ao errar ou não responder. Critério de desempate. |
 | **Pool** | `pool` | Conjunto total de músicas das playlists de todos os jogadores da sala. Fonte do autocomplete (evita spoilers de quais músicas estão na partida). |
 | **Revelação** | `Reveal` (fase de `Round`) | Momento após o timer da rodada onde a música correta + respostas de todos + pontos são exibidos. Dura ~3 segundos. |
 | **Grace period** | `grace_period_seconds` | Janela de 3 segundos antes do timer oficial da rodada, para buffering do áudio nos clientes. |
-| **Solo / Prática** | (sem flag específica) | Modo natural quando há apenas 1 jogador na sala — todas as regras valem normalmente. Não é um modo separado. |
+| **Modo de jogo** | `game_mode` ∈ `{multiplayer, solo}` | Modalidade da partida, configurada na `MatchConfiguration`. **Solo** é modo explícito (não apenas multiplayer com 1 jogador); regras específicas serão detalhadas no GDD canônico (`10-product/03-gdd.md`). |
 
 ## 2. Conceitos de resposta e pontuação
 
@@ -80,8 +81,9 @@ Eventos seguem `snake_case`. Detalhes em [`30-specs/04-websocket.yaml`](30-specs
 
 | Evento (client→server) | O que faz |
 |---|---|
-| `player_ready` / `player_unready` | Alterna `ready` do jogador. |
-| `configure_match` | Host envia `MatchConfiguration`. |
+| `player_ready` / `player_unready` | Alterna `ready` do jogador. **Rejeitado se o emissor é o host** (host é sempre ready). |
+| `player_afk_changed` | Jogador (qualquer um, inclusive host) alterna `afk`. Servidor faz broadcast equivalente. |
+| `configure_match` | Host envia `MatchConfiguration` (inclui `game_mode`). |
 | `start_game` | Host inicia. |
 | `submit_answer` | Envia ou atualiza `answer_text`. Pode ser chamado várias vezes durante a rodada. |
 | `vote_skip` | Vota para encerrar a rodada antes do timer (só após ter respondido). |
@@ -92,7 +94,7 @@ Eventos seguem `snake_case`. Detalhes em [`30-specs/04-websocket.yaml`](30-specs
 |---|---|
 | `room_state` | Ao entrar/reconectar; estado completo da sala. |
 | `player_joined` / `player_left` / `host_changed` | Eventos de presença. |
-| `player_ready_changed` / `config_updated` | Mudanças no lobby. |
+| `player_ready_changed` / `player_afk_changed` / `config_updated` | Mudanças no lobby (ready, ausência, configuração da partida). |
 | `game_starting` / `round_starting` / `timer_started` | Início de partida e rodadas. |
 | `answer_confirmed` | Backend acusa recebimento — **não** revela se acertou. |
 | `player_voted_skip` | Inclui contagem atual de votos. |
@@ -119,3 +121,4 @@ Estes termos apareciam em versões antigas da documentação e **não devem mais
 ## Changelog
 
 - **2026-05-13:** primeira versão consolidada. Termos extraídos de `DOMAIN_MODELS_v0_gleam.md`, `gdd_v1.1.md`, `Asyncapi_v1.0_phoenix.yaml`. Termos legados (BEAM/ETS/Phoenix Channel/Gleam/SvelteKit) marcados como descontinuados.
+- **2026-05-13 (fixup):** ajustes de produto após primeira revisão — (1) **Host é sempre ready** e não pode marcar `unready`; (2) novo conceito **AFK** como sinalizador social (não funcional); (3) **Solo** promovido a modo de jogo explícito (`game_mode` na `MatchConfiguration`); (4) novo evento `player_afk_changed`.

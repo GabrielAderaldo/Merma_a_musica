@@ -1,23 +1,16 @@
-# === Elixir / Mix ===
-_build/
-cover/
-deps/
-.fetch
-erl_crash.dump
-*.ez
-/tmp/
-*.tar
-
-# === Gleam ===
-apps/game_engine/build/
-apps/game_orchestrator/build/
-
-# === Bun / Node ===
+# === Bun ===
 node_modules/
 bun.lock
 
 # === Build output ===
 dist/
+*.tsbuildinfo
+.tsbuildinfo/
+
+# === Logs ===
+*.log
+npm-debug.log*
+firebase-debug.log
 
 # === IDE ===
 .vscode/
@@ -35,5 +28,9 @@ Thumbs.db
 .env.local
 .env.production
 
-# === Debug ===
-firebase-debug.log
+# === MCP config local ===
+# .mcp.json contém path absoluto do MCP local — específico da máquina do dev
+.mcp.json
+
+# === Temporários ===
+*.tmp

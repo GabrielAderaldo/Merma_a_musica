@@ -2,6 +2,8 @@
 
 > Documento autocontido para conduzir a criação do **design system, design tokens e telas** do produto. Quem lê não precisa de contexto prévio do projeto.
 >
+> Cada decisão de design aqui é **fundamentada em princípio canônico nomeado** (Krug, Wathan & Schoger, Tamosauskas, Greever, Lowdermilk, Levy). A intenção não é restringir você — é deixar transparente o porquê de cada pedido, pra que você consiga discordar com base se algum princípio for inadequado pro nosso caso.
+>
 > Entregáveis esperados ao final:
 >
 > 1. **Design tokens** (cores, tipografia, espaçamento, raios, sombras, animações) — exportáveis para CSS variables / TS const.
@@ -40,6 +42,23 @@ O projeto é **open-source (AGPL-3.0)** e está hospedado em GitHub. Qualquer pe
 
 ---
 
+## 0.5. Princípios canônicos que guiam este brief
+
+Este brief foi escrito consultando **seis obras de referência em design de produto digital**. Cada seção que pede algo de você cita o(s) autor(es) que fundamentam o pedido. Você pode (e deve) discordar quando o princípio não couber — só traga a razão.
+
+| Camada | Obra de referência | Quando consultar |
+|---|---|---|
+| **Estratégia / MVP** | Jaime Levy — *Estratégia de UX* | Validação, proposição de valor, smoke test |
+| **Pesquisa / DCU** | Travis Lowdermilk — *Design Centrado no Usuário* | Personas, princípios clássicos (Gestalt, Hick, Fitts) |
+| **Arquitetura de informação** | Thiago Tamosauskas — *AI e UX* | Organização, navegação, taxonomia, "poupe o tempo do leitor" |
+| **Usabilidade / clareza** | Steve Krug — *Não me faça pensar* | Escaneamento, convenção, "1ª Lei: não faça pensar" |
+| **UI visual / craft** | Adam Wathan & Steve Schoger — *Refactoring UI* | Hierarquia, tipografia, cor (HSL), espaçamento, profundidade |
+| **Decisões com stakeholder** | Tom Greever — *Articulando Decisões* | Quando você precisar defender escolha ou discordar do mantenedor |
+
+> Padrão de leitura recomendado: **leia este brief inteiro primeiro**. Depois, ao começar cada bloco do design (tokens → componentes → telas), volte aos capítulos das obras nomeados na seção correspondente.
+
+---
+
 ## 1. O que é o produto
 
 **Mermã, a Música!** é um **quiz musical multiplayer online** onde jogadores ouvem trechos de música e tentam adivinhar o nome ou o artista — o catálogo é formado pelas **playlists dos próprios jogadores** (Spotify, Deezer, YouTube Music).
@@ -54,6 +73,14 @@ O projeto é **open-source (AGPL-3.0)** e está hospedado em GitHub. Qualquer pe
 ### Tagline
 > *Prove que você conhece mais música que seus amigos — usando as playlists deles.*
 
+### Proposição de valor (Levy)
+
+A Levy (cap. 3, *Definindo a proposição de valor inicial*) defende que toda proposição de valor é uma frase testável que une **cliente + problema + solução diferenciada**. A nossa:
+
+> **Para** grupos de amigos que gostam de música e querem se divertir socialmente, **o Mermã** é um quiz multiplayer **que** usa as playlists deles próprios como catálogo, **ao contrário de** quiz com catálogo fixo (AMQ, SongPop) ou de jogos genéricos que não têm áudio (Kahoot).
+
+Use esta frase como teste de aderência: se uma decisão de design enfraquece o diferencial ("usa as playlists deles próprios", "diversão social"), levante a mão.
+
 ---
 
 ## 2. Mood, atmosfera e identidade visual
@@ -67,6 +94,8 @@ O jogo é vivido em momentos de **diversão social descontraída**: amigos no Di
 - **Tensão da rodada**: timer correndo, áudio tocando, "eu sei essa, eu sei essa!".
 - **Catarse da revelação**: "AH ERA ESSA!" — momento de comédia social, especialmente quando alguém escreve coisa absurda.
 
+> **→ Wathan & Schoger** (*Refactoring UI*, cap. *Choose a personality*): "antes de pixel algum, escolha a personalidade da interface". Eles dão um exercício: pegue 3-5 adjetivos opostos (formal↔informal, profissional↔amigável, sério↔divertido, tradicional↔ousado) e marque onde a interface vive. A nossa: **amigável (8/10), informal (9/10), divertido (10/10), ousado (7/10)**. Cor, tipografia, raios e microinterações deveriam refletir essas marcas.
+
 ### 2.2 Identidade visual sugerida
 
 - **Dark mode primário** (e único no MVP). Fadiga visual de sessão longa + sentimento de "neon de festa" em vez de "documento corporativo".
@@ -74,6 +103,8 @@ O jogo é vivido em momentos de **diversão social descontraída**: amigos no Di
 - **Tipografia bold para números** (timer, pontos, ranking) — é onde a tensão mora.
 - **Detalhes ondulares / curvilíneos** que remetem a som / waveform. Sem ser literal demais (sem fones de ouvido como mascote, sem partituras realistas).
 - **Microinterações vivas**: pulsação no timer, glow quando acerta, shake leve quando erra (não punitivo — divertido).
+
+> **→ Wathan & Schoger** (*Ditch hex for HSL*, *You need more colors than you think*): cor de marca não é "uma cor" — são **9+ tons** por matiz (50, 100, 200… 900 em escala). Você vai precisar disso pra hover, disabled, glow, background sutil. HSL é mais legível e fácil de derivar tons que hex.
 
 ### 2.3 O que evitar
 
@@ -89,14 +120,35 @@ O jogo é vivido em momentos de **diversão social descontraída**: amigos no Di
 
 Em ordem de prioridade. Conflito entre pilares resolve-se pelo de cima.
 
-1. **Diversão social.** Tudo amplifica momento compartilhado, especialmente a **revelação** (quem acertou/errou + o que cada um digitou). Não punir erro visualmente.
-2. **Personalização total.** Suas playlists, sua sala, suas regras. UI permite configurar partida com poucos cliques (não esconder em settings profundo).
-3. **Ritmo rápido.** Partidas de 5–15 min, transições automáticas. Zero "aperte para continuar" desnecessário. Skeletons em vez de spinners onde possível.
-4. **Acessibilidade.** Mobile-first. Sem cadastro. Funciona em 3G. WCAG AA como mínimo.
+### 1. Diversão social
+
+Tudo amplifica momento compartilhado, especialmente a **revelação** (quem acertou/errou + o que cada um digitou). **Não punir erro visualmente** — erro do amigo é a comédia do jogo.
+
+> **→ Krug** (cap. *Primeira Lei de Usabilidade*, "Não me faça pensar"): a 1ª Lei diz que cada elemento que faz o usuário parar pra pensar é dívida. No nosso caso, a revelação é a **antítese da 1ª Lei** — é onde o jogador PARA, lê, ri, compara. **Esse momento é especial; design dele merece mais carinho que qualquer outro.**
+
+### 2. Personalização total
+
+Suas playlists, sua sala, suas regras. UI permite configurar partida com poucos cliques — não esconde em settings profundo.
+
+> **→ Levy** (*os 4 princípios*, especialmente "UX sem complicações"): personalização que exige 7 cliques nada faz pelo jogador. Toda configuração de partida deve estar **alcançável em ≤2 cliques** a partir do Lobby.
+
+### 3. Ritmo rápido
+
+Partidas de 5–15 min, transições automáticas. **Zero "aperte para continuar" desnecessário**. Skeletons em vez de spinners onde possível.
+
+> **→ Krug** (*1ª Lei*, novamente): cada "aperte continuar" não-necessário é cobrança cognitiva. Se a próxima ação é óbvia, **execute automaticamente** com micro-countdown visível (ex: "Próxima rodada em 3..."). Botão "pular contagem" sempre disponível.
+
+### 4. Acessibilidade
+
+Mobile-first. Sem cadastro. Funciona em 3G. WCAG AA como mínimo.
+
+> **→ Lowdermilk** (cap. 7, *Princípios de design centrado no usuário*): DCU não é fazer o que o usuário pede — é entender o que ele PRECISA. No nosso caso, o jogador anônimo (Bruno) **não pede acessibilidade**, mas precisa dela (rede ruim, celular antigo). Acessibilidade é decisão de empatia que ele não vai verbalizar.
 
 ---
 
 ## 4. Quem usa (personas)
+
+> **→ Lowdermilk** (DCU): personas existem para forçar empatia, não pra serem decoradas. Cada decisão de design deve passar pelo teste "qual persona isso ajuda mais? alguma persona isso prejudica?".
 
 ### 🎤 Camila — A Anfitriã (27, designer freelance)
 Hosta sessões sexta à noite com amigos. Mobile (celular como controle) + notebook. **Valoriza velocidade do setup** ("link copy-paste, jogar em 10s"), controle granular da partida, e UX confiável quando o WiFi cai.
@@ -106,6 +158,13 @@ Hosta sessões sexta à noite com amigos. Mobile (celular como controle) + noteb
 
 ### 🏆 Diego — O Solo Grinder (22, estudante)
 Joga sozinho, quase diariamente. **Foco em recordes pessoais por playlist**. **Valoriza métricas detalhadas** (recorde por playlist, melhor streak, tempo médio), UI específica do solo sem "estamos esperando outros jogadores", e poder compartilhar resultado.
+
+### Anti-personas (quem **não** é o foco)
+
+- DJ profissional buscando ferramenta de trabalho
+- Criança < 13 anos (compliance LGPD/COPPA fora do escopo MVP)
+- Speedrunner competitivo global (não temos leaderboard global)
+- Jogador querendo catálogo curado (não vamos curar nada)
 
 ---
 
@@ -134,6 +193,8 @@ Joga sozinho, quase diariamente. **Foco em recordes pessoais por playlist**. **V
    └──── Login opcional ─► [Playlists] (gestão de playlists importadas)
 ```
 
+> **→ Wathan & Schoger** (*Start with a feature, not a layout*): para cada tela aqui, **NÃO comece desenhando a navegação ou o shell**. Comece pela peça-feature da tela (o input de resposta, o card da música, o ranking). O resto vem depois.
+
 ---
 
 ### TELA 1 — Home (Tela Inicial)
@@ -154,6 +215,10 @@ Joga sozinho, quase diariamente. **Foco em recordes pessoais por playlist**. **V
 
 **Tom:** Convidativo, não-formal. "Bora?".
 
+> **→ Lowdermilk** (*Lei de Hick*): "quanto mais opções, mais tempo o usuário leva pra escolher". Os 3 botões principais são **exatamente** o limite confortável. Não adicione "Como jogar?", "Sobre", "Demo" no nível 1 — empurra pro footer.
+>
+> **→ Krug** (*convenções e escaneamento*): jogador chega aqui escaneando, não lendo. Hierarquia: marca (1) → CTAs grandes (2) → login subordinado (3). Os 3 botões devem ter **peso visual similar entre si** (são opções legítimas), mas claramente **mais peso que o login** (Wathan: "not all elements are equal").
+
 ---
 
 ### TELA 2 — Login OAuth (opcional)
@@ -169,6 +234,8 @@ Joga sozinho, quase diariamente. **Foco em recordes pessoais por playlist**. **V
 - Cliquei em "Spotify" → redireciona para Spotify OAuth → volta para callback.
 - Mostrar loading suave no retorno (skeleton, não spinner).
 
+> **→ Krug** (*texto curto, escaneável*): a frase "Sem cadastro nosso, sem email" remove a fricção de medo. Krug recomenda **mata-objeções antes que elas surjam**, especialmente em onboarding.
+
 ---
 
 ### TELA 3 — Criar Sala
@@ -182,6 +249,8 @@ Joga sozinho, quase diariamente. **Foco em recordes pessoais por playlist**. **V
 
 **Notas:**
 - Após criar, navega automaticamente para `/room/ABC123` (Lobby).
+
+> **→ Lowdermilk** (*Lei de Fitts*): "quanto maior e mais próximo o alvo, mais rápido o clique". Pós-criação, **botão "Copiar link" deve ser GIGANTE** e fácil de tocar com polegar em mobile. Esse é o ato crítico (a Camila vai colar no WhatsApp).
 
 ---
 
@@ -197,6 +266,8 @@ Joga sozinho, quase diariamente. **Foco em recordes pessoais por playlist**. **V
 **Estados:**
 - Código não existe → mensagem amigável: "Essa sala não existe. Confira o código com seu amigo."
 - Sala cheia (20 jogadores) → "Essa sala tá lotada! Bora criar outra?"
+
+> **→ Greever** (*tom empático em mensagens de erro*): "Essa sala não existe" usa "essa" + "confira com seu amigo" — culpa difusa, sem dedo apontado. Compare com "Código inválido" (acusatório). **Sempre devolva o que o usuário pode fazer**, não apenas o que deu errado.
 
 ---
 
@@ -222,6 +293,12 @@ Joga sozinho, quase diariamente. **Foco em recordes pessoais por playlist**. **V
 - Host é **sempre ready** — não tem botão "ready" pra ele.
 - Mudanças de config são broadcast em tempo real (outros jogadores veem ao vivo).
 - Botão "Importar playlist" se logado, ou "Conectar conta" se não.
+
+> **→ Tamosauskas** (*5ª Lei de Ranganathan: "poupe o tempo do leitor"*): este é o ponto onde o jogador espera. **Toda informação visível aqui deve responder a "quem está, o que vai rolar, posso começar?"**. Esconda o resto. Configurações avançadas em accordion expansível, se necessário.
+>
+> **→ Lowdermilk** (*Princípio da proximidade — Gestalt*): agrupe (1) lista de jogadores em uma região, (2) painel de configuração em outra, (3) ações finais sticky em outra. Distância visual entre grupos > distância dentro do grupo. Erro comum: misturar config e roster.
+>
+> **→ Wathan & Schoger** (*Emphasize by de-emphasizing*): controles read-only para não-host **não** ficam invisíveis — ficam **com opacidade reduzida ou em cinza escuro**, claramente "informativo, não interativo". Esconder muda o layout (config-shock quando vira host por migração).
 
 ---
 
@@ -257,6 +334,14 @@ Joga sozinho, quase diariamente. **Foco em recordes pessoais por playlist**. **V
 - Timer deve ser legível por screen reader periodicamente (não a cada segundo — a cada 10s ou em momentos chave).
 - Auto-focus no input ao começar a rodada.
 
+> **→ Krug** (*1ª Lei: não me faça pensar*): durante a rodada, cada microsegundo de pensamento sobre A UI rouba do jogo. **O input é o herói da tela**. Cor de fundo do input contrasta com fundo da página. Placeholder claro: "Digite a música ou o artista...".
+>
+> **→ Lowdermilk** (*Lei de Fitts*): input deve ser **grande o suficiente pra tocar com polegar sem mirar**. Mobile-first: largura quase total da tela, altura mínima 48px (recomendação iOS/Material).
+>
+> **→ Lowdermilk** (*Lei de Hick*): durante a rodada, **drasticamente reduza opções visíveis**. Sem menu, sem botão "voltar", sem "sair" exposto. O jogador tem 2 ações possíveis: digitar resposta, votar pular. Mais que isso polui.
+>
+> **→ Wathan & Schoger** (*Hierarquia*): timer e input dominam. Status dos jogadores ao rodapé é **subordinado** — cinza, pequeno, presente mas não disputando atenção. **Erro comum**: cards de jogadores chamativos demais durante a rodada.
+
 ---
 
 ### TELA 7 — Revelação (pós-rodada, ~3s)
@@ -286,6 +371,14 @@ Joga sozinho, quase diariamente. **Foco em recordes pessoais por playlist**. **V
 - Se for última rodada → transição direta para Resultados.
 - Se for rodada normal → contagem 3s + próxima.
 
+> **→ Lowdermilk** (*proximidade Gestalt*): para cada jogador, agrupe (avatar + nick + resposta digitada + ✓/❌ + pontos) num único card. Quem ler "passa o olho" e captura todos os atributos numa entidade visual — não em 5 elementos soltos. Distância entre cards > distância dentro do card.
+>
+> **→ Wathan & Schoger** (*Use shadows to convey elevation*): o card da música revelada é o pico dramático. **Sombra/glow** pra destacar como "elevado da página". Não fique flat e perca o momento.
+>
+> **→ Krug** (*reduzir ruído visual nos erros*): erro aparece com a mesma estrutura visual de acerto — só muda o ícone ✓→❌ e a cor do número de pontos. **Não diminua o card, não use vermelho gritante**. A graça é ver o que a pessoa escreveu, não envergonhar.
+>
+> **→ Greever** (*tom de comunicação*): "Música de: @Gabriel 🎵" é a piada — atribui crédito + revela quem traiu a galera com aquele rock progressivo obscuro. Esse é o **gancho social** que diferencia o jogo. Não enterre essa info em letra pequena.
+
 ---
 
 ### TELA 8 — Resultados (pós-partida, ~5s antes de voltar ao lobby)
@@ -306,6 +399,10 @@ Joga sozinho, quase diariamente. **Foco em recordes pessoais por playlist**. **V
 **Animações:**
 - Confete leve no momento de revelar o vencedor.
 - Empate: dois ou mais avatares lado a lado no topo.
+
+> **→ Tamosauskas** (*hierarquia de informação*): primeira coisa que entra na retina é **o vencedor** (1 elemento). Depois ranking (lista). Depois destaques (cards opcionais). Não inverta — destaques antes do ranking confunde sobre "o que importa".
+>
+> **→ Wathan & Schoger** (*Don't overlook empty states*): se foi empate triplo, mostre 3 avatares lado a lado. Se "@W com 4 quase certas" não existir (porque ninguém errou perto), **esconda o card** — não mostre "Na trave: ninguém". Cards vazios são depressivos.
 
 ---
 
@@ -344,6 +441,12 @@ Joga sozinho, quase diariamente. **Foco em recordes pessoais por playlist**. **V
 
 **Tom:** Encorajador, não competitivo-tóxico. Quem joga solo quer evoluir, não ser humilhado.
 
+> **→ Tamosauskas** (*taxonomia*): há **duas categorias claras de métrica** — "por playlist" e "global". Não misture cards. Use **agrupamento visual + label clara**.
+>
+> **→ Wathan & Schoger** (*Establish a type scale*): números de recorde (9.450) são **a feature emocional do solo**. Use a escala tipográfica grande (5xl/6xl, peso 700+). Compare com Diego (persona) que tira screenshot pra postar — esse número precisa ser fotogênico.
+>
+> **→ Krug** (*texto adaptativo do CTA*): "Bata seu recorde!" só faz sentido se há recorde. Senão "Primeira partida nessa playlist!" é mais honesto e convidativo. **Não fingir contexto que não existe.**
+
 ---
 
 ### TELA 10 — Partida Solo
@@ -354,6 +457,8 @@ Idêntica à TELA 6 (Partida multiplayer), mas:
 - **Sem botão "Pular"** (não tem maioria).
 - **Indicador de "Recorde atual: 9.450 pts"** persistente em algum canto sutil (motivação).
 - **Pode incluir prompts sutis**: "Faltam 200 pontos para o recorde!" se está perto (não-invasivo).
+
+> **→ Krug** (*sutileza durante foco*): "Faltam 200 pontos" aparece como **whisper UI** — pequeno, sem fanfarra, pode ser ignorado. Mostrar isso no centro da tela atrapalha quem está concentrado tentando ouvir a música.
 
 ---
 
@@ -376,6 +481,8 @@ Idêntica à TELA 6 (Partida multiplayer), mas:
 - Tom: "Quase! Tenta de novo?"
 - Botões "Tentar de novo" / "Trocar playlist".
 
+> **→ Greever** (*tom em comunicação*): cenário B é onde muitos produtos erram — "você perdeu". Em vez disso: "**Partida concluída**" + comparação fria + convite gentil. **Sem usar a palavra "perdeu", "errado", "falhou"** no MVP do solo. Diego (persona) joga várias vezes; humilhar a cada tentativa quebra o ciclo.
+
 ---
 
 ### TELA 12 — Gestão de Playlists
@@ -390,6 +497,8 @@ Idêntica à TELA 6 (Partida multiplayer), mas:
 **Estados:**
 - Sem playlist importada: estado vazio amigável "Conecte uma conta e importe sua primeira playlist!".
 - Import em andamento: progress bar "Importando 'Top Hits Brasil' — 230/500 músicas".
+
+> **→ Wathan & Schoger** (*Don't overlook empty states*): estado vazio aqui é a primeira tela do user logado — **chance de educar**. Não é "nenhum item encontrado" genérico. É call-to-action com explicação curta + botão claro.
 
 ---
 
@@ -417,6 +526,8 @@ Estes são **modais / overlays** que aparecem sobre qualquer tela.
 #### Loading skeleton
 - Em vez de spinner, **skeleton screens** para lobby/playlist/dashboard.
 
+> **→ Krug** (*"Onde estou?" sempre respondido*): reconnecting deve dizer ao usuário **o que está acontecendo + o que ele pode fazer (ou não fazer) enquanto isso**. Spinners genéricos quebram a 1ª Lei.
+
 ---
 
 ## 7. Componentes reutilizáveis necessários
@@ -435,6 +546,8 @@ Estes são **modais / overlays** que aparecem sobre qualquer tela.
 | **Spinner / Skeleton** | — | — |
 | **Tooltip** | — | hidden, visible |
 | **Avatar** | small, medium, large | with image, with initial (cor derivada do hash do nickname) |
+
+> **→ Wathan & Schoger** (*Supercharge the defaults*): cada estado **importa**. Default sem hover/focus visível é trabalho mal feito. Cobra todos os estados desde o token.
 
 ### 7.2 Domain-specific
 
@@ -462,9 +575,13 @@ Estes são **modais / overlays** que aparecem sobre qualquer tela.
 
 ## 8. Design Tokens — categorias esperadas
 
+> **→ Wathan & Schoger** (*Establish a spacing and sizing system*): "estabelecer um sistema de espaçamento e tamanho deve ser uma das primeiras coisas a fazer ao iniciar um projeto". **Não invente tamanho ad-hoc** depois — todos os componentes usam o mesmo conjunto pequeno de tokens.
+
 Quem implementa fará via `tailwind.config.ts` + arquivo TS de tokens importáveis. Tokens organizados por categoria:
 
 ### 8.1 Cores semânticas
+
+> **→ Wathan & Schoger** (*Ditch hex for HSL* + *You need more colors than you think*): use HSL. Para cada matiz, gere 9+ tons (`50, 100, 200, ..., 900`). Cinza não é cinza — defina cinzas com leve tonalidade (frios para tech, quentes para humanos). Nossa "personalidade amigável-divertida" pede **cinza levemente quente ou neutro** — não cinza azul corporativo.
 
 ```
 colors:
@@ -479,7 +596,7 @@ colors:
     muted         (placeholder, hint — cinza médio)
     inverse       (texto em fundo claro)
   accent:
-    primary       (cor de marca — coral/pink quente sugerido)
+    primary       (cor de marca — coral/pink quente sugerido, com 9+ tons)
     primary-hover
     secondary     (azul elétrico sugerido)
   feedback:
@@ -495,6 +612,8 @@ colors:
 
 ### 8.2 Tipografia
 
+> **→ Wathan & Schoger** (*Establish a type scale*): defina uma **escala pequena** (não infinitas opções). Cada uso (body, h1-h4, caption, button, número-gigante de timer) mapeia pra um nível dessa escala. Comece com tipografia **maior do que parece necessária** — é mais fácil reduzir.
+
 ```
 font-family:
   sans:  system-ui ou Inter (self-hosted, .woff2)
@@ -509,6 +628,8 @@ line-height: tight (1.2), normal (1.5), relaxed (1.75)
 
 ### 8.3 Espaçamento
 
+> **→ Wathan & Schoger** (*Avoid ambiguous spacing*): se um item tem 16px acima e 24px abaixo, **agrupa-se com o de cima** (proximidade Gestalt — Lowdermilk reforça). Sistema multiplo de 4 facilita decisão consistente.
+
 Sistema múltiplo de 4: `0, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80, 96`.
 
 ### 8.4 Border radius
@@ -520,7 +641,11 @@ lg: 20px   (modais, botões grandes)
 pill: 9999px (avatares, toggles, badges arredondados)
 ```
 
+> Raios mais arredondados (md/lg/pill) reforçam "amigável" — coerente com a personalidade (§2.1).
+
 ### 8.5 Sombras
+
+> **→ Wathan & Schoger** (*Use shadows to convey elevation* + *Shadows can have two parts*): sombra serve pra comunicar **camada** (modal sobre página, card sobre fundo). Em dark mode, sombra com glow (uma sombra colorida sutil) funciona melhor que sombra preta — preta some no fundo escuro.
 
 ```
 sm:  sombra leve (cards)
@@ -565,6 +690,8 @@ overlay:  0.85  (backdrop de modais)
 
 ## 9. Acessibilidade — alvo MVP
 
+> **→ Lowdermilk** (cap. 7) + **Wathan & Schoger** (*Don't rely on color alone*, *Accessible doesn't have to mean ugly*): acessibilidade não é tax — é DCU. Cada decisão abaixo melhora o jogo pra **todos**, não só pra quem tem deficiência.
+
 - **WCAG 2.1 nível AA** mínimo.
 - Contraste mínimo **4.5:1** para texto normal, **3:1** para texto grande.
 - Navegação por **teclado completa** (Tab, Enter, Esc, setas em listas).
@@ -591,6 +718,8 @@ Coisas que **NÃO valem animação custosa** (passe rápido):
 - Navegação entre rotas — fade simples.
 - Abertura de modais — fade + scale.
 
+> **→ Krug** (*não atrapalhe o escaneamento*): microinteração que não comunica algo concreto é decoração — e decoração pesa. Toda animação deve responder "o que mudou?". Animação > 300ms em transição crítica é cobrança cognitiva.
+
 ---
 
 ## 11. Brand — nome e tom
@@ -599,6 +728,8 @@ Coisas que **NÃO valem animação custosa** (passe rápido):
 - Tom de UI: **amigável + brasileiro casual**. Use **"você"** (não "tu"), use **gerúndio** quando natural ("carregando...", "esperando..."), **emojis com moderação** (1-2 por tela max).
 - **Não usar inglês** em UI principal no MVP (jogo é PT-BR).
 - Mensagens de erro: **empáticas**, não acusatórias. "Essa sala não existe — confere com seu amigo?" em vez de "Sala inexistente. Código inválido."
+
+> **→ Greever** (*tom em todo texto público*): qualquer cópia que escrever (botão, erro, prompt) é uma mini-decisão de design. Pergunte sempre: "isso convida ou expulsa?". A diferença entre "Sala inválida" e "Essa sala não existe — confere com seu amigo?" é a diferença entre product e tool.
 
 ---
 
@@ -644,6 +775,8 @@ Pesquisar para mood (não copiar diretamente):
 - **Variantes de tema (dark com paleta alternativa)?** Pós-MVP.
 - **Internacionalização — espaço para textos mais longos (DE, FR)?** Considerar, mas no MVP é só PT-BR — textos curtos.
 
+> **→ Greever** (*comece com SIM*): se você discordar de algo no brief, **abra discutindo o que tem de bom na ideia atual antes de propor mudança**. Mantenedor é só uma pessoa — feedback "tudo errado" é desmotivador; feedback "isso aqui funciona, mas tem trade-off X, e eu proponho Y porque Z" abre conversa de verdade.
+
 ---
 
 ## 15. Fluxo de entrega sugerido
@@ -656,9 +789,27 @@ Pesquisar para mood (não copiar diretamente):
 
 Total estimado: **2 semanas** de design focado.
 
+> **→ Levy** (*validação antes de cobrir todas as superfícies*): se tiver dúvida sobre uma decisão grande (paleta dominante, layout do Partida), **pare na etapa 2 e proponha 2-3 variantes** antes de gastar 5 dias modelando todas as telas no caminho errado. Smoke test interno é grátis.
+
 ---
 
-**Tudo nesse brief é negociável** — se algum item te parecer prejudicial ao produto, traga sua opinião. O objetivo final é jogadores se divertindo, não o documento.
+## 16. Mapa de princípios aplicados (resumo executivo)
+
+Para consulta rápida durante o trabalho. Cada princípio aqui aparece **detalhado em alguma seção acima**.
+
+| Quando você estiver projetando... | Consulte primeiro... | E lembre que... |
+|---|---|---|
+| Lobby (organização de jogadores + config) | **Tamosauskas** (5ª Lei de Ranganathan) + **Lowdermilk** (proximidade Gestalt) | "Poupe o tempo do leitor" — agrupe semanticamente |
+| Partida (rodada ao vivo) | **Krug** (1ª Lei) + **Lowdermilk** (Hick, Fitts) | Reduza opções drasticamente; input é o herói |
+| Revelação (pós-rodada) | **Lowdermilk** (proximidade) + **Wathan** (elevação + hierarquia) | Esse é O momento — investe |
+| Solo Dashboard (recordes) | **Tamosauskas** (taxonomia) + **Wathan** (type scale) | Números grandes são a feature emocional |
+| Cor, espaço, sombra | **Wathan & Schoger** (caps. *Hierarchy*, *Layout & Spacing*, *Working with Color*, *Creating Depth*) | HSL, 9+ tons, sistema pequeno |
+| Mensagens (erro, sucesso, vazio) | **Greever** (tom empático) + **Krug** (convenção) | Convide, não expulse |
+| Decisão estratégica (defaults, variantes) | **Levy** (validação leve antes) | Smoke test antes de espalhar |
+
+---
+
+**Tudo nesse brief é negociável** — se algum item te parecer prejudicial ao produto, traga sua opinião (com nome do princípio que sustenta sua crítica, idealmente). O objetivo final é jogadores se divertindo, não o documento.
 
 E, retomando a §0: **este projeto não tem time. Você é o time de design.** Use convicção. Não tem designer sênior pra validar; tem você + um mantenedor humano. E qualquer pessoa do mundo que quiser melhorar é bem-vinda (design, código, sugestão, tradução, o que for) — o projeto é open-source AGPL-3.0 e isso fica explícito em qualquer texto público que você escrever.
 

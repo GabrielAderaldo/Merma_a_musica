@@ -1,0 +1,17 @@
+# Delete a file
+Source: https://bun.com/docs/guides/write-file/unlink
+
+
+
+The `Bun.file()` function accepts a path and returns a `BunFile` instance. Use the `.delete()` method to delete the file.
+
+```ts theme={"theme":{"light":"github-light","dark":"dracula"}}
+const path = "/path/to/file.txt";
+const file = Bun.file(path);
+
+await file.delete();
+```
+
+***
+
+See [Docs > API > File I/O](/docs/runtime/file-io#reading-files-bun-file) for complete documentation of `Bun.file()`.

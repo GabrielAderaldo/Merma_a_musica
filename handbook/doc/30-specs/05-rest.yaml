@@ -1,0 +1,642 @@
+openapi: 3.1.0
+info:
+  title: "Mermã, a Música! — REST API"
+  version: 1.0.0
+  description: |
+    Contratos REST do servidor Mermã. Cobre:
+
+    - **OAuth flows** (Spotify, Deezer, YouTube Music): início e callback.
+    - **Salas**: criação, leitura básica.
+    - **Playlists**: importação e listagem das playlists conectadas.
+    - **Áudio**: proxy de preview com token HMAC.
+    - **Métricas**: endpoint Prometheus protegido.
+    - **Health**: probe de operação.
+
+    Stack: **Hono + Bun**. Spec gerada a partir desta YAML produz tipos TS
+    via `openapi-typescript` no client (`apps/web`).
+
+    > Versão 1.0.0 é a **primeira versão real**. O arquivo `archive/Openapi_was_dup_of_asyncapi.yaml`
+    > anterior era cópia bit-a-bit do AsyncAPI (bug).
+
+  license:
+    name: AGPL-3.0
+  contact:
+    name: Mermã, a Música! Team
+
+servers:
+  - url: https://merma.example.com
+    description: Produção
+  - url: http://localhost:3000
+    description: Dev local
+
+tags:
+  - name: auth
+    description: OAuth com Spotify, Deezer, YouTube Music
+  - name: rooms
+    description: Criação e leitura de salas
+  - name: playlists
+    description: Listagem e importação de playlists do usuário
+  - name: audio
+    description: Proxy de áudio (preview MP3 sanitizado)
+  - name: telemetry
+    description: Métricas Prometheus e health
+  - name: solo
+    description: Recordes pessoais do modo solo
+
+paths:
+  # ===================================================
+  # AUTH
+  # ===================================================
+  /auth/{platform}:
+    get:
+      tags: [auth]
+      operationId: oauthStart
+      summary: Inicia fluxo OAuth da plataforma
+      description: |
+        Redireciona para a página de autorização da plataforma. Gera state
+        CSRF + PKCE em cookie HttpOnly. Após autorização, jogador é
+        redirecionado para `/auth/{platform}/callback`.
+      parameters:
+        - $ref: "#/components/parameters/Platform"
+      responses:
+        "302":
+          description: Redirect para autorização externa
+          headers:
+            Location:
+              schema: { type: string, format: uri }
+            Set-Cookie:
+              description: Cookie state CSRF (HttpOnly, Secure)
+              schema: { type: string }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /auth/{platform}/callback:
+    get:
+      tags: [auth]
+      operationId: oauthCallback
+      summary: Callback da autorização OAuth
+      description: |
+        A plataforma redireciona para cá após autorização. Valida state CSRF,
+        troca code por tokens, armazena ConnectedAccount em Postgres,
+        encrypta refresh token, redireciona para `/`.
+      parameters:
+        - $ref: "#/components/parameters/Platform"
+        - in: query
+          name: code
+          required: true
+          schema: { type: string }
+        - in: query
+          name: state
+          required: true
+          schema: { type: string }
+        - in: query
+          name: error
+          required: false
+          schema: { type: string }
+      responses:
+        "302":
+          description: Redirect para a SPA (`/`)
+          headers:
+            Location: { schema: { type: string } }
+            Set-Cookie:
+              description: "`__Host-session` cookie (Max-Age 30d, HttpOnly, Secure)"
+              schema: { type: string }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /auth/logout:
+    post:
+      tags: [auth]
+      operationId: logout
+      summary: Encerra sessão
+      description: Invalida cookie de sessão; player_uuid em localStorage permanece (jogo anônimo).
+      security:
+        - sessionCookie: []
+      responses:
+        "204":
+          description: Logout efetuado
+          headers:
+            Set-Cookie:
+              description: cookie expirado
+              schema: { type: string }
+
+  /auth/me:
+    get:
+      tags: [auth]
+      operationId: getMe
+      summary: Retorna info da sessão atual
+      description: Para a SPA saber se está autenticado e quais plataformas estão conectadas.
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Sessão válida
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [player_uuid, is_authenticated, connected_accounts]
+                properties:
+                  player_uuid: { $ref: "#/components/schemas/PlayerUuid" }
+                  is_authenticated: { type: boolean }
+                  connected_accounts:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        platform: { type: string, enum: [spotify, deezer, youtube_music] }
+                        connected_at: { type: string, format: date-time }
+                        scopes: { type: array, items: { type: string } }
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+
+  # ===================================================
+  # ROOMS
+  # ===================================================
+  /api/v1/rooms:
+    post:
+      tags: [rooms]
+      operationId: createRoom
+      summary: Cria nova sala
+      description: |
+        Cria sala vazia, gera invite_code único de 6 chars, retorna ao cliente
+        para redirect para o lobby via WS.
+
+        Rate limit: 10 salas/hora por player_uuid.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nickname:
+                  type: string
+                  maxLength: 32
+                  description: Nickname do host. Se omitido, usa o do cookie.
+      responses:
+        "201":
+          description: Sala criada
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [room_id, invite_code, host_player_uuid]
+                properties:
+                  room_id:          { type: string, format: uuid }
+                  invite_code:      { $ref: "#/components/schemas/InviteCode" }
+                  host_player_uuid: { $ref: "#/components/schemas/PlayerUuid" }
+                  ws_url:
+                    type: string
+                    format: uri
+                    description: URL pronta para conectar WS (inclui invite_code)
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /api/v1/rooms/{invite_code}:
+    get:
+      tags: [rooms]
+      operationId: getRoom
+      summary: Resumo público da sala
+      description: |
+        Para a SPA validar invite_code antes de conectar WS.
+        **Não** revela roster ou estado interno; só existe/não existe + estado externo.
+      parameters:
+        - $ref: "#/components/parameters/InviteCode"
+      responses:
+        "200":
+          description: Sala existe
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [invite_code, exists, state, player_count]
+                properties:
+                  invite_code:  { $ref: "#/components/schemas/InviteCode" }
+                  exists:       { type: boolean, const: true }
+                  state:        { type: string, enum: [waiting, in_match, reveal, finished] }
+                  player_count: { type: integer }
+                  max_players:  { type: integer, default: 20 }
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ===================================================
+  # PLAYLISTS
+  # ===================================================
+  /api/v1/playlists:
+    get:
+      tags: [playlists]
+      operationId: listPlaylists
+      summary: Lista playlists importadas do jogador
+      description: |
+        Retorna playlists JÁ IMPORTADAS (NormalizedSong em Postgres).
+        Para listar playlists DISPONÍVEIS na plataforma externa (a serem importadas),
+        ver `/api/v1/playlists/available/{platform}`.
+      security:
+        - sessionCookie: []
+      parameters:
+        - in: query
+          name: platform
+          schema: { type: string, enum: [spotify, deezer, youtube_music] }
+      responses:
+        "200":
+          description: Lista de playlists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  playlists:
+                    type: array
+                    items: { $ref: "#/components/schemas/ImportedPlaylist" }
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+
+  /api/v1/playlists/available/{platform}:
+    get:
+      tags: [playlists]
+      operationId: listAvailablePlaylists
+      summary: Lista playlists disponíveis na plataforma externa
+      description: Faz chamada upstream à plataforma (Spotify/Deezer/YouTube) e retorna catálogo do jogador.
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/Platform"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  platform: { type: string }
+                  playlists:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        external_id: { type: string }
+                        name:        { type: string }
+                        track_count: { type: integer }
+                        cover_url:   { type: string, format: uri, nullable: true }
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "502":
+          description: Plataforma upstream indisponível
+
+  /api/v1/playlists/import:
+    post:
+      tags: [playlists]
+      operationId: importPlaylist
+      summary: Importa playlist da plataforma externa
+      description: |
+        Cria um job assíncrono. Cliente é notificado via WS (evento
+        `playlist_imported`) quando concluir, ou via polling do `/api/v1/playlists/imports/{job_id}`.
+
+        Rate limit: 5 imports concorrentes por player_uuid.
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [platform, external_playlist_id]
+              properties:
+                platform:             { type: string, enum: [spotify, deezer, youtube_music] }
+                external_playlist_id: { type: string }
+      responses:
+        "202":
+          description: Import enfileirado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [job_id, status]
+                properties:
+                  job_id: { type: string, format: uuid }
+                  status: { type: string, enum: [queued] }
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+
+  /api/v1/playlists/imports/{job_id}:
+    get:
+      tags: [playlists]
+      operationId: getImportStatus
+      summary: Status de um job de importação
+      security:
+        - sessionCookie: []
+      parameters:
+        - in: path
+          name: job_id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Status atual
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job_id:  { type: string, format: uuid }
+                  status:  { type: string, enum: [queued, in_progress, completed, failed] }
+                  progress:
+                    type: object
+                    properties:
+                      tracks_fetched: { type: integer }
+                      tracks_total:   { type: integer, nullable: true }
+                  imported_playlist_id: { type: string, nullable: true }
+                  error_code: { type: string, nullable: true }
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/playlists/{playlist_id}:
+    delete:
+      tags: [playlists]
+      operationId: deletePlaylist
+      summary: Remove playlist importada do banco
+      description: Para LGPD (direito de exclusão).
+      security:
+        - sessionCookie: []
+      parameters:
+        - in: path
+          name: playlist_id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204":
+          description: Removida
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ===================================================
+  # AUDIO
+  # ===================================================
+  /api/v1/audio/{audio_token}:
+    get:
+      tags: [audio]
+      operationId: getAudio
+      summary: Proxy de preview MP3
+      description: |
+        Retorna stream MP3 sanitizado (sem ID3, sem `Content-Length` original).
+
+        Requer:
+        - Cookie de sessão OU player_uuid no header `X-Player-Uuid`.
+        - `audio_token` HMAC vinculado a (`player_uuid`, `round_id`, `expiry`).
+        - Token ainda não usado (single-use).
+
+        Rejeita:
+        - Token expirado: 410
+        - Token de outro player: 401
+        - Token reusado: 410
+        - `Range` header presente: 416
+
+        Detalhes em `30-specs/02-audio.md`.
+      parameters:
+        - in: path
+          name: audio_token
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Stream MP3
+          headers:
+            Content-Type:
+              schema: { type: string, const: audio/mpeg }
+            Cache-Control:
+              schema: { type: string, const: "no-store, private" }
+          content:
+            audio/mpeg:
+              schema: { type: string, format: binary }
+        "401":
+          description: Token inválido, mal-formado ou de outro player
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "410":
+          description: Token expirado ou já usado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "416":
+          description: Range header não suportado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "503":
+          description: Áudio ainda não pronto (resolução em andamento)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  # ===================================================
+  # SOLO
+  # ===================================================
+  /api/v1/solo/personal-bests:
+    get:
+      tags: [solo]
+      operationId: getSoloPersonalBests
+      summary: Recordes pessoais do jogador (todas playlists)
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Lista de recordes pessoais
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  global_stats:
+                    type: object
+                    properties:
+                      best_streak_ever:        { type: integer }
+                      fastest_correct_ever:    { type: number, format: float }
+                      matches_played_total:    { type: integer }
+                      songs_known_lifetime:    { type: integer }
+                  by_playlist:
+                    type: array
+                    items: { $ref: "#/components/schemas/PersonalBest" }
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+
+  /api/v1/solo/personal-bests/{playlist_id}:
+    get:
+      tags: [solo]
+      operationId: getSoloPersonalBest
+      summary: Recorde pessoal numa playlist específica
+      security:
+        - sessionCookie: []
+      parameters:
+        - in: path
+          name: playlist_id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Recorde
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PersonalBest" }
+        "404":
+          description: Sem recorde ainda (primeira partida)
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+
+  # ===================================================
+  # TELEMETRY
+  # ===================================================
+  /metrics:
+    get:
+      tags: [telemetry]
+      operationId: prometheusMetrics
+      summary: Métricas em formato Prometheus
+      description: |
+        Endpoint Prometheus para scraping. Protegido por token simples
+        no header `Authorization: Bearer <METRICS_AUTH_TOKEN>`.
+
+        Detalhes em `10-product/04-metrics-telemetry.md`.
+      security:
+        - metricsToken: []
+      responses:
+        "200":
+          description: Métricas
+          content:
+            text/plain:
+              schema: { type: string }
+              example: |
+                # HELP merma_rooms_active Active rooms by state
+                # TYPE merma_rooms_active gauge
+                merma_rooms_active{state="waiting"} 12
+                merma_rooms_active{state="in_match"} 8
+                merma_ws_connections 187
+                # HELP merma_submit_answer_duration_seconds latency histogram
+                # TYPE merma_submit_answer_duration_seconds histogram
+                merma_submit_answer_duration_seconds_bucket{le="0.05"} 1240
+                ...
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+
+  /health:
+    get:
+      tags: [telemetry]
+      operationId: health
+      summary: Healthcheck
+      description: 200 se serviço está up; usado por load balancer e watchdog.
+      responses:
+        "200":
+          description: Saudável
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, const: ok }
+                  uptime_seconds: { type: number }
+                  version: { type: string, examples: ["1.0.0"] }
+        "503":
+          description: Indisponível (db ou redis down)
+
+components:
+  parameters:
+    Platform:
+      in: path
+      name: platform
+      required: true
+      schema:
+        type: string
+        enum: [spotify, deezer, youtube_music]
+    InviteCode:
+      in: path
+      name: invite_code
+      required: true
+      schema: { $ref: "#/components/schemas/InviteCode" }
+
+  schemas:
+    PlayerUuid:
+      type: string
+      format: uuid
+      example: "550e8400-e29b-41d4-a716-446655440000"
+
+    InviteCode:
+      type: string
+      pattern: "^[A-Z0-9]{6}$"
+      example: "ABC123"
+
+    ImportedPlaylist:
+      type: object
+      required: [playlist_id, name, platform, track_count, imported_at]
+      properties:
+        playlist_id: { type: string, format: uuid }
+        external_id: { type: string }
+        name:        { type: string }
+        platform:    { type: string, enum: [spotify, deezer, youtube_music] }
+        track_count: { type: integer }
+        cover_url:   { type: string, format: uri, nullable: true }
+        imported_at: { type: string, format: date-time }
+
+    PersonalBest:
+      type: object
+      required: [playlist_id, max_score, max_streak, matches_played]
+      properties:
+        playlist_id:        { type: string, format: uuid }
+        playlist_name:      { type: string }
+        max_score:          { type: integer }
+        max_streak:         { type: integer }
+        avg_response_time:  { type: number, format: float, nullable: true }
+        songs_known_count:  { type: integer }
+        matches_played:     { type: integer }
+        last_played_at:     { type: string, format: date-time }
+        first_played_at:    { type: string, format: date-time }
+
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:    { type: string }
+        message: { type: string }
+
+  responses:
+    Unauthenticated:
+      description: Sem sessão válida
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: Recurso não encontrado
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    BadRequest:
+      description: Requisição malformada
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    RateLimited:
+      description: Rate limit excedido
+      headers:
+        Retry-After:
+          schema: { type: integer }
+          description: Segundos para tentar de novo
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-session
+      description: |
+        Cookie HttpOnly + Secure + SameSite=Strict emitido após OAuth callback.
+        Vincula `player_uuid` autenticado à sessão.
+    metricsToken:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque
+      description: Token compartilhado em `METRICS_AUTH_TOKEN` env var.

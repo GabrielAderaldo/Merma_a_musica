@@ -1,0 +1,925 @@
+asyncapi: 3.0.0
+id: "urn:com:merma-a-musica:game-server"
+info:
+  title: "Mermã, a Música! — WebSocket API"
+  version: 2.0.0
+  description: |
+    API de eventos em tempo real do jogo Mermã, a Música!.
+
+    Stack: **Hono (Bun)** com `app.upgradeWebSocket()`. Substitui a versão
+    1.0 que descrevia Phoenix Channels.
+
+    Frontend: **SolidJS** (apps/web) via API nativa `WebSocket` do browser.
+
+    Contrato JSON ligado a `@merma/schema` (Zod) — toda mensagem pode
+    ser validada em runtime.
+
+    Versão 2.0.0 (2026-05-13): reescrita completa após pivot tecnológico.
+    Veja `archive/Asyncapi_v1.0_phoenix.yaml` para versão anterior.
+  license:
+    name: AGPL-3.0
+  contact:
+    name: Mermã, a Música! Team
+  tags:
+    - name: lobby
+      description: Eventos do lobby (antes da partida)
+    - name: game
+      description: Eventos da partida em andamento
+    - name: system
+      description: Eventos de sistema (presença, erros, reconexão)
+
+defaultContentType: application/json
+
+servers:
+  production:
+    host: "{domain}"
+    pathname: /ws/room/{invite_code}
+    protocol: wss
+    description: |
+      Servidor WebSocket via Hono. Endpoint único por sala — sticky routing
+      por hash de `invite_code` quando houver N≥2 nodes.
+
+      Conexão exige cookie de sessão OU `?player_uuid=<uuid>&nickname=<n>`
+      como query string (anônimo).
+    variables:
+      domain:
+        default: merma.example.com
+        description: Domínio público do servidor (configurado via Caddy + Let's Encrypt)
+    security:
+      - $ref: "#/components/securitySchemes/playerUuid"
+    tags:
+      - name: "env:production"
+  development:
+    host: "localhost:3000"
+    pathname: /ws/room/{invite_code}
+    protocol: ws
+    description: Desenvolvimento local — sem TLS
+    variables:
+      invite_code:
+        default: ABC123
+
+channels:
+  room:
+    address: "/ws/room/{invite_code}"
+    title: Canal da Sala
+    description: |
+      Canal único por sala, identificado por `invite_code` (6 chars alfanuméricos).
+
+      **Handshake:** WS upgrade com headers/query incluindo:
+      - `player_uuid` (UUID v4, gerado no browser)
+      - `nickname` (string)
+
+      **Sticky routing:** Caddy roteia por hash do `invite_code` em N≥2 nodes.
+      A mesma sala sempre cai no mesmo `RoomActor`.
+    parameters:
+      invite_code:
+        description: Código de convite da sala (6 chars alfanuméricos maiúsculos)
+        examples:
+          - ABC123
+          - XYZ789
+    messages:
+      # ---- CLIENT → SERVER ----
+      playerReady:        { $ref: "#/components/messages/playerReady" }
+      playerUnready:      { $ref: "#/components/messages/playerUnready" }
+      playerAfkChanged:   { $ref: "#/components/messages/playerAfkChanged" }
+      configureMatch:     { $ref: "#/components/messages/configureMatch" }
+      startGame:          { $ref: "#/components/messages/startGame" }
+      submitAnswer:       { $ref: "#/components/messages/submitAnswer" }
+      voteSkip:           { $ref: "#/components/messages/voteSkip" }
+      selectPlaylist:     { $ref: "#/components/messages/selectPlaylist" }
+      playerLeave:        { $ref: "#/components/messages/playerLeave" }
+      autocompleteSearch: { $ref: "#/components/messages/autocompleteSearch" }
+      ping:               { $ref: "#/components/messages/ping" }
+      # ---- SERVER → CLIENT ----
+      roomState:           { $ref: "#/components/messages/roomState" }
+      playerJoined:        { $ref: "#/components/messages/playerJoined" }
+      playerLeft:          { $ref: "#/components/messages/playerLeft" }
+      playerReadyChanged:  { $ref: "#/components/messages/playerReadyChanged" }
+      playerAfkChangedSrv: { $ref: "#/components/messages/playerAfkChangedSrv" }
+      configUpdated:       { $ref: "#/components/messages/configUpdated" }
+      hostChanged:         { $ref: "#/components/messages/hostChanged" }
+      gameStarting:        { $ref: "#/components/messages/gameStarting" }
+      roundStarting:       { $ref: "#/components/messages/roundStarting" }
+      timerStarted:        { $ref: "#/components/messages/timerStarted" }
+      answerConfirmed:     { $ref: "#/components/messages/answerConfirmed" }
+      playerVotedSkip:     { $ref: "#/components/messages/playerVotedSkip" }
+      roundEnded:          { $ref: "#/components/messages/roundEnded" }
+      gameEnded:           { $ref: "#/components/messages/gameEnded" }
+      autocompleteResults: { $ref: "#/components/messages/autocompleteResults" }
+      pong:                { $ref: "#/components/messages/pong" }
+      error:               { $ref: "#/components/messages/error" }
+    bindings:
+      ws:
+        method: GET
+
+operations:
+  # ---- CLIENT → SERVER (send) ----
+  sendPlayerReady:
+    action: send
+    channel: { $ref: "#/channels/room" }
+    title: Marcar como pronto
+    summary: |
+      Jogador marca-se como pronto.
+      **Rejeitado se emissor é host** (host é sempre ready — `error: host_is_always_ready`).
+    tags: [{ name: lobby }]
+    messages:
+      - $ref: "#/channels/room/messages/playerReady"
+
+  sendPlayerUnready:
+    action: send
+    channel: { $ref: "#/channels/room" }
+    title: Desmarcar pronto
+    summary: |
+      Jogador desmarca pronto. Rejeitado se emissor é host.
+    tags: [{ name: lobby }]
+    messages:
+      - $ref: "#/channels/room/messages/playerUnready"
+
+  sendPlayerAfkChanged:
+    action: send
+    channel: { $ref: "#/channels/room" }
+    title: Alterar AFK
+    summary: |
+      Jogador (inclusive host) sinaliza ausência. Apenas comunicação social,
+      não muda regras do jogo.
+    tags: [{ name: lobby }]
+    messages:
+      - $ref: "#/channels/room/messages/playerAfkChanged"
+
+  sendConfigureMatch:
+    action: send
+    channel: { $ref: "#/channels/room" }
+    title: Configurar partida
+    summary: |
+      Host define configurações. Rejeitado com `error: not_host` se emissor não é host.
+    tags: [{ name: lobby }]
+    messages:
+      - $ref: "#/channels/room/messages/configureMatch"
+
+  sendStartGame:
+    action: send
+    channel: { $ref: "#/channels/room" }
+    title: Iniciar partida
+    summary: |
+      Host inicia. Requer pelo menos 1 jogador (mesmo solo) e configuração válida.
+      Host pode iniciar mesmo com jogadores `unready`.
+    tags: [{ name: lobby }]
+    messages:
+      - $ref: "#/channels/room/messages/startGame"
+
+  sendSubmitAnswer:
+    action: send
+    channel: { $ref: "#/channels/room" }
+    title: Enviar resposta
+    summary: |
+      Pode ser enviado múltiplas vezes durante a rodada. Última submissão
+      substitui a anterior. Para `speed_bonus`, conta o tempo da última.
+
+      Rate limit: 10 req/segundo por jogador.
+    tags: [{ name: game }]
+    messages:
+      - $ref: "#/channels/room/messages/submitAnswer"
+
+  sendVoteSkip:
+    action: send
+    channel: { $ref: "#/channels/room" }
+    title: Votar pular rodada
+    summary: |
+      Disponível apenas após ter respondido. Quando maioria + todos
+      responderam, rodada encerra antes do timer.
+    tags: [{ name: game }]
+    messages:
+      - $ref: "#/channels/room/messages/voteSkip"
+
+  sendSelectPlaylist:
+    action: send
+    channel: { $ref: "#/channels/room" }
+    title: Selecionar playlist
+    summary: Jogador escolhe playlist validada para usar na partida.
+    tags: [{ name: lobby }]
+    messages:
+      - $ref: "#/channels/room/messages/selectPlaylist"
+
+  sendPlayerLeave:
+    action: send
+    channel: { $ref: "#/channels/room" }
+    title: Sair da sala
+    summary: Jogador sai voluntariamente. Difere de timeout (que é detectado por WS close).
+    tags: [{ name: system }]
+    messages:
+      - $ref: "#/channels/room/messages/playerLeave"
+
+  sendAutocompleteSearch:
+    action: send
+    channel: { $ref: "#/channels/room" }
+    title: Busca autocomplete
+    summary: |
+      Frontend deve aplicar debounce de 300ms. Backend retorna máximo 10 resultados.
+      Rate limit: 5 req/segundo por jogador.
+    tags: [{ name: game }]
+    messages:
+      - $ref: "#/channels/room/messages/autocompleteSearch"
+
+  sendPing:
+    action: send
+    channel: { $ref: "#/channels/room" }
+    title: Ping (heartbeat)
+    summary: |
+      Heartbeat do cliente a cada 30s. Servidor responde com `pong`.
+      Mantém a conexão viva e detecta desconexão silenciosa.
+    tags: [{ name: system }]
+    messages:
+      - $ref: "#/channels/room/messages/ping"
+
+  # ---- SERVER → CLIENT (receive) ----
+  receiveRoomState:
+    action: receive
+    channel: { $ref: "#/channels/room" }
+    title: Estado completo da sala
+    summary: Enviado ao entrar/reconectar. Cliente substitui estado local pelo recebido.
+    tags: [{ name: system }]
+    messages:
+      - $ref: "#/channels/room/messages/roomState"
+
+  receivePlayerJoined:
+    action: receive
+    channel: { $ref: "#/channels/room" }
+    title: Jogador entrou
+    tags: [{ name: lobby }]
+    messages:
+      - $ref: "#/channels/room/messages/playerJoined"
+
+  receivePlayerLeft:
+    action: receive
+    channel: { $ref: "#/channels/room" }
+    title: Jogador saiu
+    summary: Voluntário, timeout (2 min sem reconectar) ou removido.
+    tags: [{ name: system }]
+    messages:
+      - $ref: "#/channels/room/messages/playerLeft"
+
+  receivePlayerReadyChanged:
+    action: receive
+    channel: { $ref: "#/channels/room" }
+    title: Status de ready mudou
+    tags: [{ name: lobby }]
+    messages:
+      - $ref: "#/channels/room/messages/playerReadyChanged"
+
+  receivePlayerAfkChanged:
+    action: receive
+    channel: { $ref: "#/channels/room" }
+    title: AFK mudou (broadcast)
+    summary: Server faz broadcast quando algum jogador altera afk.
+    tags: [{ name: lobby }]
+    messages:
+      - $ref: "#/channels/room/messages/playerAfkChangedSrv"
+
+  receiveConfigUpdated:
+    action: receive
+    channel: { $ref: "#/channels/room" }
+    title: Configuração atualizada
+    tags: [{ name: lobby }]
+    messages:
+      - $ref: "#/channels/room/messages/configUpdated"
+
+  receiveHostChanged:
+    action: receive
+    channel: { $ref: "#/channels/room" }
+    title: Host mudou
+    summary: |
+      Host desconectou por >60s; papel migrou para jogador conectado há mais tempo.
+    tags: [{ name: system }]
+    messages:
+      - $ref: "#/channels/room/messages/hostChanged"
+
+  receiveGameStarting:
+    action: receive
+    channel: { $ref: "#/channels/room" }
+    title: Partida iniciando
+    summary: Countdown de 3s antes da primeira rodada.
+    tags: [{ name: game }]
+    messages:
+      - $ref: "#/channels/room/messages/gameStarting"
+
+  receiveRoundStarting:
+    action: receive
+    channel: { $ref: "#/channels/room" }
+    title: Rodada iniciando
+    summary: |
+      Cliente deve buscar áudio via `GET /api/v1/audio/{audio_token}`.
+      Cada jogador recebe SEU PRÓPRIO `audio_token` HMAC (não compartilhável).
+      Grace period de 3s antes do timer oficial.
+    tags: [{ name: game }]
+    messages:
+      - $ref: "#/channels/room/messages/roundStarting"
+
+  receiveTimerStarted:
+    action: receive
+    channel: { $ref: "#/channels/room" }
+    title: Timer iniciou
+    summary: Server é fonte da verdade. Cliente apenas exibe.
+    tags: [{ name: game }]
+    messages:
+      - $ref: "#/channels/room/messages/timerStarted"
+
+  receiveAnswerConfirmed:
+    action: receive
+    channel: { $ref: "#/channels/room" }
+    title: Resposta confirmada
+    summary: |
+      Apenas confirma recebimento.
+      **NÃO revela se está correta** — isso só em `roundEnded`.
+    tags: [{ name: game }]
+    messages:
+      - $ref: "#/channels/room/messages/answerConfirmed"
+
+  receivePlayerVotedSkip:
+    action: receive
+    channel: { $ref: "#/channels/room" }
+    title: Voto de pular
+    summary: Inclui contagem atual de votos.
+    tags: [{ name: game }]
+    messages:
+      - $ref: "#/channels/room/messages/playerVotedSkip"
+
+  receiveRoundEnded:
+    action: receive
+    channel: { $ref: "#/channels/room" }
+    title: Rodada encerrada
+    summary: |
+      Revelação completa: música, artista, álbum, dono, respostas de TODOS,
+      pontos da rodada, placar atualizado. Música continua tocando 3s.
+      Próxima rodada em 3 segundos.
+    tags: [{ name: game }]
+    messages:
+      - $ref: "#/channels/room/messages/roundEnded"
+
+  receiveGameEnded:
+    action: receive
+    channel: { $ref: "#/channels/room" }
+    title: Partida encerrada
+    summary: |
+      Ranking final + highlights. Retorno automático ao lobby em 5s.
+      Para `game_mode: solo`, contém também comparação com recorde anterior.
+    tags: [{ name: game }]
+    messages:
+      - $ref: "#/channels/room/messages/gameEnded"
+
+  receiveAutocompleteResults:
+    action: receive
+    channel: { $ref: "#/channels/room" }
+    title: Resultados autocomplete
+    summary: Máximo 10 sugestões do pool das playlists dos jogadores.
+    tags: [{ name: game }]
+    messages:
+      - $ref: "#/channels/room/messages/autocompleteResults"
+
+  receivePong:
+    action: receive
+    channel: { $ref: "#/channels/room" }
+    title: Pong (heartbeat reply)
+    tags: [{ name: system }]
+    messages:
+      - $ref: "#/channels/room/messages/pong"
+
+  receiveError:
+    action: receive
+    channel: { $ref: "#/channels/room" }
+    title: Erro
+    summary: |
+      Erro direcionado ao jogador. Não fecha a conexão.
+      Códigos: `not_host`, `host_is_always_ready`, `not_all_ready`,
+      `room_full`, `round_not_accepting_answers`, `player_not_in_match`,
+      `rate_limited`, `unauthenticated`.
+    tags: [{ name: system }]
+    messages:
+      - $ref: "#/channels/room/messages/error"
+
+components:
+  securitySchemes:
+    playerUuid:
+      type: userPassword
+      description: |
+        Identificação via `player_uuid` (UUID v4 gerado no browser, persistido em
+        cookie/localStorage). Enviado como query string no handshake WS:
+        `wss://merma.example.com/ws/room/ABC123?player_uuid=...&nickname=...`.
+
+        Para usuários OAuth-autenticados, o cookie `__Host-session` adiciona
+        binding seguro do player_uuid à conta autenticada.
+
+  schemas:
+    # ---- shared ----
+    PlayerUuid:
+      type: string
+      format: uuid
+      description: UUID v4 do jogador
+      examples:
+        - "550e8400-e29b-41d4-a716-446655440000"
+
+    InviteCode:
+      type: string
+      pattern: "^[A-Z0-9]{6}$"
+      description: Código da sala
+      examples:
+        - "ABC123"
+
+    Player:
+      type: object
+      required: [player_uuid, nickname, is_host, ready, afk, connection_status, has_playlist]
+      properties:
+        player_uuid: { $ref: "#/components/schemas/PlayerUuid" }
+        nickname:    { type: string, maxLength: 32 }
+        is_host:     { type: boolean }
+        ready:       { type: boolean }
+        afk:         { type: boolean }
+        connection_status:
+          type: string
+          enum: [connected, reconnecting, disconnected]
+        has_playlist: { type: boolean }
+        platform:
+          type: string
+          enum: [spotify, deezer, youtube_music]
+          nullable: true
+
+    MatchConfiguration:
+      type: object
+      required: [time_per_round, total_songs, answer_type, allow_repeats, scoring_rule, game_mode]
+      properties:
+        time_per_round:
+          type: integer
+          minimum: 10
+          maximum: 60
+          description: Segundos por rodada
+        total_songs:
+          type: integer
+          minimum: 1
+          description: Total de músicas (dentro do range dinâmico baseado em jogadores)
+        answer_type:
+          type: string
+          enum: [song, artist, both]
+        allow_repeats:
+          type: boolean
+          default: false
+        scoring_rule:
+          type: string
+          enum: [simple, speed_bonus]
+        game_mode:
+          type: string
+          enum: [multiplayer, solo]
+
+    SongRange:
+      type: object
+      properties:
+        min:                   { type: integer, description: "Mínimo = 1 × total_jogadores" }
+        max:                   { type: integer, description: "Máximo = 5 × total_jogadores" }
+        current_players:       { type: integer }
+        players_with_playlist: { type: integer }
+
+    RevealedSong:
+      type: object
+      properties:
+        isrc:           { type: string, nullable: true }
+        name:           { type: string, examples: [ "Bohemian Rhapsody" ] }
+        artist:         { type: string, examples: [ "Queen" ] }
+        album:          { type: string, examples: [ "A Night At The Opera" ], nullable: true }
+        cover_url:      { type: string, format: uri, nullable: true }
+        contributed_by: { type: string, description: "Nickname do dono da música" }
+        source_platform: { type: string, enum: [spotify, deezer, youtube_music] }
+
+    PlayerAnswer:
+      type: object
+      properties:
+        player_uuid:    { $ref: "#/components/schemas/PlayerUuid" }
+        nickname:       { type: string }
+        answer_text:    { type: string, description: "O que o jogador digitou (vazio se não respondeu)" }
+        is_correct:     { type: boolean }
+        is_near_miss:   { type: boolean, description: "Errou mas chegou perto (fuzzy próximo)" }
+        points_earned:  { type: integer }
+        response_time:  { type: number, format: float, nullable: true, description: "Segundos" }
+
+    Highlight:
+      type: object
+      properties:
+        player_uuid: { $ref: "#/components/schemas/PlayerUuid" }
+        nickname:    { type: string }
+
+    RankingEntry:
+      type: object
+      properties:
+        position:           { type: integer }
+        player_uuid:        { $ref: "#/components/schemas/PlayerUuid" }
+        nickname:           { type: string }
+        total_points:       { type: integer }
+        correct_answers:    { type: integer }
+        max_streak:         { type: integer }
+        avg_response_time:  { type: number, format: float, nullable: true }
+
+    SoloComparison:
+      type: object
+      description: Só presente em `game_ended` quando `game_mode: solo`
+      properties:
+        beat_record:       { type: boolean }
+        previous_score:    { type: integer, nullable: true }
+        delta_score:       { type: integer, nullable: true }
+        previous_streak:   { type: integer, nullable: true }
+        delta_streak:      { type: integer, nullable: true }
+        previous_avg_time: { type: number, format: float, nullable: true }
+        delta_avg_time:    { type: number, format: float, nullable: true }
+
+  messages:
+    # ===========================================================
+    # CLIENT → SERVER
+    # ===========================================================
+    playerReady:
+      name: player_ready
+      title: Marcar pronto
+      tags: [{ name: lobby }]
+      payload:
+        type: object
+        required: [type]
+        properties:
+          type: { type: string, const: player_ready }
+
+    playerUnready:
+      name: player_unready
+      title: Desmarcar pronto
+      tags: [{ name: lobby }]
+      payload:
+        type: object
+        required: [type]
+        properties:
+          type: { type: string, const: player_unready }
+
+    playerAfkChanged:
+      name: player_afk_changed
+      title: Alterar AFK
+      tags: [{ name: lobby }]
+      payload:
+        type: object
+        required: [type, afk]
+        properties:
+          type: { type: string, const: player_afk_changed }
+          afk:  { type: boolean }
+
+    configureMatch:
+      name: configure_match
+      title: Configurar partida
+      tags: [{ name: lobby }]
+      payload:
+        type: object
+        required: [type, config]
+        properties:
+          type:   { type: string, const: configure_match }
+          config: { $ref: "#/components/schemas/MatchConfiguration" }
+
+    startGame:
+      name: start_game
+      title: Iniciar partida
+      tags: [{ name: lobby }]
+      payload:
+        type: object
+        required: [type]
+        properties:
+          type: { type: string, const: start_game }
+
+    submitAnswer:
+      name: submit_answer
+      title: Enviar resposta
+      tags: [{ name: game }]
+      payload:
+        type: object
+        required: [type, answer_text]
+        properties:
+          type:        { type: string, const: submit_answer }
+          answer_text: { type: string, examples: [ "Bohemian Rhapsody" ] }
+
+    voteSkip:
+      name: vote_skip
+      title: Votar pular
+      tags: [{ name: game }]
+      payload:
+        type: object
+        required: [type]
+        properties:
+          type: { type: string, const: vote_skip }
+
+    selectPlaylist:
+      name: select_playlist
+      title: Selecionar playlist
+      tags: [{ name: lobby }]
+      payload:
+        type: object
+        required: [type, playlist_id, platform]
+        properties:
+          type:        { type: string, const: select_playlist }
+          playlist_id: { type: string }
+          platform:    { type: string, enum: [spotify, deezer, youtube_music] }
+
+    playerLeave:
+      name: player_leave
+      title: Sair da sala
+      tags: [{ name: system }]
+      payload:
+        type: object
+        required: [type]
+        properties:
+          type: { type: string, const: player_leave }
+
+    autocompleteSearch:
+      name: autocomplete_search
+      title: Busca autocomplete
+      tags: [{ name: game }]
+      payload:
+        type: object
+        required: [type, query]
+        properties:
+          type:  { type: string, const: autocomplete_search }
+          query: { type: string, minLength: 2 }
+
+    ping:
+      name: ping
+      title: Heartbeat
+      tags: [{ name: system }]
+      payload:
+        type: object
+        required: [type]
+        properties:
+          type: { type: string, const: ping }
+
+    # ===========================================================
+    # SERVER → CLIENT
+    # ===========================================================
+    roomState:
+      name: room_state
+      title: Estado completo da sala
+      tags: [{ name: system }]
+      payload:
+        type: object
+        properties:
+          type:             { type: string, const: room_state }
+          room_id:          { type: string, format: uuid }
+          invite_code:      { $ref: "#/components/schemas/InviteCode" }
+          state:            { type: string, enum: [waiting, starting, in_match, reveal, finished] }
+          host_player_uuid: { $ref: "#/components/schemas/PlayerUuid" }
+          config:           { $ref: "#/components/schemas/MatchConfiguration" }
+          players:          { type: array, items: { $ref: "#/components/schemas/Player" } }
+          song_range:       { $ref: "#/components/schemas/SongRange" }
+          current_round_index: { type: integer, nullable: true }
+          total_rounds:        { type: integer, nullable: true }
+
+    playerJoined:
+      name: player_joined
+      title: Jogador entrou
+      tags: [{ name: lobby }]
+      payload:
+        type: object
+        required: [type, player]
+        properties:
+          type:   { type: string, const: player_joined }
+          player: { $ref: "#/components/schemas/Player" }
+
+    playerLeft:
+      name: player_left
+      title: Jogador saiu
+      tags: [{ name: system }]
+      payload:
+        type: object
+        required: [type, player_uuid, reason]
+        properties:
+          type:        { type: string, const: player_left }
+          player_uuid: { $ref: "#/components/schemas/PlayerUuid" }
+          reason:      { type: string, enum: [voluntary, timeout, kicked] }
+
+    playerReadyChanged:
+      name: player_ready_changed
+      title: Ready mudou
+      tags: [{ name: lobby }]
+      payload:
+        type: object
+        required: [type, player_uuid, ready]
+        properties:
+          type:        { type: string, const: player_ready_changed }
+          player_uuid: { $ref: "#/components/schemas/PlayerUuid" }
+          ready:       { type: boolean }
+
+    playerAfkChangedSrv:
+      name: player_afk_changed
+      title: AFK mudou (broadcast)
+      tags: [{ name: lobby }]
+      payload:
+        type: object
+        required: [type, player_uuid, afk]
+        properties:
+          type:        { type: string, const: player_afk_changed }
+          player_uuid: { $ref: "#/components/schemas/PlayerUuid" }
+          afk:         { type: boolean }
+
+    configUpdated:
+      name: config_updated
+      title: Configuração atualizada
+      tags: [{ name: lobby }]
+      payload:
+        type: object
+        required: [type, config]
+        properties:
+          type:       { type: string, const: config_updated }
+          config:     { $ref: "#/components/schemas/MatchConfiguration" }
+          song_range: { $ref: "#/components/schemas/SongRange" }
+
+    hostChanged:
+      name: host_changed
+      title: Host mudou
+      tags: [{ name: system }]
+      payload:
+        type: object
+        required: [type, new_host_uuid, new_host_nickname]
+        properties:
+          type:              { type: string, const: host_changed }
+          new_host_uuid:     { $ref: "#/components/schemas/PlayerUuid" }
+          new_host_nickname: { type: string }
+          reason:            { type: string, enum: [previous_host_disconnected] }
+
+    gameStarting:
+      name: game_starting
+      title: Partida iniciando
+      tags: [{ name: game }]
+      payload:
+        type: object
+        required: [type, countdown_seconds]
+        properties:
+          type:              { type: string, const: game_starting }
+          countdown_seconds: { type: integer, examples: [3] }
+
+    roundStarting:
+      name: round_starting
+      title: Rodada iniciando
+      tags: [{ name: game }]
+      payload:
+        type: object
+        required: [type, round_index, total_rounds, audio_source, grace_period_seconds]
+        properties:
+          type:                 { type: string, const: round_starting }
+          round_index:          { type: integer, minimum: 0 }
+          total_rounds:         { type: integer, minimum: 1 }
+          audio_source:         { type: string, enum: [deezer, spotify_sdk] }
+          audio_token:
+            type: string
+            description: "Token HMAC, single-use, expira com a rodada. Use em GET /api/v1/audio/{token}. SOMENTE quando audio_source=deezer."
+            nullable: true
+          spotify_uri:
+            type: string
+            description: "URI Spotify para Web Playback SDK. SOMENTE quando audio_source=spotify_sdk."
+            nullable: true
+          grace_period_seconds: { type: integer, default: 3 }
+
+    timerStarted:
+      name: timer_started
+      title: Timer iniciou
+      tags: [{ name: game }]
+      payload:
+        type: object
+        required: [type, duration_seconds]
+        properties:
+          type:             { type: string, const: timer_started }
+          duration_seconds: { type: integer, minimum: 10, maximum: 60 }
+          server_now:       { type: integer, description: "Unix ms do servidor — para sync de timer no cliente" }
+
+    answerConfirmed:
+      name: answer_confirmed
+      title: Resposta confirmada
+      tags: [{ name: game }]
+      payload:
+        type: object
+        required: [type]
+        properties:
+          type: { type: string, const: answer_confirmed }
+
+    playerVotedSkip:
+      name: player_voted_skip
+      title: Voto de pular
+      tags: [{ name: game }]
+      payload:
+        type: object
+        required: [type, player_uuid, skip_votes, votes_needed]
+        properties:
+          type:         { type: string, const: player_voted_skip }
+          player_uuid:  { $ref: "#/components/schemas/PlayerUuid" }
+          skip_votes:   { type: integer }
+          votes_needed: { type: integer }
+
+    roundEnded:
+      name: round_ended
+      title: Rodada encerrada (revelação)
+      tags: [{ name: game }]
+      payload:
+        type: object
+        required: [type, round_index, song, answers, scores, next_round_in_seconds]
+        properties:
+          type:                  { type: string, const: round_ended }
+          round_index:           { type: integer }
+          end_reason:            { type: string, enum: [timer_expired, majority_skip] }
+          song:                  { $ref: "#/components/schemas/RevealedSong" }
+          answers:               { type: array, items: { $ref: "#/components/schemas/PlayerAnswer" } }
+          scores:
+            type: object
+            additionalProperties: { type: integer }
+            description: "Placar acumulado: player_uuid → total points"
+          next_round_in_seconds: { type: integer, default: 3 }
+
+    gameEnded:
+      name: game_ended
+      title: Partida encerrada
+      tags: [{ name: game }]
+      payload:
+        type: object
+        required: [type, final_scores, ranking, highlights, return_to_lobby_in_seconds]
+        properties:
+          type:         { type: string, const: game_ended }
+          match_id:     { type: string, format: uuid }
+          final_scores:
+            type: object
+            additionalProperties: { type: integer }
+          ranking:
+            type: array
+            items: { $ref: "#/components/schemas/RankingEntry" }
+          highlights:
+            type: object
+            properties:
+              best_streak:
+                allOf:
+                  - { $ref: "#/components/schemas/Highlight" }
+                  - { type: object, properties: { streak: { type: integer } } }
+              fastest_answer:
+                allOf:
+                  - { $ref: "#/components/schemas/Highlight" }
+                  - { type: object, properties: { time: { type: number, format: float }, song_name: { type: string } } }
+              most_correct:
+                allOf:
+                  - { $ref: "#/components/schemas/Highlight" }
+                  - { type: object, properties: { count: { type: integer } } }
+              near_miss_champion:
+                allOf:
+                  - { $ref: "#/components/schemas/Highlight" }
+                  - { type: object, properties: { count: { type: integer } } }
+          solo_comparison:
+            allOf:
+              - { $ref: "#/components/schemas/SoloComparison" }
+            description: "Presente apenas se a partida foi solo"
+          return_to_lobby_in_seconds: { type: integer, default: 5 }
+
+    autocompleteResults:
+      name: autocomplete_results
+      title: Resultados autocomplete
+      tags: [{ name: game }]
+      payload:
+        type: object
+        required: [type, query, results]
+        properties:
+          type:  { type: string, const: autocomplete_results }
+          query: { type: string }
+          results:
+            type: array
+            maxItems: 10
+            items:
+              type: object
+              properties:
+                text: { type: string }
+                kind: { type: string, enum: [song, artist] }
+
+    pong:
+      name: pong
+      title: Pong (heartbeat reply)
+      tags: [{ name: system }]
+      payload:
+        type: object
+        required: [type]
+        properties:
+          type: { type: string, const: pong }
+
+    error:
+      name: error
+      title: Erro direcionado ao jogador
+      tags: [{ name: system }]
+      payload:
+        type: object
+        required: [type, code, message]
+        properties:
+          type:    { type: string, const: error }
+          code:
+            type: string
+            enum:
+              - unauthenticated
+              - not_host
+              - host_is_always_ready
+              - not_all_ready          # legado — host pode iniciar com unready agora
+              - room_full
+              - room_not_found
+              - round_not_accepting_answers
+              - player_not_in_match
+              - already_answered
+              - already_voted_skip
+              - rate_limited
+              - invalid_payload
+              - internal_error
+          message: { type: string, description: "Mensagem legível em pt-BR" }

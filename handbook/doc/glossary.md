@@ -28,7 +28,8 @@ Termos compartilhados entre produto, design, arquitetura, código e specs. Quand
 | **Pool** | `pool` | Conjunto total de músicas das playlists de todos os jogadores da sala. Fonte do autocomplete (evita spoilers de quais músicas estão na partida). |
 | **Revelação** | `Reveal` (fase de `Round`) | Momento após o timer da rodada onde a música correta + respostas de todos + pontos são exibidos. Dura ~3 segundos. |
 | **Grace period** | `grace_period_seconds` | Janela de 3 segundos antes do timer oficial da rodada, para buffering do áudio nos clientes. |
-| **Modo de jogo** | `game_mode` ∈ `{multiplayer, solo}` | Modalidade da partida, configurada na `MatchConfiguration`. **Solo** é modo explícito (não apenas multiplayer com 1 jogador); regras específicas serão detalhadas no GDD canônico (`10-product/03-gdd.md`). |
+| **Modo de jogo** | `game_mode` ∈ `{multiplayer, solo}` | Modalidade da partida, configurada na `MatchConfiguration`. **Solo** é modo explícito com UI e mecânicas próprias (ver abaixo). |
+| **Modo Solo** | `game_mode = solo` | Partida com 1 jogador focada em **progressão pessoal contra si mesmo**. Características-chave: (1) UI exclusiva (sem ranking comparativo, sem indicadores de "esperando outros"); (2) **métricas pessoais persistidas** — recorde de pontuação por playlist, melhor streak, tempo médio de resposta, total de músicas conhecidas; (3) `MatchConfiguration` mostra apenas opções relevantes (sem voto-pular, sem repetição forçada); (4) `allow_repeats` exposto como escolha livre do jogador. Detalhes finais (telas, achievements, prompt de "supere seu recorde") em [`10-product/03-gdd.md`](10-product/03-gdd.md). |
 
 ## 2. Conceitos de resposta e pontuação
 

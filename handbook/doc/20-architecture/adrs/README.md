@@ -16,6 +16,8 @@ Um ADR documenta **uma decisão arquitetural** — o contexto que levou a ela, a
 | [0006](0006-postgres-drizzle.md) | accepted | Banco: PostgreSQL + Drizzle | 2026-05-13 |
 | [0007](0007-fuzzy-match-levenshtein.md) | accepted | Fuzzy match in-house (Levenshtein) | 2026-05-13 |
 | [0008](0008-frontend-solidjs.md) | accepted | Frontend reativo com SolidJS (supersedes 0003) | 2026-05-13 |
+| [0009](0009-redis-snapshot.md) | accepted | Snapshot de partida ativa em Redis | 2026-05-13 |
+| [0010](0010-observability-minimal.md) | accepted | Observabilidade minimalista (stdout JSON + Sentry + /metrics) | 2026-05-13 |
 
 ## Status possíveis
 

@@ -83,8 +83,11 @@ Quando dois documentos parecerem conflitar, o documento de **nível mais alto** 
 | Frontend | SolidJS 1.x (signals + JSX AOT) | [`adrs/0008`](20-architecture/adrs/0008-frontend-solidjs.md) |
 | Áudio | Deezer (engine) + fallback Spotify Premium | [`adrs/0004`](20-architecture/adrs/0004-audio-deezer-as-engine.md) |
 | Monorepo | Bun Workspaces | [`adrs/0005`](20-architecture/adrs/0005-monorepo-bun-workspaces.md) |
-| Banco | PostgreSQL + Drizzle | [`adrs/0006`](20-architecture/adrs/0006-postgres-drizzle.md) |
+| Banco persistente | PostgreSQL + Drizzle | [`adrs/0006`](20-architecture/adrs/0006-postgres-drizzle.md) |
+| Estado transiente | Redis 7.x (snapshot de partida ativa, cache) | [`adrs/0009`](20-architecture/adrs/0009-redis-snapshot.md) |
 | Fuzzy match | Levenshtein (in-house) | [`adrs/0007`](20-architecture/adrs/0007-fuzzy-match-levenshtein.md) |
+| Topologia | single-writer-per-room + sticky sharding por `invite_code` | [`adrs/0002`](20-architecture/adrs/0002-server-hono.md) |
+| Observabilidade | stdout JSON + Sentry + `/metrics` Prometheus | [`adrs/0010`](20-architecture/adrs/0010-observability-minimal.md) |
 
 ## Convenções
 

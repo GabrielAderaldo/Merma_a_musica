@@ -58,7 +58,21 @@ Para a integridade do jogo, precisamos garantir:
 - **Neutras:**
   - Cache em memória reinicia em deploys; previews voltam a ser buscados do Deezer. Aceitável.
 
+## Anti-cheat do token de áudio (adendo 2026-05-13)
+
+Sob discussão arquitetural ficou claro que single-use + TTL não é suficiente — um jogador poderia capturar a URL na DevTools e repassar para um cúmplice da mesma sala, ou abrir aba incógnita e baixar paralelamente para análise. Reforçamos:
+
+- **`audio_token = HMAC(server_secret, player_uuid || round_id || expiry)`** — token é vinculado ao **jogador que requisitou**. Outro player_uuid recebe `401`.
+- **Single-use** mantido (TTL = duração da rodada).
+- **TLS obrigatório** (Caddy força HTTPS) — mitiga MITM.
+- **Headers strip** mantidos (ID3, `Content-Length` original).
+- **Sem `Range: bytes=` parcial** — qualquer requisição parcial é rejeitada (impede usar a feature de range para inspeção fragmentada).
+- **Rate limit no proxy de áudio:** 1 requisição por (`player_uuid`, `round_id`).
+
+Implementação ~20 linhas de TS no handler `GET /api/v1/audio/{audio_token}`.
+
 ## Notas
 
 - Anti-cheat completo (cobertura de Shazam ao fundo, copiar URL, etc.) está em [`30-specs/02-audio.md`](../../30-specs/02-audio.md) e [`40-operations/03-security-anticheat.md`](../../../40-operations/03-security-anticheat.md) (a criar).
 - Modelo de cache de **ISRC → Deezer track ID** persistido por 24h em **memória** (não ETS — versão antiga incorretamente referenciava ETS do Erlang). Pode virar Redis pós-MVP se ganho for medível.
+- Cache de **preview MP3** (binário): 1 download Deezer por `audio_token`, reusado em memória do processo Bun para todos os jogadores da sala. Expira com a rodada.

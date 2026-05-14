@@ -46,7 +46,25 @@ Padrões de uso:
 - **Neutras:**
   - Documentação online do Hono é a fonte primária; complementar com snapshot offline (a fazer em `handbook/references/hono/` na F6).
 
+## Topologia e sharding (adendo 2026-05-13)
+
+Resultado da discussão arquitetural depois da decisão original:
+
+- **Padrão: single-writer-per-room.** Cada `Room` é detida por exatamente um processo Bun (um `RoomActor` em memória). Esse padrão é o mesmo usado por Erlang/OTP, Phoenix Channels, Discord guilds, Twitch chat — comprovado para o nosso tipo de problema.
+- **Sharding sticky por `invite_code`.** Em N nodes, o load balancer (Caddy) faz hash consistente de `invite_code` → mesma sala sempre cai no mesmo node. WebSockets têm session affinity pela mesma chave.
+- **Snapshot via Redis** ([ADR-0009](0009-redis-snapshot.md)) cobre crash/deploy — node novo re-hidrata `RoomActor` a partir do Redis.
+- **Deploy rolling drain.** Em N≥2 nodes: node antigo para de aceitar **lobbies novos**, mantém lobbies vivos até esvaziarem, depois é morto. Em 1 VPS (MVP) o deploy é hard-cut em janela de baixo uso — recovery automático via snapshot.
+
+### Latência alvo (NFR)
+
+| Métrica | Alvo p95 |
+|---|---|
+| `submit_answer` round-trip (cliente → server → ack) | < 80ms |
+| Jitter de `timer_started` entre clientes | < 100ms |
+| TTFB do áudio após `round_starting` | < 500ms |
+
+Documentado em detalhes em [`40-operations/01-nfrs.md`](../../../40-operations/01-nfrs.md) (F6).
+
 ## Notas
 
-- Latência alvo (NFR a documentar em `40-operations/01-nfrs.md`): p95 < 60ms para o handler de `submit_answer` (cliente → servidor → broadcast). Vamos benchmarkar antes do MVP shipar.
 - Decisão revisita-se caso encontremos limites de throughput no MVP — improvável no escopo atual.

@@ -54,5 +54,9 @@ Precisamos de um banco que:
 
 ## Notas
 
-- Não usamos banco para estado vivo da partida — partidas inteiras vivem e morrem em memória; só o **resultado** vai pro banco. Detalhes em [`20-architecture/03-state-machines.md`](../03-state-machines.md) (a criar).
+- Não usamos Postgres para estado **vivo** da partida — partidas em andamento têm seu estado em memória do `RoomActor` + snapshot transiente em **Redis** ([ADR-0009](0009-redis-snapshot.md)). Postgres recebe apenas o **resultado final** da partida (placar, destaques, métricas pessoais do solo) ao chegar em `game_ended`. Detalhes em [`20-architecture/03-state-machines.md`](../03-state-machines.md) (a criar).
+- **Stack de persistência completo:**
+  - **Postgres:** dados duradouros (accounts, playlists, histórico, recordes pessoais).
+  - **Redis:** estado transiente (snapshot de partida ativa, cache ISRC→Deezer).
+  - **Memória do processo:** estado vivo da `RoomActor` + cache de preview MP3 da rodada.
 - Estratégia de armazenamento de OAuth tokens (encrypted at rest? KMS?) será decidida em ADR separado quando chegarmos em LGPD/security ([`40-operations/02-privacy-lgpd.md`](../../../40-operations/02-privacy-lgpd.md)).

@@ -121,26 +121,28 @@ handbook/
 │   └── archive/                    ← versões antigas (Gleam/Elixir) — read-only
 ├── design/
 │   └── brief.md                    ← handoff para designer
-├── api_responses/                  ← refs de APIs externas (Spotify/Deezer/YouTube)
-└── references/                     ← snapshots offline da doc de libs
-    ├── bun/ solid/ react/
-    ├── tanstack/ typescript/ zod/
-    └── (cada um com INDEX.md + docs/**/*.md)
+└── api_responses/                  ← respostas reais das APIs (Spotify/Deezer/YouTube), usadas como fixture
 ```
 
-## Atualizando references offline
+## Ferramental de IA: doc, debug e LSP
 
-Os snapshots de doc (Bun, Solid, etc.) podem ser regenerados via:
+**Não existe doc de lib versionada no repo** ([ADR-0011](handbook/doc/20-architecture/adrs/0011-ai-native-docs-sources.md)). Consulte sempre a fonte oficial, em tempo real, nesta ordem: **MCP oficial → CLI oficial para agentes → skill/plugin oficial → `llms.txt` → doc HTML**. Não responda sobre API de lib de memória.
 
-```bash
-cd handbook/references/<lib>
-# Para Bun:
-curl -fsSL https://bun.com/llms-full.txt -o llms-full.md
-python3 .split.py    # gera docs/**/*.md
-python3 .index.py    # gera INDEX.md raiz + por pasta
-```
+| Tecnologia | Onde consultar |
+|---|---|
+| Bun | MCP `bun-docs` (no `.mcp.json`) |
+| Hono | skills do plugin `hono@hono` · `bunx @hono/cli docs <path>` / `search <termo>` / `request` (testa rota sem subir server) |
+| SolidJS · Drizzle · Zod · oxlint | `llms.txt` oficial (`docs.solidjs.com`, `orm.drizzle.team`, `zod.dev`, `oxc.rs`) |
+| Redis | skills do plugin `redis-development` |
+| Sentry | `docs.sentry.io/llms.txt`. O plugin `sentry` e o MCP entram quando o projeto Sentry existir |
+| Caddy | MCP `reverse-proxy` (VPS) + doc oficial |
+| Segurança / anti-cheat | MCP `security` (VPS) |
+| Skills de arquitetura (DDD, TDD, clean code…) | MCP `acdg-skills` (VPS) |
 
-**`.split.py` do Bun aplica sanitização automática** de tokens-exemplo conhecidos (Discord bot token na guide `ecosystem/discordjs`) — GitHub Push Protection bloqueia esses. Se aparecer um novo, adicione em `KNOWN_SECRETS_TO_REDACT` no script.
+- **Skill ou plugin só entra se for publicado pela própria org da tecnologia** (ex: `honojs/skills`, `redis/agent-skills`). Nada de marketplace de comunidade.
+- **Código:** use o **LSP** (`tsgo-lsp`, plugin local) para tipos, definição e referências antes de `grep`. O lint roda pelo CLI (`bun run lint`).
+- **Frontend (`apps/web`):** depure com **Claude in Chrome** (console, rede, DOM), não por suposição.
+- Os MCPs `acdg-skills`, `security` e `reverse-proxy` ficam na VPS `mcp-server`, **só pela tailnet**. Se não conectarem, cheque o Tailscale antes de qualquer outra coisa.
 
 ## Convenções de commit
 

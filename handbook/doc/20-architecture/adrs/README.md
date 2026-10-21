@@ -18,6 +18,7 @@ Um ADR documenta **uma decisão arquitetural** — o contexto que levou a ela, a
 | [0008](0008-frontend-solidjs.md) | accepted | Frontend reativo com SolidJS (supersedes 0003) | 2026-05-13 |
 | [0009](0009-redis-snapshot.md) | accepted | Snapshot de partida ativa em Redis | 2026-05-13 |
 | [0010](0010-observability-minimal.md) | accepted | Observabilidade minimalista (stdout JSON + Sentry + /metrics) | 2026-05-13 |
+| [0011](0011-ai-native-docs-sources.md) | accepted | Doc das libs pelas fontes oficiais para IA, sem snapshots no repo | 2026-10-21 |
 
 ## Status possíveis
 

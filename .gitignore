@@ -15,7 +15,7 @@ firebase-debug.log
 # === IDE ===
 .vscode/
 .idea/
-# NOTA: .zed/ é commitado (config do projeto para Zed editor)
+.zed/
 *.swp
 *.swo
 
@@ -28,9 +28,10 @@ Thumbs.db
 .env.local
 .env.production
 
-# === MCP config local ===
-# .mcp.json contém path absoluto do MCP local — específico da máquina do dev
-.mcp.json
+# === Claude Code ===
+# .mcp.json e .claude/settings.json são versionados (só URLs HTTP, sem path local nem segredo).
+# O que é específico da máquina fica no settings.local.json.
+.claude/settings.local.json
 
 # === Temporários ===
 *.tmp

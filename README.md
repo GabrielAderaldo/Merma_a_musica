@@ -69,9 +69,9 @@ merma-a-musica/
 ├── packages/
 │   ├── domain/           # @merma/domain — engine pura (TS, zero deps)
 │   └── schema/           # @merma/schema — contratos Zod compartilhados
-├── handbook/             # 📚 documentação canônica + referências
+├── handbook/             # 📚 documentação canônica
 │   ├── doc/              # docs do projeto (entrada: doc/README.md)
-│   └── references/       # snapshots offline (Bun, Solid, Zod, React, TS)
+│   └── api_responses/    # respostas reais das APIs de streaming (fixtures)
 ├── package.json          # workspaces raiz
 ├── tsconfig.json         # config base (TS 6 strict)
 └── README.md             # você está aqui
@@ -87,7 +87,7 @@ A documentação está organizada em camadas, com hierarquia explícita de fonte
 |---|---|---|
 | [`handbook/doc/`](handbook/doc/) | Todos | Índice mestre, linguagem ubíqua |
 | [`handbook/doc/10-product/`](handbook/doc/10-product/) | Produto, design, stakeholders | Visão, personas, **GDD canônico**, métricas |
-| [`handbook/doc/20-architecture/`](handbook/doc/20-architecture/) | Engenheiros | C4, bounded contexts, state machines, sequence diagrams, deployment, **10 ADRs** |
+| [`handbook/doc/20-architecture/`](handbook/doc/20-architecture/) | Engenheiros | C4, bounded contexts, state machines, sequence diagrams, deployment, **11 ADRs** |
 | [`handbook/doc/30-specs/`](handbook/doc/30-specs/) | Implementadores | Engine completo, áudio + anti-cheat, frontend, **AsyncAPI WS**, **OpenAPI REST** |
 | [`handbook/doc/40-operations/`](handbook/doc/40-operations/) | Operação | NFRs, LGPD, segurança consolidada, **runbook** |
 | [`handbook/doc/archive/`](handbook/doc/archive/) | Histórico | Versões anteriores (Phoenix/Gleam/SvelteKit) |

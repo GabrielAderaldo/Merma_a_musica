@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(bun install:*)",
+      "Bash(bun test:*)",
+      "Bash(bun run lint:*)",
+      "Bash(bun run build:*)",
+      "Bash(bun --filter:*)",
+      "Bash(bunx oxlint:*)",
+      "Bash(bunx tsc --noEmit:*)",
+      "Bash(bunx @hono/cli docs:*)",
+      "Bash(bunx @hono/cli search:*)",
+      "mcp__acdg-skills",
+      "mcp__security",
+      "mcp__reverse-proxy",
+      "mcp__bun-docs",
+      "WebFetch(domain:bun.com)",
+      "WebFetch(domain:hono.dev)",
+      "WebFetch(domain:docs.solidjs.com)",
+      "WebFetch(domain:orm.drizzle.team)",
+      "WebFetch(domain:zod.dev)",
+      "WebFetch(domain:oxc.rs)",
+      "WebFetch(domain:tailwindcss.com)",
+      "WebFetch(domain:redis.io)",
+      "WebFetch(domain:docs.sentry.io)",
+      "WebFetch(domain:www.postgresql.org)",
+      "WebFetch(domain:caddyserver.com)",
+      "WebFetch(domain:developer.spotify.com)",
+      "WebFetch(domain:developers.deezer.com)",
+      "WebFetch(domain:www.typescriptlang.org)"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "acdg-skills",
+    "security",
+    "reverse-proxy",
+    "bun-docs"
+  ],
+  "enabledPlugins": {
+    "hono@hono": true,
+    "redis-development@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {
+    "hono": {
+      "source": {
+        "source": "github",
+        "repo": "honojs/skills"
+      }
+    }
+  }
+}

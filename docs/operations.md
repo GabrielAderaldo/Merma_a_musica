@@ -42,6 +42,8 @@ FCP < 2s · TTI < 3s · chunk principal < 30 KB gzip (< 60 KB com Solid + Tailwi
 
 ## Topologia da Fase 0
 
+> Em avaliação: [ADR-0017](adr/0017-producao-em-containers-com-podman-quadlet.md) (`proposed`) põe estes quatro serviços num pod Podman/Quadlet, com o deploy por imagem fixada por digest. Até ele virar `accepted`, vale o texto abaixo.
+
 Uma VPS rodando, via systemd: Caddy 2 (TLS automático, serve `apps/web/dist`, faz proxy de `/api/*`, `/auth/*` e `/ws/room/*` para `127.0.0.1:3000`), `apps/api` (Bun ≥ 1.4.3, iniciado com `--disallow-code-generation-from-strings=strict`, S-27), **Postgres 17** e **Redis 8** (`requirepass` + AOF), estes três só em loopback. As variáveis canônicas estão em [`.env.example`](../.env.example).
 
 - Deploy hard-cut entre 03h e 05h BRT: parar → `git pull` → `bun install` → build → `bun run db:migrate` → subir. O `RecoveryService` reidrata as salas ([`architecture.md`](architecture.md#recuperação)). Meta: < 30s fora do ar.

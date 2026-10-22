@@ -11,11 +11,11 @@ Equipe: 1 mantenedor + IA. O que não está nos docs se pergunta ao mantenedor, 
 
 ## Comandos
 
-- `bun install` · `bun test [caminho]` (já roda com `--check`) · `bun run typecheck` · `bun run lint` (oxlint) · `bun run docs:check`
+- `bun install` · `bun run test` (com `--check`, inclui os testes dos hooks) · `bun test --check <caminho>` · `bun run typecheck` · `bun run lint` (oxlint) · `bun run docs:check`
 - Bun ≥ 1.4.3. Os tipos são TypeScript 7, checados pelo `bun check`; não use `tsc`. Depois de `bun upgrade`, alinhe o devDep `typescript` com `bun -p process.versions.typescript` (ADR-0016).
 - Só `bun`/`bunx`. Nunca npm, pnpm ou yarn (um hook bloqueia).
 - Postgres 17 e Redis 8 de dev vêm da `~/.infra` (`infra up postgres redis`). Nada de docker-compose no projeto.
-- Antes de dar uma tarefa por concluída: `bun run docs:check`, `bun run typecheck` e, quando houver código, `bun test` e `bun run lint`.
+- Antes de dar uma tarefa por concluída: `bun run docs:check`, `bun run typecheck`, `bun run lint` e `bun run test`. Com mudança não commitada, o hook `Stop` roda os quatro e não deixa encerrar se algum falhar. O CI roda os mesmos.
 
 ## Onde está a verdade (em conflito, vence o de cima)
 

@@ -1,0 +1,28 @@
+# Os mesmos checks do hook Stop (.claude/hooks/gate-stop.ts). Versões das actions aferidas em 2026-10-21.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      # Sem bun-version: lê o packageManager do package.json (bun@1.4.3, ADR-0016).
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run docs:check
+      - run: bun run typecheck
+      - run: bun run lint
+      - run: bun run test

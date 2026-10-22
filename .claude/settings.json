@@ -14,6 +14,7 @@
       "Bash(bunx @hono/cli search:*)",
       "Bash(bunx @hono/cli request:*)",
       "Bash(bun run docs:check)",
+      "Bash(bun run test:*)",
       "WebFetch(domain:code.claude.com)",
       "mcp__acdg-skills",
       "mcp__security",
@@ -47,6 +48,13 @@
         "matcher": "Bash",
         "hooks": [
           { "type": "command", "command": "bun \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guard-bash.ts" }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bun \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/gate-stop.ts", "timeout": 120 }
         ]
       }
     ]

@@ -1,0 +1,14 @@
+# Caddyfile da PoC: sem domínio público, então TLS da CA interna do Caddy.
+# `handle` fixa a ordem: sem ele, o Caddy põe `respond` antes de `reverse_proxy` e a API nunca recebe nada.
+merma.local {
+	tls internal
+	handle /api/* {
+		reverse_proxy 127.0.0.1:3000
+	}
+	handle /ws/* {
+		reverse_proxy 127.0.0.1:3000
+	}
+	handle {
+		respond "merma poc" 200
+	}
+}

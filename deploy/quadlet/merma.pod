@@ -1,0 +1,7 @@
+# Pod de produção (ADR-0017). Os containers dividem o loopback; só o pod publica portas (ADR-0017.R2).
+# Quadlet: https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html
+[Pod]
+PodName=merma
+PublishPort=80:80
+PublishPort=443:443
+PublishPort=443:443/udp

@@ -1,0 +1,23 @@
+# Postgres 17 só em loopback (ADR-0006, ADR-0017.R2). Senha via secret montado, nunca em Environment= (ADR-0017.R4).
+[Unit]
+Description=Mermã — Postgres 17
+
+[Container]
+ContainerName=merma-postgres
+Pod=merma.pod
+Image=docker.io/library/postgres:17@sha256:8630835ad34e3e09007371ac2d8785bd941c3c1fccc02145e3af050b9e520659
+Volume=merma-pgdata.volume:/var/lib/postgresql/data
+Secret=merma-pg-password,type=mount,target=/run/secrets/pg_password
+Environment=POSTGRES_USER=merma POSTGRES_DB=merma POSTGRES_PASSWORD_FILE=/run/secrets/pg_password
+Exec=postgres -c listen_addresses=127.0.0.1
+HealthCmd=pg_isready -h 127.0.0.1 -U merma -d merma
+HealthInterval=5s
+HealthRetries=5
+Notify=healthy
+
+[Service]
+Restart=always
+TimeoutStartSec=180
+
+[Install]
+WantedBy=default.target

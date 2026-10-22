@@ -1,0 +1,27 @@
+# Redis 8 só em loopback, com requirepass e AOF (ADR-0009.R3, ADR-0017.R2).
+# A senha vira um conf em /tmp (umask 077), para não aparecer no argv nem no ambiente. O `exec` sem pipe deixa o
+# redis-server como PID 1, recebendo o SIGTERM (com pipe, o `sh` ficava no meio e o stop acabava em SIGKILL).
+# User=redis porque o Exec= não passa pela troca de usuário do entrypoint; `:U` dá o volume a esse usuário.
+# `$$` e `%%` são `$` e `%` literais: o systemd expande `$VAR` e `%x` no ExecStart.
+[Unit]
+Description=Mermã — Redis 8
+
+[Container]
+ContainerName=merma-redis
+Pod=merma.pod
+Image=docker.io/library/redis:8@sha256:701d27eed8cbd5042c98ec4035146ed036c2390a31ddd9f3f617b4a5e316e12d
+User=redis
+Volume=merma-redisdata.volume:/data:U
+Secret=merma-redis-password,type=mount,target=/run/secrets/redis_password,uid=999
+Exec=sh -c 'umask 077 && printf "requirepass %%s\n" "$$(cat /run/secrets/redis_password)" > /tmp/auth.conf && exec redis-server /tmp/auth.conf --bind 127.0.0.1 --appendonly yes'
+HealthCmd=REDISCLI_AUTH="$$(cat /run/secrets/redis_password)" redis-cli -h 127.0.0.1 ping | grep -q PONG
+HealthInterval=5s
+HealthRetries=5
+Notify=healthy
+
+[Service]
+Restart=always
+TimeoutStartSec=120
+
+[Install]
+WantedBy=default.target

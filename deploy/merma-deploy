@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Deploy hard-cut da API com rollback (ADR-0017). Roda como o usuário de serviço na VPS.
+# Uso: merma-deploy <imagem@sha256:…>
+#
+# Por que não `podman auto-update`: num pod Quadlet ele reinicia a unit do POD (derruba Postgres, Redis e Caddy junto)
+# e julga o sucesso pelo pod, que sobe mesmo com a API quebrada; o rollback nunca dispara (PoC de 2026-10-21).
+# Aqui a imagem fica num drop-in do Quadlet e só a merma-api.service reinicia. Notify=healthy faz o `restart`
+# esperar o healthcheck; se não ficar healthy dentro do TimeoutStartSec, volta para a imagem anterior.
+set -euo pipefail
+
+new="${1:?uso: merma-deploy <imagem@sha256:…>}"
+dir="$HOME/.config/containers/systemd/merma-api.container.d"
+conf="$dir/image.conf"
+mkdir -p "$dir"
+old="$(sed -n 's/^Image=//p' "$conf" 2>/dev/null || true)"
+
+use() {
+  printf '[Container]\nImage=%s\n' "$1" > "$conf"
+  systemctl --user daemon-reload
+}
+
+[[ "$new" == localhost/* ]] || podman pull -q "$new" > /dev/null
+
+use "$new"
+start=$(date +%s)
+if systemctl --user restart merma-api.service; then
+  echo "merma-deploy: $new no ar em $(( $(date +%s) - start ))s"
+  exit 0
+fi
+
+echo "merma-deploy: $new não ficou healthy; voltando para ${old:-<nenhuma>}" >&2
+if [[ -z "$old" ]]; then exit 1; fi
+use "$old"
+systemctl --user restart merma-api.service
+echo "merma-deploy: rollback para $old concluído em $(( $(date +%s) - start ))s" >&2
+exit 1

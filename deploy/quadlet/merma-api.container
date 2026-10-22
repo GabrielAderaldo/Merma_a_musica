@@ -1,0 +1,29 @@
+# apps/api em oven/bun distroless, como nonroot (a imagem declara User=0) e com a flag do S-27.
+# Sem shell na imagem: o healthcheck é exec form, rodando o bun direto.
+# A imagem real vem do drop-in merma-api.container.d/image.conf, escrito pelo deploy/merma-deploy (GHCR por digest,
+# ADR-0017.R3). Sem AutoUpdate=: num pod, o `podman auto-update` reinicia o pod inteiro e não faz rollback.
+[Unit]
+Description=Mermã — API
+Requires=merma-postgres.service merma-redis.service
+After=merma-postgres.service merma-redis.service
+
+[Container]
+ContainerName=merma-api
+Pod=merma.pod
+Image=localhost/merma-api:poc
+User=65532:65532
+Secret=merma-pg-password,type=mount,target=/run/secrets/pg_password,uid=65532
+Secret=merma-redis-password,type=mount,target=/run/secrets/redis_password,uid=65532
+Exec=--disallow-code-generation-from-strings=strict /app/server.ts
+HealthCmd=["/usr/local/bin/bun", "/app/healthcheck.ts"]
+HealthInterval=5s
+HealthRetries=3
+Notify=healthy
+
+[Service]
+Restart=always
+# Teto para ficar healthy: estourou, o merma-deploy volta para a imagem anterior.
+TimeoutStartSec=30
+
+[Install]
+WantedBy=default.target

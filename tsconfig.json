@@ -22,6 +22,6 @@
     "useUnknownInCatchVariables": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["apps", "packages", "scripts", ".claude/hooks"],
+  "include": ["apps", "packages", "scripts", "deploy", ".claude/hooks"],
   "exclude": ["node_modules"]
 }

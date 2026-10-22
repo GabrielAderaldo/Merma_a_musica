@@ -20,6 +20,7 @@
       "mcp__security",
       "mcp__reverse-proxy",
       "mcp__bun-docs",
+      "mcp__penpot",
       "WebFetch(domain:bun.com)",
       "WebFetch(domain:hono.dev)",
       "WebFetch(domain:docs.solidjs.com)",
@@ -63,7 +64,8 @@
     "acdg-skills",
     "security",
     "reverse-proxy",
-    "bun-docs"
+    "bun-docs",
+    "penpot"
   ],
   "enabledPlugins": {
     "hono@hono": true,

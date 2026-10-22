@@ -59,6 +59,19 @@
 | `ConnectedAccount` | Vínculo OAuth entre `player_uuid` e uma plataforma. Guarda o refresh token cifrado. |
 | `ImportedPlaylist` | Playlist importada e normalizada, persistida no Postgres. |
 
+## Design (Atomic Design, ADR-0019)
+
+| Termo | Definição |
+|---|---|
+| Pattern | Peça reutilizável do design system, em qualquer nível. No código, vira um componente Solid com o mesmo nome. |
+| Atom (`atom`) | Pattern indivisível, que não contém outro pattern. Ex.: `Button`. |
+| Molecule (`molecule`) | Poucos atoms que fazem uma coisa só. Ex.: `RoomCodeDisplay`. |
+| Organism (`organism`) | Seção da interface feita de atoms, molecules ou organisms. Ex.: `PlayerList`. |
+| Template (`template`) | Layout de tela com organisms posicionados, sem conteúdo real. |
+| Page (`page`) | Template com conteúdo real e variações. **Não** é a página do Penpot (a aba do arquivo). |
+| Linhagem | De que um pattern é feito e onde é usado. Calculada pelo MCP do Penpot, nunca escrita à mão. |
+| Ficha | Bloco de texto ao lado do componente principal no Penpot: descrição, uso, estados, a11y e tokens. |
+
 ## Arquitetura
 
 | Termo | Definição |

@@ -120,7 +120,13 @@ for (const file of [...docsFiles, ...harnessFiles]) {
   if (hit) fail(file, `menciona stack antiga '${hit[1]}'`);
 }
 
-// 7. Sem snapshot de doc de terceiros (ADR-0011.R1)
+// 7. Níveis do Atomic Design não viram pasta no apps/web (ADR-0019.R4)
+for (const file of walk(join(ROOT, "apps/web"))) {
+  const rel = relative(ROOT, file);
+  if (/(^|\/)(atoms|molecules|organisms|templates)\//.test(rel)) fail(file, "pasta por nível do Atomic Design no apps/web (ADR-0019.R4)");
+}
+
+// 8. Sem snapshot de doc de terceiros (ADR-0011.R1)
 for (const file of walk(ROOT)) {
   const rel = relative(ROOT, file);
   if (/(^|\/)references\/|llms-full|api[_-]reference/i.test(rel)) fail(file, "parece snapshot de doc de terceiros (ADR-0011.R1)");

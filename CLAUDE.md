@@ -25,7 +25,7 @@ Equipe: 1 mantenedor + IA. O que não está nos docs se pergunta ao mantenedor, 
 4. `docs/specs/`: rascunhos pré-código que **expiram** quando o pacote do `until:` nasce
 5. Código: quando existir, testes e tipos são a fonte do "como"
 
-- Mudar regra do jogo → skill `/change-game-rule`. Mudar decisão → skill `/new-adr`.
+- Mudar regra do jogo → skill `/change-game-rule`. Mudar decisão → skill `/new-adr`. Criar ou mudar componente/tela de UI → skill `/design-pattern` (Atomic Design, ADR-0019).
 - ADR `accepted` não se edita (um hook bloqueia). Muda-se com ADR novo que faz supersede.
 - Termo novo do domínio entra em `docs/glossary.md` antes de entrar no código.
 - Contradição entre docs: **não escolha sozinho.** Pergunte ao mantenedor, com as opções, os tradeoffs e as fontes.
@@ -56,6 +56,7 @@ Nunca responda de memória sobre API de lib. Ordem: MCP oficial → CLI oficial 
 | Sentry | `docs.sentry.io/llms.txt` (plugin e MCP quando o projeto Sentry existir) |
 | Caddy · segurança/anti-cheat · DDD/TDD | MCPs `reverse-proxy` · `security` · `acdg-skills` (VPS, só pela tailnet: se falharem, cheque o Tailscale) |
 | Spotify | `developer.spotify.com/llms.txt` |
+| Penpot (design) | MCP `penpot` (remoto, `PENPOT_MCP_KEY` no bucket `penpot` do cofre caninha_games: abrir com `sbox --dir ~/Desktop/Projetos/dev/projetos_pessoais/caninha_games/secrets run penpot -- claude`) · tool `penpot_api_info` · guia em `docs/design/penpot.md` (ADR-0018) |
 
 - Código: LSP (`tsgo-lsp`) antes de grep. Frontend: depurar com Claude in Chrome (console, rede, DOM).
 - Skill, plugin ou MCP só entra se for publicado pela org da própria tecnologia.

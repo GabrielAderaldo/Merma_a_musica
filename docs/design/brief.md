@@ -532,44 +532,57 @@ Estes são **modais / overlays** que aparecem sobre qualquer tela.
 
 ## 7. Componentes reutilizáveis necessários
 
-### 7.1 Primitivos
+> Organizado pelos níveis do **Atomic Design** ([ADR-0019](../adr/0019-design-system-em-atomic-design.md), método em [atomic-design.md](atomic-design.md)). Os tokens da §8 ficam por baixo de tudo. A classificação abaixo foi feita em 2026-10-21. Ela pode mudar pela skill `/design-pattern`, que mantém este catálogo em dia.
+
+### 7.1 Atoms
 
 | Componente | Variantes | Estados |
 |---|---|---|
 | **Button** | primary, secondary, danger, ghost, icon | default, hover, active, disabled, loading |
 | **Input** | text, number, slider | default, focus, error, disabled |
-| **Autocomplete** | — | open, closed, loading sugestões |
 | **Toggle / Switch** | — | on, off, disabled |
-| **Tabs** | — | active, inactive |
-| **Modal** | small, medium, fullscreen | open, closing |
-| **Toast** | info, success, warning, error | entering, visible, leaving |
+| **Avatar** | small, medium, large | with image, with initial (cor derivada do hash do nickname) |
+| **Badge** | host, ready, afk, plataforma | — (separado do PlayerCard, que tem 4 badges) |
 | **Spinner / Skeleton** | — | — |
 | **Tooltip** | — | hidden, visible |
-| **Avatar** | small, medium, large | with image, with initial (cor derivada do hash do nickname) |
+| **AudioIndicator** | — | tocando, parado (sinal de "tocando agora", pode ser equalizer simulado em CSS) |
 
 > **→ Wathan & Schoger** (*Supercharge the defaults*): cada estado **importa**. Default sem hover/focus visível é trabalho mal feito. Cobra todos os estados desde o token.
 
-### 7.2 Domain-specific
+### 7.2 Molecules
 
-| Componente | Descrição |
+| Componente | Composição |
 |---|---|
-| **PlayerCard** | avatar + nick + badges (host, ready, AFK, plataforma) + indicador "tem playlist" + score parcial (in-match) |
-| **Timer** | número grande + barra/anel de progresso visual + pulsação nos últimos 5s |
-| **AudioIndicator** | sinal de "tocando agora" — pode ser equalizer simulado em CSS |
+| **Autocomplete** | Input + lista de sugestões. Estados: open, closed, loading sugestões |
+| **Tabs** | Buttons de aba. Estados: active, inactive |
+| **Toast** | ícone + texto. Variantes info, success, warning, error. Estados entering, visible, leaving |
+| **PlayerCard** | Avatar + nick + Badges + indicador "tem playlist" + score parcial (in-match) |
+| **Timer** | número grande + barra/anel de progresso + pulsação nos últimos 5s |
 | **AnswerCard** (revelação) | nick + resposta digitada + ícone ✓/❌ + pontos ganhos |
 | **HighlightCard** (resultados) | emoji + nome do destaque + nick do vencedor + métrica |
 | **SongRevealCard** | capa + nome + artista + álbum + "contribuído por X" |
-| **PersonalBestPanel** (solo) | recordes pessoais por playlist em layout de cards |
-| **RoomCodeDisplay** | código grande + botão de copiar + animação ao copiar |
-| **ReadyToggle / AfkToggle** | toggle especializado para esses estados |
-| **VoteSkipButton** | botão com contador "(2/3 votos)" |
+| **RoomCodeDisplay** | código grande + Button de copiar + animação ao copiar |
+| **ReadyToggle / AfkToggle** | Toggle + rótulo do estado |
+| **VoteSkipButton** | Button + contador "(2/3 votos)" |
 | **MotivationBanner** (solo) | banner com "Bata seu recorde de X pts!" |
+| **EmptyState** | ícone + título + descrição + Button (CTA) |
 
-### 7.3 Layout
+### 7.3 Organisms
 
-- **AppShell**: header + main + footer (responsivo).
-- **PageHeader**: título + breadcrumb + actions.
-- **EmptyState**: ícone + título + descrição + CTA.
+| Componente | Composição |
+|---|---|
+| **AppHeader** | logo + ações da conta (o header do AppShell) |
+| **PageHeader** | título + breadcrumb + Buttons de ação |
+| **Modal** | shell small, medium, fullscreen que recebe molecules. Estados open, closing |
+| **PlayerList** | lista de PlayerCard (Lobby, placar da Partida) |
+| **AnswerList** | lista de AnswerCard (Revelação) |
+| **PersonalBestPanel** (solo) | recordes pessoais por playlist em cards |
+
+### 7.4 Templates
+
+- **AppShell**: AppHeader + main + footer, responsivo. É a base de todos os outros templates.
+- Um template por área funcional da §6 (Home, Lobby, Partida, Revelação, Resultados, Solo, Playlists), com estrutura e limites de texto, sem conteúdo real.
+- As **pages** são as telas da §6 com conteúdo real e as variações de [atomic-design.md](atomic-design.md) (§ Pages).
 
 ---
 
@@ -737,8 +750,10 @@ Coisas que **NÃO valem animação custosa** (passe rápido):
 
 Por favor, ao final do trabalho:
 
-1. **Design tokens em Figma + export para TS/CSS variables**.
-2. **Biblioteca de componentes** com cada componente da §7, com todas as variantes/estados.
+> A ferramenta é o **Penpot**, não o Figma ([ADR-0018](../adr/0018-design-no-penpot-via-mcp-remoto.md), proposto em 2026-10-21). O guia de operação por IA está em [penpot.md](penpot.md). Onde este brief diz "Figma" ou "Smart Animate", leia "Penpot" e "protótipo do Penpot".
+
+1. **Design tokens no Penpot + export para TS/CSS variables**.
+2. **Biblioteca de componentes** com cada componente da §7, com todas as variantes/estados, numa página do Penpot por nível do Atomic Design.
 3. **Todas as 13 telas** descritas na §6, no fluxo conectado (mobile + desktop).
 4. **Especificação de animações** (pode ser via Smart Animate no Figma + notas).
 5. **Sample do estado completo** de uma partida (lobby → partida → revelação → resultados) para tirar dúvidas de fluxo.

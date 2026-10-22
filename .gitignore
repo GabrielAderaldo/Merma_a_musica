@@ -1,6 +1,6 @@
 # === Bun ===
 node_modules/
-bun.lock
+# bun.lock é versionado: o CI roda `bun install --frozen-lockfile` (ADR-0016)
 
 # === Build output ===
 dist/

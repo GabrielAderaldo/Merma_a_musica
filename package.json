@@ -2,14 +2,21 @@
   "name": "merma-a-musica",
   "version": "1.0.0",
   "private": true,
+  "packageManager": "bun@1.4.3",
+  "engines": {
+    "bun": ">=1.4.3"
+  },
   "scripts": {
     "dev": "bun --filter \"*\" dev",
     "build": "bun --filter \"*\" build",
-    "test": "bun test",
-    "lint": "oxlint"
+    "test": "bun test --check",
+    "typecheck": "bun check",
+    "lint": "oxlint",
+    "docs:check": "bun scripts/docs-check.ts"
   },
   "devDependencies": {
-    "typescript": "^6.0.0",
-    "oxlint": "latest"
+    "@types/bun": "latest",
+    "oxlint": "latest",
+    "typescript": "7.0.2"
   }
 }

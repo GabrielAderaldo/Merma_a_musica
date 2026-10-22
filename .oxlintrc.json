@@ -1,0 +1,29 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "rules": {
+    "typescript/no-explicit-any": "error"
+  },
+  "overrides": [
+    {
+      "files": ["apps/web/**"],
+      "rules": {
+        "no-restricted-imports": ["error", {
+          "patterns": [
+            { "group": ["@merma/domain", "@merma/domain/*"], "message": "apps/web não importa a engine: regra de jogo vive no servidor (ADR-0005, ADR-0007)." },
+            { "group": ["react", "react-dom", "@solidjs/start"], "message": "Frontend é Solid 1.x sem SolidStart (ADR-0008)." }
+          ]
+        }]
+      }
+    },
+    {
+      "files": ["packages/**"],
+      "rules": {
+        "no-restricted-imports": ["error", {
+          "patterns": [
+            { "group": ["@merma/api", "@merma/api/*", "@merma/web", "@merma/web/*"], "message": "packages/* não importa apps/* (ADR-0005)." }
+          ]
+        }]
+      }
+    }
+  ]
+}

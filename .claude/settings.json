@@ -8,9 +8,13 @@
       "Bash(bun run build:*)",
       "Bash(bun --filter:*)",
       "Bash(bunx oxlint:*)",
-      "Bash(bunx tsc --noEmit:*)",
+      "Bash(bun check:*)",
+      "Bash(bun run typecheck:*)",
       "Bash(bunx @hono/cli docs:*)",
       "Bash(bunx @hono/cli search:*)",
+      "Bash(bunx @hono/cli request:*)",
+      "Bash(bun run docs:check)",
+      "WebFetch(domain:code.claude.com)",
       "mcp__acdg-skills",
       "mcp__security",
       "mcp__reverse-proxy",
@@ -29,6 +33,22 @@
       "WebFetch(domain:developer.spotify.com)",
       "WebFetch(domain:developers.deezer.com)",
       "WebFetch(domain:www.typescriptlang.org)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          { "type": "command", "command": "bun \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guard-accepted-adr.ts" }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "bun \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guard-bash.ts" }
+        ]
+      }
     ]
   },
   "enabledMcpjsonServers": [

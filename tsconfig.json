@@ -1,25 +1,27 @@
 {
   "compilerOptions": {
+    "lib": ["ESNext"],
     "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
+    "module": "Preserve",
     "moduleDetection": "force",
+    "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
+    "verbatimModuleSyntax": true,
     "allowJs": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "incremental": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "types": ["bun"],
+
+    "strict": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
     "exactOptionalPropertyTypes": true,
-    "useUnknownInCatchVariables": true
+    "useUnknownInCatchVariables": true,
+    "noFallthroughCasesInSwitch": true
   },
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["apps", "packages", "scripts", ".claude/hooks"],
+  "exclude": ["node_modules"]
 }

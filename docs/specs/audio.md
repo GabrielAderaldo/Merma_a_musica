@@ -1,10 +1,10 @@
 ---
-until: apps/api/package.json
+until: apps/api/src/playlist/audio
 ---
 
 # Spec pré-código — motor de áudio (`apps/api`)
 
-> **Rascunho com prazo de validade.** Quando `apps/api/package.json` existir, isto vira código e testes,
+> **Rascunho com prazo de validade.** Quando `apps/api/src/playlist/audio` existir, isto vira código e testes,
 > e o arquivo é apagado. A decisão está em [ADR-0004](../adr/0004-audio-universal-via-deezer.md); as
 > ameaças, em [`security.md`](../security.md) (S-10 a S-15).
 

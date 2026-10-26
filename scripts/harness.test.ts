@@ -13,7 +13,7 @@ type Pkg = {
   devDependencies: Record<string, string>;
   workspaces?: string[];
 };
-type Restricted = [string, { patterns: { group: string[]; message: string }[] }];
+type Restricted = [string, { patterns: { group?: string[]; regex?: string; message: string }[] }];
 type Oxlint = {
   rules: Record<string, unknown>;
   overrides: { files: string[]; rules: { "no-restricted-imports"?: Restricted } }[];
@@ -75,7 +75,7 @@ describe("ADR-0015 — oxlint", () => {
     lint.overrides
       .filter((o) => files === undefined || o.files.includes(files))
       .flatMap((o) => o.rules["no-restricted-imports"]?.[1].patterns ?? []);
-  const groups = (files: string): string[] => patterns(files).flatMap((p) => p.group);
+  const groups = (files: string): string[] => patterns(files).flatMap((p) => p.group ?? []);
 
   test("ADR-0018.R3 any é erro", () => {
     expect(lint.rules["typescript/no-explicit-any"]).toBe("error");
@@ -87,6 +87,14 @@ describe("ADR-0015 — oxlint", () => {
 
   test("ADR-0005.R2 packages/* não importa apps/*", () => {
     expect(groups("packages/**")).toEqual(expect.arrayContaining(["@merma/api", "@merma/web"]));
+  });
+
+  test("ADR-0023.R1 Playlist Integration não importa o Orchestrator nem a engine", () => {
+    expect(groups("apps/api/src/playlist/**")).toEqual(expect.arrayContaining(["@merma/domain"]));
+    const room = patterns("apps/api/src/playlist/**").flatMap((p) => (p.regex ? [new RegExp(p.regex)] : []));
+    const blocked = (spec: string) => room.some((r) => r.test(spec));
+    expect(["../room", "../room/actor", "../../room/index.ts"].filter((s) => !blocked(s))).toEqual([]);
+    expect(["./roomy", "../playlist/import", "./audio/resolver"].filter(blocked)).toEqual([]);
   });
 
   test("ADR-0015.R2 toda message de no-restricted-imports cita uma restrição de ADR", () => {

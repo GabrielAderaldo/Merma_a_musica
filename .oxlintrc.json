@@ -27,6 +27,17 @@
       }
     },
     {
+      "files": ["apps/api/src/playlist/**"],
+      "rules": {
+        "no-restricted-imports": ["error", {
+          "patterns": [
+            { "regex": "(^|/)room(/|$)", "message": "Playlist Integration não importa o Orchestrator: fronteira de bounded context (ADR-0023.R1)." },
+            { "group": ["@merma/domain", "@merma/domain/*"], "message": "Playlist Integration não importa a engine: fronteira de bounded context (ADR-0023.R1)." }
+          ]
+        }]
+      }
+    },
+    {
       "files": ["packages/domain/**"],
       "rules": {
         "merma/domain-purity": "error"

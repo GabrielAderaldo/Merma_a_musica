@@ -1,5 +1,5 @@
 ---
-until: apps/api/package.json
+until: apps/api/src/observability
 ---
 
 # Spec pré-código — rotas REST
@@ -7,7 +7,8 @@ until: apps/api/package.json
 > **Rascunho com prazo de validade.** Veio do antigo `specs/protocol.md`: a parte WebSocket virou
 > `packages/schema` em 2026-10-26, e a REST espera a `apps/api`, onde as rotas e o `openapi.json` nascem com
 > `@hono/zod-openapi` ([ADR-0014](../adr/0014-contratos-zod-first.md)). Os corpos REST entram em `packages/schema`
-> junto com as rotas. Quando a `apps/api` existir, este arquivo é apagado.
+> junto com as rotas. **Cada linha sai desta tabela no commit em que a rota nasce.** O arquivo é apagado quando
+> `apps/api/src/observability` (a última camada, com `/metrics`) existir.
 
 | Método e rota | Auth | Resposta |
 |---|---|---|

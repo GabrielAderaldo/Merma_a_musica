@@ -1,16 +1,17 @@
 # Arquitetura
 
 > Só o que **restringe** o código: fronteiras, onde vive cada estado e as máquinas de estado.
-> Não há mapa de pastas aqui (ele apodrece). A estrutura real é a do repositório.
+> Não há mapa de pastas aqui (ele apodrece). A estrutura real é a do repositório. As pastas de contexto da
+> `apps/api` abaixo são fronteira, não mapa: o lint e o `docs:check` (`PENDING_SCOPE`) dependem delas.
 
 ## Bounded contexts e fronteiras
 
 | Contexto | Onde | Papel |
 |---|---|---|
 | Game Engine (core) | `packages/domain` | Regras puras do GDD. Sem I/O. |
-| Game Orchestrator | `apps/api` (sala, WS) | `RoomRegistry`, `RoomActor`, timers, snapshot, recovery. Aplica os `Result` da engine. |
-| Playlist Integration | `apps/api` (auth, playlists, áudio) | OAuth, importação, normalização para `NormalizedSong`, resolução de áudio. Anti-corruption layer: nada fora dele vê formato de plataforma. |
-| Progression | `apps/api` (progression) | Recordes do solo no MVP; XP e leaderboard depois. |
+| Game Orchestrator | `apps/api/src/room` | `RoomRegistry`, `RoomActor`, `WsGateway`, timers, snapshot, recovery. Aplica os `Result` da engine. |
+| Playlist Integration | `apps/api/src/playlist` (áudio em `playlist/audio`) | OAuth, importação, normalização para `NormalizedSong`, resolução de áudio. Anti-corruption layer: nada fora dele vê formato de plataforma. |
+| Progression | `apps/api/src/progression` | Recordes do solo no MVP; XP e leaderboard depois. |
 | Contratos | `packages/schema` | Zod, compartilhado por todos ([ADR-0014](adr/0014-contratos-zod-first.md)). |
 
 Dependências permitidas (o lint garante, [ADR-0015](adr/0015-lint-com-oxlint.md)):
@@ -23,7 +24,8 @@ apps/web ──► packages/schema ◄── packages/domain ◄── apps/api
 
 - `packages/domain` importa só `packages/schema`.
 - `apps/web` **nunca** importa `packages/domain`: a UI só reflete eventos do servidor.
-- Dentro de `apps/api`, Playlist Integration não importa Orchestrator nem Engine.
+- Dentro de `apps/api`, Playlist Integration não importa Orchestrator nem Engine ([ADR-0023](adr/0023-pastas-de-contexto-da-apps-api.md)).
+- Fora dos contextos, a `apps/api` tem só camadas transversais: `src/http` (app Hono, middlewares, sessão, logger, rotas REST que compõem os contextos), `src/db` (schema Drizzle) e `src/observability` (métricas, Sentry).
 
 ## Onde vive cada estado
 

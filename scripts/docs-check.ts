@@ -155,16 +155,19 @@ for (const file of allFiles) {
 // 8. Restrições citadas pelos verificadores (ADR-0022.R7, R8, R9).
 // Onde nasce o verificador das restrições `pendente` dos ADRs aceitos antes do ADR-0022, que não dizem o caminho.
 // As chaves vêm sem o prefixo "ADR-" para esta tabela não contar como citação.
+// Na apps/api, o caminho é a pasta do contexto ou da camada transversal (docs/architecture.md), para cada
+// restrição virar cobrança quando o módulo dela nascer, e não a API inteira de uma vez.
 const PENDING_SCOPE: Record<string, string> = {
-  "0002.R1": "apps/api", "0002.R3": "apps/api",
-  "0004.R1": "apps/api", "0004.R2": "apps/api", "0004.R3": "apps/api", "0004.R4": "apps/api", "0004.R5": "apps/api",
-  "0006.R1": "apps/api", "0006.R2": "apps/api", "0006.R3": "apps/api",
+  "0002.R1": "apps/api/src/room", "0002.R3": "apps/api/src/room",
+  "0004.R1": "apps/api/src/playlist/audio", "0004.R2": "apps/api/src/playlist/audio", "0004.R3": "apps/api/src/playlist/audio",
+  "0004.R4": "apps/api/src/playlist/audio", "0004.R5": "apps/api/src/playlist/audio",
+  "0006.R1": "apps/api/src/room", "0006.R2": "apps/api/src/db", "0006.R3": "apps/api/src/playlist",
   "0007.R2": "packages/domain",
   "0008.R1": "apps/web",
-  "0009.R2": "apps/api", "0009.R4": "apps/api",
-  "0010.R1": "apps/api", "0010.R2": "apps/api", "0010.R3": "apps/api",
-  "0013.R1": "apps/api", "0013.R2": "apps/web", "0013.R3": "apps/api", "0013.R4": "apps/api",
-  "0014.R1": "packages/schema", "0014.R2": "apps/api",
+  "0009.R2": "apps/api/src/room", "0009.R4": "apps/api/src/room",
+  "0010.R1": "apps/api/src/http", "0010.R2": "apps/api/src/observability", "0010.R3": "apps/api/src/observability",
+  "0013.R1": "apps/api/src/http", "0013.R2": "apps/web", "0013.R3": "apps/api/src/http", "0013.R4": "apps/api/src/playlist",
+  "0014.R1": "packages/schema", "0014.R2": "apps/api/src/room",
   "0015.R3": "packages/domain",
 };
 const citations = new Map<string, string[]>();

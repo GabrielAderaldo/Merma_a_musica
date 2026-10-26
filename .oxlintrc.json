@@ -1,5 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "jsPlugins": ["./tools/oxlint-plugin-merma/index.mjs"],
   "rules": {
     "typescript/no-explicit-any": "error"
   },
@@ -23,6 +24,12 @@
             { "group": ["@merma/api", "@merma/api/*", "@merma/web", "@merma/web/*"], "message": "packages/* não importa apps/* (ADR-0005.R2)." }
           ]
         }]
+      }
+    },
+    {
+      "files": ["packages/domain/**"],
+      "rules": {
+        "merma/domain-purity": "error"
       }
     }
   ]

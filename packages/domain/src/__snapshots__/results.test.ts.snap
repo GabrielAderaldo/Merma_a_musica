@@ -1,0 +1,81 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`R-702 destaques R-702 fixture de 4 jogadores e 8 rodadas 1`] = `
+{
+  "final_scores": {
+    "00000000-0000-4000-8000-000000000001": 5310,
+    "00000000-0000-4000-8000-000000000002": 5340,
+    "00000000-0000-4000-8000-000000000003": 1350,
+    "00000000-0000-4000-8000-000000000004": 3259,
+  },
+  "highlights": {
+    "best_streak": {
+      "nickname": "P2",
+      "player_uuid": "00000000-0000-4000-8000-000000000002",
+      "value": 5,
+    },
+    "fastest_answer": {
+      "nickname": "P4",
+      "player_uuid": "00000000-0000-4000-8000-000000000004",
+      "value": 700,
+    },
+    "most_correct": {
+      "nickname": "P2",
+      "player_uuid": "00000000-0000-4000-8000-000000000002",
+      "value": 6,
+    },
+    "near_miss_champion": {
+      "nickname": "P3",
+      "player_uuid": "00000000-0000-4000-8000-000000000003",
+      "value": 4,
+    },
+  },
+  "match_id": "00000000-0000-4000-8000-000000009000",
+  "ranking": [
+    {
+      "avg_response_time": 3125,
+      "correct_answers": 6,
+      "fastest_correct": 1500,
+      "max_streak": 5,
+      "near_misses": 1,
+      "nickname": "P2",
+      "player_uuid": "00000000-0000-4000-8000-000000000002",
+      "position": 1,
+      "total_points": 5340,
+    },
+    {
+      "avg_response_time": 3714.285714285714,
+      "correct_answers": 6,
+      "fastest_correct": 1000,
+      "max_streak": 3,
+      "near_misses": 0,
+      "nickname": "P1",
+      "player_uuid": "00000000-0000-4000-8000-000000000001",
+      "position": 2,
+      "total_points": 5310,
+    },
+    {
+      "avg_response_time": 5283.333333333333,
+      "correct_answers": 4,
+      "fastest_correct": 700,
+      "max_streak": 2,
+      "near_misses": 1,
+      "nickname": "P4",
+      "player_uuid": "00000000-0000-4000-8000-000000000004",
+      "position": 3,
+      "total_points": 3259,
+    },
+    {
+      "avg_response_time": 9285.714285714286,
+      "correct_answers": 3,
+      "fastest_correct": 10000,
+      "max_streak": 1,
+      "near_misses": 4,
+      "nickname": "P3",
+      "player_uuid": "00000000-0000-4000-8000-000000000003",
+      "position": 4,
+      "total_points": 1350,
+    },
+  ],
+}
+`;

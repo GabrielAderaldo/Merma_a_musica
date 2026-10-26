@@ -12,4 +12,6 @@ paths:
 - IDs e strings críticas são branded (`PlayerUuid`, `RoundId`, `InviteCode`, `Isrc`…).
 - Importa só `@merma/schema`.
 - Teste de regra cita o ID do GDD no nome: `test("R-202 speed_bonus: 5s de 30s → 850", …)`. Algoritmos com `test.each` sobre as tabelas de `docs/gdd.md`.
-- Enquanto `docs/specs/engine.md` existir, ele é o rascunho dos tipos e das assinaturas. Quando este pacote nascer, migre o conteúdo para tipos e testes e apague o spec.
+- O agregado é a `Room` (lobby + `Match` + `Round`), em `src/types.ts`. Cada função aplica uma transição das máquinas de estado da `docs/architecture.md`; fora delas, `err("illegal_state_transition")`. O rascunho antigo (`docs/specs/engine.md`) está no git.
+- Tempo é `Duration`/`Timestamp` em ms; a conversão para os segundos do fio fica na `apps/api`.
+- Nos testes, `src/testing.ts` tem as fixtures; `unwrap` e `defined` falham com `expect.unreachable`, porque o `throw` é proibido aqui também (`merma/domain-purity`, ADR-0015.R3).

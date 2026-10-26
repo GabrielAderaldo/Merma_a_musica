@@ -9,6 +9,7 @@
 |---|---|
 | Sala (`Room`) | Espaço onde jogadores se reúnem e jogam partidas em sequência. Identificada pelo `invite_code`. Estados em [`architecture.md`](architecture.md#máquinas-de-estado). |
 | Partida (`Match`) | Uma execução completa do jogo dentro da sala, do início ao ranking. Composta por rodadas. |
+| Participante (`participants`) | Quem estava na sala quando a partida começou. Continua no placar e no ranking mesmo se sair da sala; para o pulo (R-120), contam só os que ainda estão nela. |
 | Rodada (`Round`) | Um ciclo "ouvir → responder → revelação". |
 | Host (`is_host`) | Quem criou a sala, ou quem herdou o papel (R-603). Configura e inicia. Sempre `ready`. |
 | Lobby (`lobby`) | Estado da sala entre partidas: escolher playlist, marcar ready, configurar. |
@@ -22,7 +23,7 @@
 | Fase (`phase`) | Valor **derivado** que o cliente recebe para decidir a tela: `lobby`, `countdown`, `playing`, `reveal`, `results`. |
 | Modo de jogo (`game_mode`) | `multiplayer` ou `solo`. |
 | Modo solo | Partida de 1 jogador, de uma playlist, focada em recorde (R-501 a R-508). |
-| Recorde (`personal_best`) | Maior média de pontos por música no solo, por `(player, playlist, answer_type, time_per_round)` (R-504). |
+| Recorde (`personal_best`) | Maior média de pontos por rodada jogada no solo, por `(player, playlist, answer_type, time_per_round)` (R-504). |
 | Streak (`streak`) | Acertos consecutivos na partida (R-203). |
 
 ## Resposta e pontuação
@@ -46,7 +47,7 @@
 | ISRC (`isrc`) | Código global de uma gravação. Chave para achar "a mesma música" entre plataformas. |
 | `audio_token` | Token HMAC por `(player_uuid, round_id, expiry)`, de uso único, usado em `GET /api/v1/audio/{audio_token}` ([ADR-0004](adr/0004-audio-universal-via-deezer.md)). |
 | Proxy de áudio | Endpoint que baixa o preview, remove os metadados e o entrega ao cliente. |
-| `NormalizedSong` | Música importada, já independente da plataforma: `{ isrc?, name, artist, album?, owner_player_uuid, source_platform }`. |
+| `NormalizedSong` | Música importada, já independente da plataforma: `{ isrc?, name, artist, album?, contributed_by, source_platform }`. |
 
 ## Identidade e plataformas
 

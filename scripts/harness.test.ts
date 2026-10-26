@@ -16,7 +16,7 @@ type Pkg = {
 type Restricted = [string, { patterns: { group: string[]; message: string }[] }];
 type Oxlint = {
   rules: Record<string, unknown>;
-  overrides: { files: string[]; rules: { "no-restricted-imports": Restricted } }[];
+  overrides: { files: string[]; rules: { "no-restricted-imports"?: Restricted } }[];
 };
 
 const pkg: Pkg = JSON.parse(text("package.json"));
@@ -70,10 +70,12 @@ describe("ADR-0018 — Bun e TypeScript fixados", () => {
 
 describe("ADR-0015 — oxlint", () => {
   const lint: Oxlint = JSON.parse(text(".oxlintrc.json"));
-  const groups = (files: string): string[] =>
+  // Só os overrides de fronteira; o de packages/domain liga o plugin merma (ADR-0015.R3).
+  const patterns = (files?: string) =>
     lint.overrides
-      .filter((o) => o.files.includes(files))
-      .flatMap((o) => o.rules["no-restricted-imports"][1].patterns.flatMap((p) => p.group));
+      .filter((o) => files === undefined || o.files.includes(files))
+      .flatMap((o) => o.rules["no-restricted-imports"]?.[1].patterns ?? []);
+  const groups = (files: string): string[] => patterns(files).flatMap((p) => p.group);
 
   test("ADR-0018.R3 any é erro", () => {
     expect(lint.rules["typescript/no-explicit-any"]).toBe("error");
@@ -88,7 +90,7 @@ describe("ADR-0015 — oxlint", () => {
   });
 
   test("ADR-0015.R2 toda message de no-restricted-imports cita uma restrição de ADR", () => {
-    const messages = lint.overrides.flatMap((o) => o.rules["no-restricted-imports"][1].patterns.map((p) => p.message));
+    const messages = patterns().map((p) => p.message);
     expect(messages.filter((m) => !/ADR-\d{4}\.R\d+/.test(m))).toEqual([]);
   });
 });

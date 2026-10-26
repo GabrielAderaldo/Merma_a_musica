@@ -1,6 +1,6 @@
 # === Bun ===
 node_modules/
-# bun.lock é versionado: o CI roda `bun install --frozen-lockfile` (ADR-0016)
+# bun.lock é versionado: o CI roda `bun install --frozen-lockfile` (ADR-0018)
 
 # === Build output ===
 dist/

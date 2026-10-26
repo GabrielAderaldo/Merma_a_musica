@@ -1,5 +1,5 @@
 # Imagem do stub da PoC. BREAK=1 gera a versão quebrada do teste de rollback.
-FROM docker.io/oven/bun:1.4.3-distroless@sha256:a7e9f334332044dd7b3d9711451cb05a396ff80e493c1b5dfa463848ce784680
+FROM docker.io/oven/bun:1.4.4-distroless@sha256:153a951ae40106e125898103e6e990ee0f38e6aee7f561029e26cf9fbed23470
 ARG BREAK=0
 ENV MERMA_POC_BREAK=${BREAK}
 COPY server.ts healthcheck.ts /app/

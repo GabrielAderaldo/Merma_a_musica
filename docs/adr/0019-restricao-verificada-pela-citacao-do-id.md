@@ -1,7 +1,8 @@
 ---
 id: ADR-0019
 title: Documentação verificável, com cada restrição de ADR citada pelo seu verificador
-status: accepted
+status: superseded
+superseded_by: ADR-0022
 date: 2026-10-26
 supersedes: ADR-0012
 scope: ["CLAUDE.md", "docs/**", ".claude/**", "scripts/docs-check.ts"]

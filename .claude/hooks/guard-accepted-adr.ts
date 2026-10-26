@@ -1,4 +1,4 @@
-// PreToolUse (Edit|Write|MultiEdit): bloqueia mudança no corpo de ADR `accepted` ou `superseded` (ADR-0019.R2).
+// PreToolUse (Edit|Write|MultiEdit): bloqueia mudança no corpo de ADR `accepted` ou `superseded` (ADR-0022.R2).
 // No frontmatter só podem mudar status, superseded_by e revised (para marcar supersede).
 // Hooks: https://code.claude.com/docs/pt/hooks-guide · exit 2 = bloqueia e devolve o stderr ao Claude.
 import { existsSync, readFileSync } from "node:fs";
@@ -42,7 +42,7 @@ const changedImmutable = [...keys].filter((k) => !MUTABLE.has(k) && before.fm.ge
 
 if (before.body.trim() !== after.body.trim() || changedImmutable.length > 0) {
   console.error(
-    `${path} é um ADR ${status}: o conteúdo é imutável (ADR-0019.R2). ` +
+    `${path} é um ADR ${status}: o conteúdo é imutável (ADR-0022.R2). ` +
       `Para mudar a decisão, crie um ADR novo com a skill /new-adr e, neste, mude só ` +
       `'status: superseded' e 'superseded_by'.` +
       (changedImmutable.length > 0 ? ` Campos imutáveis alterados: ${changedImmutable.join(", ")}.` : ""),

@@ -27,7 +27,7 @@ Equipe: 1 mantenedor + IA. O que não está nos docs se pergunta ao mantenedor, 
 
 - Mudar regra do jogo → skill `/change-game-rule`. Mudar decisão → skill `/new-adr`.
 - ADR `accepted` não se edita (um hook bloqueia, e o `docs:check` compara com o git). Muda-se com ADR novo que faz supersede.
-- Uma restrição `ADR-NNNN.Rn` só está verificada quando o teste, hook ou lint que a garante cita o ID; o `docs:check` cobra (ADR-0019).
+- Uma restrição `ADR-NNNN.Rn` só está verificada quando o teste, hook ou lint que a garante cita o ID; o `docs:check` cobra (ADR-0022).
 - Termo novo do domínio entra em `docs/glossary.md` antes de entrar no código.
 - Contradição entre docs: **não escolha sozinho.** Pergunte ao mantenedor, com as opções, os tradeoffs e as fontes.
 

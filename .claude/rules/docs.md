@@ -5,7 +5,7 @@ paths:
   - ".claude/**"
 ---
 <!-- Regra por caminho. Por que este formato: docs/adr/0012-documentacao-executavel-para-agentes.md -->
-# Editando docs e harness (ADR-0019)
+# Editando docs e harness (ADR-0022)
 
 - Só escreva o que um agente **não** consegue descobrir lendo o código ou a config. Nada de mapa de pastas, tutorial ou cópia de doc de lib.
 - Fato que muda (versão, limite, URL de API) leva data (`aferido em AAAA-MM-DD`) ou um `Check:` que o verifique.

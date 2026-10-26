@@ -14,7 +14,7 @@ Decisão: $ARGUMENTS
 3. **Pergunte ao mantenedor** com `AskUserQuestion`: 2 a 4 opções, com tradeoffs e uma fonte em cada (doc oficial, arquivo do repo). A recomendada vai primeiro. Você não decide sozinho.
 4. Crie `docs/adr/NNNN-titulo-em-kebab.md` com o próximo número livre, a partir de [template.md](template.md).
    - `status: accepted` só se o mantenedor decidiu nesta conversa; senão, `proposed`.
-   - Toda restrição em `## Restrições` é uma linha `- **ADR-NNNN.Rn** MUST … — Check: …`. O `Check:` diz qual teste, regra de lint ou hook verifica, e esse verificador **cita o ID** (`ADR-NNNN.Rn`) no nome do teste, num comentário ou na `message`. Se ele ainda não existe: `Check: pendente (<caminho onde nasce, ex.: apps/api>) — <o que vai verificar>`. Sem verificação possível, use `Check: Review: mantenedor`. ([ADR-0019](../../../docs/adr/0019-restricao-verificada-pela-citacao-do-id.md))
+   - Toda restrição em `## Restrições` é uma linha `- **ADR-NNNN.Rn** MUST … — Check: …`. O `Check:` diz qual teste, regra de lint ou hook verifica, e esse verificador **cita o ID** (`ADR-NNNN.Rn`) no nome do teste, num comentário ou na `message`. Se ele ainda não existe: `Check: pendente (<caminho onde nasce, ex.: apps/api>) — <o que vai verificar>`. Sem verificação possível, use `Check: Review: mantenedor`. ([ADR-0022](../../../docs/adr/0022-link-de-adr-para-spec-vencido.md))
    - As alternativas descartadas cabem em uma linha cada. Análise longa não entra.
 5. Se substituir outro ADR: no **antigo**, mude só o frontmatter (`status: superseded`, `superseded_by: ADR-NNNN`), que o hook permite. No novo, ponha `supersedes: ADR-XXXX`.
 6. Atualize os docs que citam a decisão antiga (`grep -rn "ADR-XXXX" docs CLAUDE.md .claude`).

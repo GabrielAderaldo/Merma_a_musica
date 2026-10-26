@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          # Histórico completo: o docs:check compara os ADRs aceitos com o commit em que foram aceitos (ADR-0019.R2).
+          # Histórico completo: o docs:check compara os ADRs aceitos com o commit em que foram aceitos (ADR-0022.R2).
           fetch-depth: 0
       # Sem bun-version: lê o packageManager do package.json (ADR-0018.R4).
       - uses: oven-sh/setup-bun@v2

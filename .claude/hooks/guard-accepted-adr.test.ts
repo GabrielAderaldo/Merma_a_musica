@@ -21,7 +21,7 @@ const fixture = (status: string): string => {
 const run = (tool_input: Record<string, unknown>): number =>
   Bun.spawnSync(["bun", HOOK], { stdin: Buffer.from(JSON.stringify({ tool_input })) }).exitCode;
 
-describe("guard-accepted-adr (ADR-0019.R2)", () => {
+describe("guard-accepted-adr (ADR-0022.R2)", () => {
   test("bloqueia Edit no corpo de ADR accepted", () => {
     const file_path = fixture("accepted");
     expect(run({ file_path, old_string: "Decisão original.", new_string: "Outra decisão." })).toBe(2);

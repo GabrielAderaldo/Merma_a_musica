@@ -28,7 +28,7 @@ Cada partida tem um pool **único**, formado pelas playlists dos jogadores prese
 | Segurança e anti-cheat · LGPD · metas de operação | [`docs/security.md`](docs/security.md) · [`docs/privacy.md`](docs/privacy.md) · [`docs/operations.md`](docs/operations.md) |
 | Design das telas | [`docs/design/brief.md`](docs/design/brief.md) |
 
-Os docs são curtos de propósito, e `bun run docs:check` acusa quando algum deles envelhece ([ADR-0019](docs/adr/0019-restricao-verificada-pela-citacao-do-id.md)).
+Os docs são curtos de propósito, e `bun run docs:check` acusa quando algum deles envelhece ([ADR-0022](docs/adr/0022-link-de-adr-para-spec-vencido.md)).
 
 ## Stack
 
@@ -36,7 +36,7 @@ Bun 1.4.4 · TypeScript 7 strict (checado pelo `bun check`) · Hono · SolidJS +
 
 ## Rodando localmente
 
-Pré-requisitos: [Bun](https://bun.com) ≥ 1.4.3 e Postgres 17 + Redis 8 locais.
+Pré-requisitos: [Bun](https://bun.com) 1.4.4 e Postgres 17 + Redis 8 locais.
 
 ```bash
 bun install

@@ -6,13 +6,18 @@
   "engines": {
     "bun": ">=1.4.4"
   },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "bun --filter \"*\" dev",
     "build": "bun --filter \"*\" build",
     "test": "bun test --check ./.claude/hooks ./scripts ./deploy ./apps ./packages",
     "typecheck": "bun check",
     "lint": "oxlint",
-    "docs:check": "bun scripts/docs-check.ts"
+    "docs:check": "bun scripts/docs-check.ts",
+    "schema:gen": "bun --filter @merma/schema generate"
   },
   "devDependencies": {
     "@types/bun": "1.4.4",

@@ -1,0 +1,1809 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Mermã, a Música! — WebSocket da sala",
+    "version": "0.1.0",
+    "description": "Gerado de packages/schema por scripts/generate.ts; não edite. Close codes: 1000 normal · 1003 invalid_payload_repeated · 1008 origin_not_allowed · 4001 duplicate_identity · 4029 rate_limited_repeated."
+  },
+  "channels": {
+    "room": {
+      "address": "/ws/room/{invite_code}",
+      "parameters": {
+        "invite_code": {
+          "description": "6 caracteres [A-Z0-9] (R-004). Identidade só pelo cookie __Host-session."
+        }
+      },
+      "messages": {
+        "client_player_ready": {
+          "$ref": "#/components/messages/client_player_ready"
+        },
+        "client_player_unready": {
+          "$ref": "#/components/messages/client_player_unready"
+        },
+        "client_player_afk_changed": {
+          "$ref": "#/components/messages/client_player_afk_changed"
+        },
+        "client_configure_match": {
+          "$ref": "#/components/messages/client_configure_match"
+        },
+        "client_select_playlist": {
+          "$ref": "#/components/messages/client_select_playlist"
+        },
+        "client_start_game": {
+          "$ref": "#/components/messages/client_start_game"
+        },
+        "client_submit_answer": {
+          "$ref": "#/components/messages/client_submit_answer"
+        },
+        "client_vote_skip": {
+          "$ref": "#/components/messages/client_vote_skip"
+        },
+        "client_autocomplete_search": {
+          "$ref": "#/components/messages/client_autocomplete_search"
+        },
+        "client_player_leave": {
+          "$ref": "#/components/messages/client_player_leave"
+        },
+        "client_ping": {
+          "$ref": "#/components/messages/client_ping"
+        },
+        "server_room_state": {
+          "$ref": "#/components/messages/server_room_state"
+        },
+        "server_player_joined": {
+          "$ref": "#/components/messages/server_player_joined"
+        },
+        "server_player_left": {
+          "$ref": "#/components/messages/server_player_left"
+        },
+        "server_player_ready_changed": {
+          "$ref": "#/components/messages/server_player_ready_changed"
+        },
+        "server_player_afk_changed": {
+          "$ref": "#/components/messages/server_player_afk_changed"
+        },
+        "server_config_updated": {
+          "$ref": "#/components/messages/server_config_updated"
+        },
+        "server_host_changed": {
+          "$ref": "#/components/messages/server_host_changed"
+        },
+        "server_game_starting": {
+          "$ref": "#/components/messages/server_game_starting"
+        },
+        "server_round_starting": {
+          "$ref": "#/components/messages/server_round_starting"
+        },
+        "server_timer_started": {
+          "$ref": "#/components/messages/server_timer_started"
+        },
+        "server_answer_confirmed": {
+          "$ref": "#/components/messages/server_answer_confirmed"
+        },
+        "server_player_voted_skip": {
+          "$ref": "#/components/messages/server_player_voted_skip"
+        },
+        "server_round_ended": {
+          "$ref": "#/components/messages/server_round_ended"
+        },
+        "server_game_ended": {
+          "$ref": "#/components/messages/server_game_ended"
+        },
+        "server_autocomplete_results": {
+          "$ref": "#/components/messages/server_autocomplete_results"
+        },
+        "server_pong": {
+          "$ref": "#/components/messages/server_pong"
+        },
+        "server_error": {
+          "$ref": "#/components/messages/server_error"
+        }
+      }
+    }
+  },
+  "operations": {
+    "receiveFromClient": {
+      "action": "receive",
+      "channel": {
+        "$ref": "#/channels/room"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/room/messages/client_player_ready"
+        },
+        {
+          "$ref": "#/channels/room/messages/client_player_unready"
+        },
+        {
+          "$ref": "#/channels/room/messages/client_player_afk_changed"
+        },
+        {
+          "$ref": "#/channels/room/messages/client_configure_match"
+        },
+        {
+          "$ref": "#/channels/room/messages/client_select_playlist"
+        },
+        {
+          "$ref": "#/channels/room/messages/client_start_game"
+        },
+        {
+          "$ref": "#/channels/room/messages/client_submit_answer"
+        },
+        {
+          "$ref": "#/channels/room/messages/client_vote_skip"
+        },
+        {
+          "$ref": "#/channels/room/messages/client_autocomplete_search"
+        },
+        {
+          "$ref": "#/channels/room/messages/client_player_leave"
+        },
+        {
+          "$ref": "#/channels/room/messages/client_ping"
+        }
+      ]
+    },
+    "sendToClient": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/room"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/room/messages/server_room_state"
+        },
+        {
+          "$ref": "#/channels/room/messages/server_player_joined"
+        },
+        {
+          "$ref": "#/channels/room/messages/server_player_left"
+        },
+        {
+          "$ref": "#/channels/room/messages/server_player_ready_changed"
+        },
+        {
+          "$ref": "#/channels/room/messages/server_player_afk_changed"
+        },
+        {
+          "$ref": "#/channels/room/messages/server_config_updated"
+        },
+        {
+          "$ref": "#/channels/room/messages/server_host_changed"
+        },
+        {
+          "$ref": "#/channels/room/messages/server_game_starting"
+        },
+        {
+          "$ref": "#/channels/room/messages/server_round_starting"
+        },
+        {
+          "$ref": "#/channels/room/messages/server_timer_started"
+        },
+        {
+          "$ref": "#/channels/room/messages/server_answer_confirmed"
+        },
+        {
+          "$ref": "#/channels/room/messages/server_player_voted_skip"
+        },
+        {
+          "$ref": "#/channels/room/messages/server_round_ended"
+        },
+        {
+          "$ref": "#/channels/room/messages/server_game_ended"
+        },
+        {
+          "$ref": "#/channels/room/messages/server_autocomplete_results"
+        },
+        {
+          "$ref": "#/channels/room/messages/server_pong"
+        },
+        {
+          "$ref": "#/channels/room/messages/server_error"
+        }
+      ]
+    }
+  },
+  "components": {
+    "messages": {
+      "client_player_ready": {
+        "name": "player_ready",
+        "contentType": "application/json",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "player_ready"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "client_player_unready": {
+        "name": "player_unready",
+        "contentType": "application/json",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "player_unready"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "client_player_afk_changed": {
+        "name": "player_afk_changed",
+        "contentType": "application/json",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "player_afk_changed"
+            },
+            "afk": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "type",
+            "afk"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "client_configure_match": {
+        "name": "configure_match",
+        "contentType": "application/json",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "configure_match"
+            },
+            "config": {
+              "type": "object",
+              "properties": {
+                "time_per_round": {
+                  "type": "integer",
+                  "minimum": 10,
+                  "maximum": 60
+                },
+                "total_songs": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "answer_type": {
+                  "type": "string",
+                  "enum": [
+                    "song",
+                    "artist",
+                    "both"
+                  ]
+                },
+                "allow_repeats": {
+                  "type": "boolean"
+                },
+                "scoring_rule": {
+                  "type": "string",
+                  "enum": [
+                    "simple",
+                    "speed_bonus"
+                  ]
+                },
+                "game_mode": {
+                  "type": "string",
+                  "enum": [
+                    "multiplayer",
+                    "solo"
+                  ]
+                }
+              },
+              "required": [
+                "time_per_round",
+                "total_songs",
+                "answer_type",
+                "allow_repeats",
+                "scoring_rule",
+                "game_mode"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "type",
+            "config"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "client_select_playlist": {
+        "name": "select_playlist",
+        "contentType": "application/json",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "select_playlist"
+            },
+            "playlist_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "platform": {
+              "type": "string",
+              "enum": [
+                "spotify",
+                "deezer",
+                "youtube_music"
+              ]
+            }
+          },
+          "required": [
+            "type",
+            "playlist_id",
+            "platform"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "client_start_game": {
+        "name": "start_game",
+        "contentType": "application/json",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "start_game"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "client_submit_answer": {
+        "name": "submit_answer",
+        "contentType": "application/json",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "submit_answer"
+            },
+            "answer_text": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "required": [
+            "type",
+            "answer_text"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "client_vote_skip": {
+        "name": "vote_skip",
+        "contentType": "application/json",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "vote_skip"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "client_autocomplete_search": {
+        "name": "autocomplete_search",
+        "contentType": "application/json",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "autocomplete_search"
+            },
+            "query": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 100
+            }
+          },
+          "required": [
+            "type",
+            "query"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "client_player_leave": {
+        "name": "player_leave",
+        "contentType": "application/json",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "player_leave"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "client_ping": {
+        "name": "ping",
+        "contentType": "application/json",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "ping"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "server_room_state": {
+        "name": "room_state",
+        "contentType": "application/json",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "room_state"
+            },
+            "room_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "invite_code": {
+              "type": "string",
+              "pattern": "^[A-Z0-9]{6}$"
+            },
+            "phase": {
+              "type": "string",
+              "enum": [
+                "lobby",
+                "countdown",
+                "playing",
+                "reveal",
+                "results"
+              ]
+            },
+            "host_player_uuid": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+              "description": "Emitido pelo servidor no cookie __Host-session (ADR-0013)."
+            },
+            "config": {
+              "type": "object",
+              "properties": {
+                "time_per_round": {
+                  "type": "integer",
+                  "minimum": 10,
+                  "maximum": 60
+                },
+                "total_songs": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "answer_type": {
+                  "type": "string",
+                  "enum": [
+                    "song",
+                    "artist",
+                    "both"
+                  ]
+                },
+                "allow_repeats": {
+                  "type": "boolean"
+                },
+                "scoring_rule": {
+                  "type": "string",
+                  "enum": [
+                    "simple",
+                    "speed_bonus"
+                  ]
+                },
+                "game_mode": {
+                  "type": "string",
+                  "enum": [
+                    "multiplayer",
+                    "solo"
+                  ]
+                }
+              },
+              "required": [
+                "time_per_round",
+                "total_songs",
+                "answer_type",
+                "allow_repeats",
+                "scoring_rule",
+                "game_mode"
+              ],
+              "additionalProperties": false
+            },
+            "players": {
+              "minItems": 1,
+              "maxItems": 20,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "player_uuid": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+                    "description": "Emitido pelo servidor no cookie __Host-session (ADR-0013)."
+                  },
+                  "nickname": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32
+                  },
+                  "is_host": {
+                    "type": "boolean"
+                  },
+                  "ready": {
+                    "type": "boolean"
+                  },
+                  "afk": {
+                    "type": "boolean"
+                  },
+                  "connection_status": {
+                    "type": "string",
+                    "enum": [
+                      "connected",
+                      "reconnecting",
+                      "disconnected"
+                    ]
+                  },
+                  "has_playlist": {
+                    "type": "boolean"
+                  },
+                  "platform": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "spotify",
+                          "deezer",
+                          "youtube_music"
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "player_uuid",
+                  "nickname",
+                  "is_host",
+                  "ready",
+                  "afk",
+                  "connection_status",
+                  "has_playlist",
+                  "platform"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "song_range": {
+              "type": "object",
+              "properties": {
+                "min": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "max": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "min",
+                "max"
+              ],
+              "additionalProperties": false
+            },
+            "current_round_index": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "total_rounds": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "audio": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "audio_source": {
+                      "type": "string",
+                      "const": "deezer"
+                    },
+                    "audio_token": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "audio_source",
+                    "audio_token"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "audio_source": {
+                      "type": "string",
+                      "const": "spotify_sdk"
+                    },
+                    "spotify_uri": {
+                      "type": "string",
+                      "format": "starts_with",
+                      "pattern": "^spotify:track:.*"
+                    }
+                  },
+                  "required": [
+                    "audio_source",
+                    "spotify_uri"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "required": [
+            "type",
+            "room_id",
+            "invite_code",
+            "phase",
+            "host_player_uuid",
+            "config",
+            "players",
+            "song_range"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "server_player_joined": {
+        "name": "player_joined",
+        "contentType": "application/json",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "player_joined"
+            },
+            "player": {
+              "type": "object",
+              "properties": {
+                "player_uuid": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+                  "description": "Emitido pelo servidor no cookie __Host-session (ADR-0013)."
+                },
+                "nickname": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 32
+                },
+                "is_host": {
+                  "type": "boolean"
+                },
+                "ready": {
+                  "type": "boolean"
+                },
+                "afk": {
+                  "type": "boolean"
+                },
+                "connection_status": {
+                  "type": "string",
+                  "enum": [
+                    "connected",
+                    "reconnecting",
+                    "disconnected"
+                  ]
+                },
+                "has_playlist": {
+                  "type": "boolean"
+                },
+                "platform": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "spotify",
+                        "deezer",
+                        "youtube_music"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "player_uuid",
+                "nickname",
+                "is_host",
+                "ready",
+                "afk",
+                "connection_status",
+                "has_playlist",
+                "platform"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "type",
+            "player"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "server_player_left": {
+        "name": "player_left",
+        "contentType": "application/json",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "player_left"
+            },
+            "player_uuid": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+              "description": "Emitido pelo servidor no cookie __Host-session (ADR-0013)."
+            },
+            "reason": {
+              "type": "string",
+              "enum": [
+                "voluntary",
+                "timeout"
+              ]
+            }
+          },
+          "required": [
+            "type",
+            "player_uuid",
+            "reason"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "server_player_ready_changed": {
+        "name": "player_ready_changed",
+        "contentType": "application/json",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "player_ready_changed"
+            },
+            "player_uuid": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+              "description": "Emitido pelo servidor no cookie __Host-session (ADR-0013)."
+            },
+            "ready": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "type",
+            "player_uuid",
+            "ready"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "server_player_afk_changed": {
+        "name": "player_afk_changed",
+        "contentType": "application/json",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "player_afk_changed"
+            },
+            "player_uuid": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+              "description": "Emitido pelo servidor no cookie __Host-session (ADR-0013)."
+            },
+            "afk": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "type",
+            "player_uuid",
+            "afk"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "server_config_updated": {
+        "name": "config_updated",
+        "contentType": "application/json",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "config_updated"
+            },
+            "config": {
+              "type": "object",
+              "properties": {
+                "time_per_round": {
+                  "type": "integer",
+                  "minimum": 10,
+                  "maximum": 60
+                },
+                "total_songs": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "answer_type": {
+                  "type": "string",
+                  "enum": [
+                    "song",
+                    "artist",
+                    "both"
+                  ]
+                },
+                "allow_repeats": {
+                  "type": "boolean"
+                },
+                "scoring_rule": {
+                  "type": "string",
+                  "enum": [
+                    "simple",
+                    "speed_bonus"
+                  ]
+                },
+                "game_mode": {
+                  "type": "string",
+                  "enum": [
+                    "multiplayer",
+                    "solo"
+                  ]
+                }
+              },
+              "required": [
+                "time_per_round",
+                "total_songs",
+                "answer_type",
+                "allow_repeats",
+                "scoring_rule",
+                "game_mode"
+              ],
+              "additionalProperties": false
+            },
+            "song_range": {
+              "type": "object",
+              "properties": {
+                "min": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "max": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "min",
+                "max"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "type",
+            "config",
+            "song_range"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "server_host_changed": {
+        "name": "host_changed",
+        "contentType": "application/json",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "host_changed"
+            },
+            "new_host_uuid": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+              "description": "Emitido pelo servidor no cookie __Host-session (ADR-0013)."
+            },
+            "new_host_nickname": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 32
+            },
+            "reason": {
+              "type": "string",
+              "const": "previous_host_disconnected"
+            }
+          },
+          "required": [
+            "type",
+            "new_host_uuid",
+            "new_host_nickname",
+            "reason"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "server_game_starting": {
+        "name": "game_starting",
+        "contentType": "application/json",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "game_starting"
+            },
+            "countdown_seconds": {
+              "type": "number",
+              "const": 3
+            }
+          },
+          "required": [
+            "type",
+            "countdown_seconds"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "server_round_starting": {
+        "name": "round_starting",
+        "contentType": "application/json",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "round_starting"
+            },
+            "round_index": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "total_rounds": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "audio": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "audio_source": {
+                      "type": "string",
+                      "const": "deezer"
+                    },
+                    "audio_token": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "audio_source",
+                    "audio_token"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "audio_source": {
+                      "type": "string",
+                      "const": "spotify_sdk"
+                    },
+                    "spotify_uri": {
+                      "type": "string",
+                      "format": "starts_with",
+                      "pattern": "^spotify:track:.*"
+                    }
+                  },
+                  "required": [
+                    "audio_source",
+                    "spotify_uri"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "grace_period_seconds": {
+              "type": "number",
+              "const": 3
+            }
+          },
+          "required": [
+            "type",
+            "round_index",
+            "total_rounds",
+            "audio",
+            "grace_period_seconds"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "server_timer_started": {
+        "name": "timer_started",
+        "contentType": "application/json",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "timer_started"
+            },
+            "duration_seconds": {
+              "type": "integer",
+              "minimum": 10,
+              "maximum": 60
+            },
+            "server_now": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991,
+              "description": "Unix ms"
+            }
+          },
+          "required": [
+            "type",
+            "duration_seconds",
+            "server_now"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "server_answer_confirmed": {
+        "name": "answer_confirmed",
+        "contentType": "application/json",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "answer_confirmed"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "server_player_voted_skip": {
+        "name": "player_voted_skip",
+        "contentType": "application/json",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "player_voted_skip"
+            },
+            "player_uuid": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+              "description": "Emitido pelo servidor no cookie __Host-session (ADR-0013)."
+            },
+            "skip_votes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "votes_needed": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "type",
+            "player_uuid",
+            "skip_votes",
+            "votes_needed"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "server_round_ended": {
+        "name": "round_ended",
+        "contentType": "application/json",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "round_ended"
+            },
+            "round_index": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "end_reason": {
+              "type": "string",
+              "enum": [
+                "timer_expired",
+                "majority_skip"
+              ]
+            },
+            "song": {
+              "type": "object",
+              "properties": {
+                "isrc": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "name": {
+                  "type": "string"
+                },
+                "artist": {
+                  "type": "string"
+                },
+                "album": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "cover_url": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "contributed_by": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 32
+                },
+                "source_platform": {
+                  "type": "string",
+                  "enum": [
+                    "spotify",
+                    "deezer",
+                    "youtube_music"
+                  ]
+                }
+              },
+              "required": [
+                "isrc",
+                "name",
+                "artist",
+                "album",
+                "cover_url",
+                "contributed_by",
+                "source_platform"
+              ],
+              "additionalProperties": false
+            },
+            "answers": {
+              "maxItems": 20,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "player_uuid": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+                    "description": "Emitido pelo servidor no cookie __Host-session (ADR-0013)."
+                  },
+                  "nickname": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32
+                  },
+                  "answer_text": {
+                    "description": "null se não respondeu",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "is_correct": {
+                    "type": "boolean"
+                  },
+                  "is_near_miss": {
+                    "type": "boolean"
+                  },
+                  "points_earned": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "response_time": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Segundos desde timer_started; null se não respondeu"
+                  }
+                },
+                "required": [
+                  "player_uuid",
+                  "nickname",
+                  "answer_text",
+                  "is_correct",
+                  "is_near_miss",
+                  "points_earned",
+                  "response_time"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "scores": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+                "description": "Emitido pelo servidor no cookie __Host-session (ADR-0013)."
+              },
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "next_round_in_seconds": {
+              "type": "number",
+              "const": 3
+            }
+          },
+          "required": [
+            "type",
+            "round_index",
+            "end_reason",
+            "song",
+            "answers",
+            "scores",
+            "next_round_in_seconds"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "server_game_ended": {
+        "name": "game_ended",
+        "contentType": "application/json",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "game_ended"
+            },
+            "match_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "final_scores": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+                "description": "Emitido pelo servidor no cookie __Host-session (ADR-0013)."
+              },
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "ranking": {
+              "minItems": 1,
+              "maxItems": 20,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "position": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991,
+                    "description": "Empate persistente divide a posição (R-204)"
+                  },
+                  "player_uuid": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+                    "description": "Emitido pelo servidor no cookie __Host-session (ADR-0013)."
+                  },
+                  "nickname": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32
+                  },
+                  "total_points": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "correct_answers": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "max_streak": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "avg_response_time": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "position",
+                  "player_uuid",
+                  "nickname",
+                  "total_points",
+                  "correct_answers",
+                  "max_streak",
+                  "avg_response_time"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "highlights": {
+              "type": "object",
+              "properties": {
+                "best_streak": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "player_uuid": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+                          "description": "Emitido pelo servidor no cookie __Host-session (ADR-0013)."
+                        },
+                        "nickname": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 32
+                        },
+                        "value": {
+                          "type": "number",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "player_uuid",
+                        "nickname",
+                        "value"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "fastest_answer": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "player_uuid": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+                          "description": "Emitido pelo servidor no cookie __Host-session (ADR-0013)."
+                        },
+                        "nickname": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 32
+                        },
+                        "value": {
+                          "type": "number",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "player_uuid",
+                        "nickname",
+                        "value"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "most_correct": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "player_uuid": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+                          "description": "Emitido pelo servidor no cookie __Host-session (ADR-0013)."
+                        },
+                        "nickname": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 32
+                        },
+                        "value": {
+                          "type": "number",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "player_uuid",
+                        "nickname",
+                        "value"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "near_miss_champion": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "player_uuid": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+                          "description": "Emitido pelo servidor no cookie __Host-session (ADR-0013)."
+                        },
+                        "nickname": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 32
+                        },
+                        "value": {
+                          "type": "number",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "player_uuid",
+                        "nickname",
+                        "value"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "best_streak",
+                "fastest_answer",
+                "most_correct",
+                "near_miss_champion"
+              ],
+              "additionalProperties": false
+            },
+            "solo_comparison": {
+              "type": "object",
+              "properties": {
+                "current": {
+                  "type": "object",
+                  "properties": {
+                    "avg_points_per_song": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1000
+                    },
+                    "max_streak": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "avg_response_time": {
+                      "anyOf": [
+                        {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "known_songs": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "avg_points_per_song",
+                    "max_streak",
+                    "avg_response_time",
+                    "known_songs"
+                  ],
+                  "additionalProperties": false
+                },
+                "previous_best": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "avg_points_per_song": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1000
+                        },
+                        "max_streak": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "avg_response_time": {
+                          "anyOf": [
+                            {
+                              "type": "number",
+                              "minimum": 0
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "known_songs": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "avg_points_per_song",
+                        "max_streak",
+                        "avg_response_time",
+                        "known_songs"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "is_new_personal_best": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "current",
+                "previous_best",
+                "is_new_personal_best"
+              ],
+              "additionalProperties": false
+            },
+            "return_to_lobby_in_seconds": {
+              "type": "number",
+              "const": 5
+            }
+          },
+          "required": [
+            "type",
+            "match_id",
+            "final_scores",
+            "ranking",
+            "highlights",
+            "return_to_lobby_in_seconds"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "server_autocomplete_results": {
+        "name": "autocomplete_results",
+        "contentType": "application/json",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "autocomplete_results"
+            },
+            "query": {
+              "type": "string"
+            },
+            "results": {
+              "maxItems": 10,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string"
+                  },
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "song",
+                      "artist"
+                    ]
+                  }
+                },
+                "required": [
+                  "text",
+                  "kind"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "type",
+            "query",
+            "results"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "server_pong": {
+        "name": "pong",
+        "contentType": "application/json",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "pong"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "server_error": {
+        "name": "error",
+        "contentType": "application/json",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "error"
+            },
+            "code": {
+              "type": "string",
+              "enum": [
+                "unauthenticated",
+                "not_host",
+                "host_is_always_ready",
+                "room_full",
+                "room_not_found",
+                "round_not_accepting_answers",
+                "round_not_accepting_skip",
+                "player_not_in_match",
+                "player_already_voted",
+                "player_not_answered_yet",
+                "rate_limited",
+                "invalid_payload",
+                "internal_error"
+              ]
+            },
+            "message": {
+              "type": "string",
+              "description": "pt-BR"
+            }
+          },
+          "required": [
+            "type",
+            "code",
+            "message"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  }
+}

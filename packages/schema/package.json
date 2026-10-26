@@ -1,0 +1,15 @@
+{
+  "name": "@merma/schema",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "generate": "bun scripts/generate.ts"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  }
+}

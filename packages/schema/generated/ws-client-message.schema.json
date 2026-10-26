@@ -1,0 +1,229 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "player_ready"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "player_unready"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "player_afk_changed"
+        },
+        "afk": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "type",
+        "afk"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "configure_match"
+        },
+        "config": {
+          "type": "object",
+          "properties": {
+            "time_per_round": {
+              "type": "integer",
+              "minimum": 10,
+              "maximum": 60
+            },
+            "total_songs": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "answer_type": {
+              "type": "string",
+              "enum": [
+                "song",
+                "artist",
+                "both"
+              ]
+            },
+            "allow_repeats": {
+              "type": "boolean"
+            },
+            "scoring_rule": {
+              "type": "string",
+              "enum": [
+                "simple",
+                "speed_bonus"
+              ]
+            },
+            "game_mode": {
+              "type": "string",
+              "enum": [
+                "multiplayer",
+                "solo"
+              ]
+            }
+          },
+          "required": [
+            "time_per_round",
+            "total_songs",
+            "answer_type",
+            "allow_repeats",
+            "scoring_rule",
+            "game_mode"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "type",
+        "config"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "select_playlist"
+        },
+        "playlist_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "platform": {
+          "type": "string",
+          "enum": [
+            "spotify",
+            "deezer",
+            "youtube_music"
+          ]
+        }
+      },
+      "required": [
+        "type",
+        "playlist_id",
+        "platform"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "start_game"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "submit_answer"
+        },
+        "answer_text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
+      },
+      "required": [
+        "type",
+        "answer_text"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "vote_skip"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "autocomplete_search"
+        },
+        "query": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100
+        }
+      },
+      "required": [
+        "type",
+        "query"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "player_leave"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "ping"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    }
+  ]
+}

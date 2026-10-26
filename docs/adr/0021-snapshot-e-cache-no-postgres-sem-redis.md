@@ -1,16 +1,16 @@
 ---
 id: ADR-0021
 title: Tirar o Redis e guardar o snapshot da partida e o cache ISRC no Postgres
-status: proposed
+status: deprecated
 date: 2026-10-26
-supersedes: ADR-0009
+supersedes: null
 scope: ["apps/api/**", "deploy/**", "docs/architecture.md", "docs/operations.md"]
 revisit_when: "Mais de 500 salas simultâneas (gatilho da Fase 1 em docs/operations.md), ou a escrita de snapshot passar de 10% do tempo de CPU do Postgres"
 ---
 
 # ADR-0021 — Tirar o Redis e guardar o snapshot da partida e o cache ISRC no Postgres
 
-> **Proposta para o mantenedor decidir.** Se for aceita, substitui o [ADR-0009](0009-snapshot-da-partida-em-redis.md) e pede um ADR que substitua o [ADR-0006](0006-postgres-e-drizzle.md), cuja R1 proíbe estado de partida em andamento no Postgres.
+> **Deprecated em 2026-10-26 pelo mantenedor: o Redis fica ([ADR-0009](0009-snapshot-da-partida-em-redis.md)).** Ele já roda na `~/.infra` e na PoC do ADR-0017, com teste, e é o único jeito de a partida sobreviver a uma queda do Postgres. A troca fica barata se a `apps/api` gravar por portas (`SnapshotStore`, `IsrcCache`): reabrir quando a Fase 1 chegar ou o primeiro mês de produção mostrar o custo de operar o Redis. A análise abaixo fica como registro.
 
 ## Contexto
 

@@ -97,6 +97,9 @@ for (const file of adrFiles) {
   if (fm["status"] === "superseded") {
     const by = /ADR-(\d{4})/.exec(fm["superseded_by"] ?? "")?.[1];
     if (!by || !adrNumbers.has(by)) fail(file, "superseded sem 'superseded_by' apontando para ADR existente");
+  }
+  // Restrição de ADR superseded ou deprecated não vale mais: não é cobrada, e citá-la é erro.
+  if (fm["status"] === "superseded" || fm["status"] === "deprecated") {
     for (const line of lines) supersededIds.add(/\*\*(ADR-\d{4}\.R\d+)\*\*/.exec(line)?.[1] ?? "");
     continue;
   }
@@ -169,7 +172,7 @@ for (const file of allFiles) {
 }
 for (const [id, files] of citations) {
   if (restrictions.has(id)) continue;
-  const why = supersededIds.has(id) ? "é de um ADR superseded: cite a restrição que a substituiu" : "não existe";
+  const why = supersededIds.has(id) ? "é de um ADR superseded ou deprecated: cite a restrição que vale hoje" : "não existe";
   for (const f of new Set(files)) fail(join(ROOT, f), `cita ${id}, que ${why} (ADR-0019.R9)`);
 }
 const tally = { verified: 0, pending: 0, review: 0 };

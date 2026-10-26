@@ -2,7 +2,8 @@
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
     "allow": [
-      "Bash(bun install:*)",
+      "Bash(bun install)",
+      "Bash(bun install --frozen-lockfile)",
       "Bash(bun test:*)",
       "Bash(bun run lint:*)",
       "Bash(bun run build:*)",
@@ -37,6 +38,14 @@
     ]
   },
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          { "type": "command", "command": "bun \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-env.ts" }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Edit|Write|MultiEdit",
@@ -67,7 +76,9 @@
   ],
   "enabledPlugins": {
     "hono@hono": true,
-    "redis-development@claude-plugins-official": true
+    "redis-development@claude-plugins-official": true,
+    "dart-flutter@dart-flutter": false,
+    "swift-lsp@claude-plugins-official": false
   },
   "extraKnownMarketplaces": {
     "hono": {

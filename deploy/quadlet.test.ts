@@ -38,6 +38,13 @@ describe("ADR-0017 — arquivos Quadlet", () => {
     expect(exec("merma-redis.container")).toContain("--bind 127.0.0.1");
   });
 
+  test("ADR-0009.R3 Redis só em loopback, com requirepass e AOF", () => {
+    const exec = values(containers.find((u) => u.name === "merma-redis.container")?.text ?? "", "Exec").join(" ");
+    expect(exec).toContain("--bind 127.0.0.1");
+    expect(exec).toContain("requirepass");
+    expect(exec).toContain("--appendonly yes");
+  });
+
   test.each(containers)("ADR-0017.R3 $name referencia a imagem por digest", ({ name, text }) => {
     // A API recebe a imagem do drop-in escrito pelo deploy/merma-deploy; a do arquivo base é só um placeholder local.
     for (const image of values(text, "Image")) {

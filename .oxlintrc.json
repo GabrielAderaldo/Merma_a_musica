@@ -9,8 +9,8 @@
       "rules": {
         "no-restricted-imports": ["error", {
           "patterns": [
-            { "group": ["@merma/domain", "@merma/domain/*"], "message": "apps/web não importa a engine: regra de jogo vive no servidor (ADR-0005, ADR-0007)." },
-            { "group": ["react", "react-dom", "@solidjs/start"], "message": "Frontend é Solid 1.x sem SolidStart (ADR-0008)." }
+            { "group": ["@merma/domain", "@merma/domain/*"], "message": "apps/web não importa a engine: regra de jogo vive no servidor (ADR-0005.R1, ADR-0007.R1, ADR-0008.R2)." },
+            { "group": ["react", "react-dom", "@solidjs/start"], "message": "Frontend é Solid 1.x sem React nem SolidStart (ADR-0008.R3)." }
           ]
         }]
       }
@@ -20,7 +20,7 @@
       "rules": {
         "no-restricted-imports": ["error", {
           "patterns": [
-            { "group": ["@merma/api", "@merma/api/*", "@merma/web", "@merma/web/*"], "message": "packages/* não importa apps/* (ADR-0005)." }
+            { "group": ["@merma/api", "@merma/api/*", "@merma/web", "@merma/web/*"], "message": "packages/* não importa apps/* (ADR-0005.R2)." }
           ]
         }]
       }

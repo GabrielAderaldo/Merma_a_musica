@@ -21,7 +21,7 @@ const fixture = (status: string): string => {
 const run = (tool_input: Record<string, unknown>): number =>
   Bun.spawnSync(["bun", HOOK], { stdin: Buffer.from(JSON.stringify({ tool_input })) }).exitCode;
 
-describe("guard-accepted-adr (ADR-0012.R2)", () => {
+describe("guard-accepted-adr (ADR-0019.R2)", () => {
   test("bloqueia Edit no corpo de ADR accepted", () => {
     const file_path = fixture("accepted");
     expect(run({ file_path, old_string: "Decisão original.", new_string: "Outra decisão." })).toBe(2);
@@ -41,6 +41,11 @@ describe("guard-accepted-adr (ADR-0012.R2)", () => {
     const file_path = fixture("accepted");
     const content = adr("accepted").replace("status: accepted", "status: superseded\nsuperseded_by: ADR-0100");
     expect(run({ file_path, content })).toBe(0);
+  });
+
+  test("bloqueia Edit no corpo de ADR superseded", () => {
+    const file_path = fixture("superseded");
+    expect(run({ file_path, old_string: "Decisão original.", new_string: "Outra decisão." })).toBe(2);
   });
 
   test("deixa editar ADR proposed", () => {

@@ -6,7 +6,7 @@ const HOOK = join(import.meta.dir, "guard-bash.ts");
 const run = (command: string): number =>
   Bun.spawnSync(["bun", HOOK], { stdin: Buffer.from(JSON.stringify({ tool_input: { command } })) }).exitCode;
 
-describe("guard-bash (ADR-0016.R1)", () => {
+describe("guard-bash (ADR-0018.R1)", () => {
   test.each([
     "npm install",
     "npx tsc",
@@ -20,6 +20,18 @@ describe("guard-bash (ADR-0016.R1)", () => {
     "echo x | yarn",
     "echo $(npm bin)",
     "(pnpm run dev)",
+    "echo ok\nnpm i left-pad",
+    "bash -c \"npm i left-pad\"",
+    "sh -lc 'yarn add x'",
+    "eval \"pnpm add x\"",
+    "command npm i",
+    "exec npx tsc",
+    "time npm test",
+    "nohup yarn dev",
+    "xargs -0 npm i < list",
+    "/usr/bin/npm i",
+    "~/.local/bin/pnpm i",
+    "echo `npm bin`",
   ])("bloqueia %p", (command) => {
     expect(run(command)).toBe(2);
   });
@@ -32,6 +44,10 @@ describe("guard-bash (ADR-0016.R1)", () => {
     "rg npm docs",
     "cat npm-debug.log",
     "git commit -m 'remove yarn'",
+    "bash -c \"bun install\"",
+    "ls node_modules/.bin/npm-run-all",
+    "bun run lint && echo yarn-free",
+    "git log --grep npm",
   ])("deixa passar %p", (command) => {
     expect(run(command)).toBe(0);
   });

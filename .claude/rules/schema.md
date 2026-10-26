@@ -10,4 +10,4 @@ paths:
 - `snake_case` no fio; enums em minúsculo; toda mensagem WS tem `type` literal (união discriminada).
 - Tempo no fio vai em segundos inteiros; a conversão para `Duration` (ms) acontece na borda do `apps/api`.
 - Rascunho inicial: `docs/specs/protocol.md`. Apague-o quando os schemas estiverem escritos.
-- Zod: consulte `zod.dev/llms.txt` (ADR-0011), principalmente `z.toJSONSchema`.
+- Zod: consulte `zod.dev/llms.txt` (ADR-0020), principalmente `z.toJSONSchema`.

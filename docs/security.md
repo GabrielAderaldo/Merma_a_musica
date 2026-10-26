@@ -40,7 +40,7 @@ Fora do modelo de ameaça no MVP: atacante estatal, zero-day em Bun/Postgres/Red
 | S-24 | Payload WS inválido no Zod → `error: invalid_payload`. 3 inválidos → close 1003. (Decidido em 2026-10-21: um cliente com bug não derruba o jogador na 1ª falha.) | pendente |
 | S-25 | REST: 10 salas/hora e 5 importações simultâneas por `player_uuid`. | pendente |
 | S-26 | Padrão "100% de acerto e menos de 1s" vira métrica `merma_suspicious_pattern_total`. Sem ação automática no MVP. | pendente |
-| S-27 | Injeção que vire código → o `apps/api` de produção roda com `bun --disallow-code-generation-from-strings=strict`: `eval`, `new Function`, `node:vm`, `import()` de `data:` e `Worker` com `eval` lançam erro no processo inteiro, Workers inclusos (Bun ≥ 1.4.3). (Decidido em 2026-10-21.) Risco a confirmar: o Zod 4 usa `new Function` como otimização e deve cair no modo sem JIT. | pendente: a suíte do `apps/api` roda também sob a flag |
+| S-27 | Injeção que vire código → o `apps/api` de produção roda com `bun --disallow-code-generation-from-strings=strict`: `eval`, `new Function`, `node:vm`, `import()` de `data:` e `Worker` com `eval` lançam erro no processo inteiro, Workers inclusos (Bun ≥ 1.4.3). (Decidido em 2026-10-21.) Risco a confirmar: o Zod 4 usa `new Function` como otimização e deve cair no modo sem JIT. Desde a 1.4.4 o `=strict` recusa todo código que não seja do programa, não só uma lista de APIs: plugin que devolve `contents` e macros também caem. | pendente: a suíte do `apps/api` roda também sob a flag |
 
 **Não mitigamos, de propósito:** Shazam no celular ao lado (impossível), extensões do browser, captcha (atrito > ganho), detecção de VPN, fingerprinting (fere a minimização).
 

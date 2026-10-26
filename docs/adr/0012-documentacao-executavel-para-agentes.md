@@ -1,7 +1,8 @@
 ---
 id: ADR-0012
 title: Documentação curta e verificável para agentes, no lugar do handbook
-status: accepted
+status: superseded
+superseded_by: ADR-0019
 date: 2026-10-21
 scope: ["CLAUDE.md", "docs/**", ".claude/**", "scripts/docs-check.ts"]
 revisit_when: "O CLAUDE.md passar de 100 linhas; o agente ignorar regra que está nos docs; mudar a forma como o Claude Code carrega instruções"

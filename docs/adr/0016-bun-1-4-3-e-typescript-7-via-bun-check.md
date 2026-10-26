@@ -1,7 +1,8 @@
 ---
 id: ADR-0016
 title: Bun ≥ 1.4.3 como runtime único, com TypeScript 7 strict checado pelo bun check
-status: accepted
+status: superseded
+superseded_by: ADR-0018
 date: 2026-10-21
 supersedes: ADR-0001
 scope: ["**"]

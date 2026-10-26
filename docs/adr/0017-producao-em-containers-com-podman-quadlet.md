@@ -22,11 +22,11 @@ Produção em **Podman 5.x com Quadlet**, **rootless**, sob um usuário de servi
 
 - Um **pod** (`merma.pod`) com quatro containers que compartilham o loopback:
   - Caddy 2;
-  - `apps/api` em `oven/bun:1.4.3-distroless`, rodando como `65532` (a imagem declara `User=0`);
+  - `apps/api` em `oven/bun:1.4.4-distroless` ([ADR-0018](0018-bun-1-4-4.md)), rodando como `65532` (a imagem declara `User=0`);
   - Postgres 17;
   - Redis 8, rodando como `redis`.
 - Só o pod publica `80`, `443` e `443/udp`. Postgres, Redis e a API escutam em `127.0.0.1`, e a topologia do `operations.md` continua valendo dentro do pod.
-- Imagens referenciadas por **digest** (`@sha256:…`), publicadas no GHCR. O CI roda os checks **dentro** da imagem `oven/bun:1.4.3` fixada pelo mesmo digest da produção, no lugar do `setup-bun`. A imagem de teste é a `debian` e a de produção é a `distroless`, ambas glibc.
+- Imagens referenciadas por **digest** (`@sha256:…`), publicadas no GHCR. O CI roda os checks **dentro** da imagem `oven/bun:1.4.4` fixada pelo mesmo digest da produção, no lugar do `setup-bun`. A imagem de teste é a `debian` e a de produção é a `distroless`, ambas glibc.
 - Segredos via `Secret=…,type=mount` do Quadlet (`podman secret`), nunca em `Environment=`.
 - **Deploy pelo [`deploy/merma-deploy`](../../deploy/merma-deploy)**, não pelo `podman auto-update`:
   1. grava o digest novo num drop-in (`merma-api.container.d/image.conf`);
@@ -52,19 +52,19 @@ Produção em **Podman 5.x com Quadlet**, **rootless**, sob um usuário de servi
 
 Outros achados da PoC:
 
-- Um PID 1 sem handler ignora o SIGTERM, e o stop vira SIGKILL depois de 10 s. Vale para o Bun e para `sh -c` com pipe.
+- Um PID 1 sem handler ignora o SIGTERM, e o stop vira SIGKILL depois de 10 s. Valia para o Bun 1.4.3 e vale para `sh -c` com pipe. O Bun 1.4.4 diz sair com 128 + o sinal quando é PID 1 (release notes, não reverificado na PoC); o handler continua necessário para gravar o snapshot (R8).
 - O cache do build reaproveitou a camada do `ENV` mesmo com outro `--build-arg`. Por isso o build de release é feito em contexto limpo, com `--no-cache`.
 
 ## Restrições
 
 - **ADR-0017.R1** MUST rodar Caddy, `apps/api`, Postgres e Redis de produção como containers Quadlet num único pod. — Check: `deploy/quadlet.test.ts`
 - **ADR-0017.R2** MUST publicar só 80, 443 e 443/udp, e só no pod; Postgres, Redis e API escutam em `127.0.0.1`. — Check: `deploy/quadlet.test.ts`
-- **ADR-0017.R3** MUST referenciar toda imagem por digest, e o CI MUST testar na mesma versão do Bun da imagem de produção. — Check: `deploy/quadlet.test.ts` (units); pendente — job do CI dentro da imagem fixada
+- **ADR-0017.R3** MUST referenciar toda imagem por digest, e o CI MUST testar na mesma versão do Bun da imagem de produção. — Check: `deploy/quadlet.test.ts` (digest) + `scripts/harness.test.ts` (CI, `packageManager` e imagem na mesma versão)
 - **ADR-0017.R4** MUST NOT pôr segredo em `Environment=` ou no arquivo da unit; só `Secret=`. — Check: `deploy/quadlet.test.ts`
 - **ADR-0017.R5** MUST NOT usar container no desenvolvimento: a aplicação roda nativa e Postgres e Redis vêm da `~/.infra`. — Check: Review: mantenedor
 - **ADR-0017.R6** MUST NOT usar `AutoUpdate=` nem `podman auto-update`; o deploy é pelo `deploy/merma-deploy`. — Check: `deploy/quadlet.test.ts`
 - **ADR-0017.R7** MUST ter `Notify=healthy` e `HealthCmd=` em todo container, para o restart esperar o serviço de fato. — Check: `deploy/quadlet.test.ts`
-- **ADR-0017.R8** MUST tratar SIGTERM na `apps/api`: gravar o snapshot das salas e sair, dentro dos 10 s antes do SIGKILL. — Check: pendente — teste de shutdown em `apps/api`
+- **ADR-0017.R8** MUST tratar SIGTERM na `apps/api`: gravar o snapshot das salas e sair, dentro dos 10 s antes do SIGKILL. — Check: pendente (apps/api) — teste de shutdown
 
 ## Consequências
 
@@ -92,6 +92,6 @@ Outros achados da PoC:
 - Quadlet: https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html
 - `podman auto-update`: https://docs.podman.io/en/latest/markdown/podman-auto-update.1.html
 - kamal-proxy: https://github.com/basecamp/kamal-proxy
-- Tags `oven/bun:1.4.3` (`distroless` 46,6 MB, `debian` 90,3 MB, aferido em 2026-10-21): https://hub.docker.com/r/oven/bun/tags
+- Tags `oven/bun:1.4.3` (`distroless` 46,6 MB, `debian` 90,3 MB, aferido em 2026-10-21) e `1.4.4-distroless` (digest `sha256:153a951a…`, aferido em 2026-10-26): https://hub.docker.com/r/oven/bun/tags
 - Incus 7.0 LTS: https://discuss.linuxcontainers.org/t/incus-7-0-lts-has-been-released/26641
 - PoC: [`deploy/`](../../deploy/)

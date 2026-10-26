@@ -57,7 +57,7 @@ Identidade só pelo cookie `__Host-session` ([ADR-0013](../adr/0013-identidade-p
 
 **Códigos de `error`:** `unauthenticated`, `not_host`, `host_is_always_ready`, `room_full`, `room_not_found`, `round_not_accepting_answers`, `round_not_accepting_skip`, `player_not_in_match`, `player_already_voted`, `player_not_answered_yet`, `rate_limited`, `invalid_payload`, `internal_error`.
 
-**Close codes:** 1000 saída normal · 1003 payload inválido 3× (S-24) · 1008 origin não permitido · 4001 mesma identidade em outra conexão · 4029 rate limit repetido.
+**Close codes:** 1000 saída normal · 1003 payload inválido 3× (S-24) · 1008 origin não permitido · 4001 mesma identidade em outra conexão · 4029 rate limit repetido. O servidor sempre passa o código: no Bun ≥ 1.4.4, `close()` sem código manda 1005 e `server.stop(true)` manda 1001 (ADR-0018.R6). Frame malformado, UTF-8 inválido e mensagem acima de `maxPayloadLength` são fechados pelo próprio Bun com 1002, 1007 e 1009, antes de chegar ao `invalid_payload`.
 
 ## REST
 

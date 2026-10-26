@@ -1,7 +1,8 @@
 ---
 id: ADR-0011
 title: Doc de libs consultada ao vivo pelas fontes oficiais para IA, sem snapshot no repo
-status: accepted
+status: superseded
+superseded_by: ADR-0020
 date: 2026-10-21
 scope: ["docs/**", "CLAUDE.md", ".mcp.json", ".claude/**"]
 revisit_when: "Uma tecnologia da stack lançar ou retirar MCP, CLI ou llms.txt oficial (reaferir a tabela a cada trimestre)"

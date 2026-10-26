@@ -3,7 +3,7 @@ paths:
   - "packages/domain/**"
 ---
 <!-- Regra por caminho: carrega só ao abrir arquivos de packages/domain. https://code.claude.com/docs/pt/memory -->
-# packages/domain — engine pura (ADR-0007, ADR-0015, ADR-0016)
+# packages/domain — engine pura (ADR-0007, ADR-0015, ADR-0018)
 
 - Sem `throw`: função que pode falhar retorna `Result<T, E>`. Até o "impossível" vira `err` (`InternalDomainError`).
 - Sem `class`, estado global ou I/O. Funções puras sobre tipos `Readonly`, `readonly T[]` e `as const`.

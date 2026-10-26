@@ -12,7 +12,7 @@ Equipe: 1 mantenedor + IA. O que não está nos docs se pergunta ao mantenedor, 
 ## Comandos
 
 - `bun install` · `bun run test` (com `--check`, inclui os testes dos hooks) · `bun test --check <caminho>` · `bun run typecheck` · `bun run lint` (oxlint) · `bun run docs:check`
-- Bun ≥ 1.4.3. Os tipos são TypeScript 7, checados pelo `bun check`; não use `tsc`. Depois de `bun upgrade`, alinhe o devDep `typescript` com `bun -p process.versions.typescript` (ADR-0016).
+- Bun 1.4.4, fixado no `packageManager`. Os tipos são TypeScript 7, checados pelo `bun check`; não use `tsc`. Trocar de versão é ADR novo: `packageManager`, `engines`, `@types/bun`, imagem do `deploy/` e devDep `typescript` andam juntos, e um teste confere (ADR-0018).
 - Só `bun`/`bunx`. Nunca npm, pnpm ou yarn (um hook bloqueia).
 - Postgres 17 e Redis 8 de dev vêm da `~/.infra` (`infra up postgres redis`). Nada de docker-compose no projeto.
 - Antes de dar uma tarefa por concluída: `bun run docs:check`, `bun run typecheck`, `bun run lint` e `bun run test`. Com mudança não commitada, o hook `Stop` roda os quatro e não deixa encerrar se algum falhar. O CI roda os mesmos.
@@ -26,7 +26,8 @@ Equipe: 1 mantenedor + IA. O que não está nos docs se pergunta ao mantenedor, 
 5. Código: quando existir, testes e tipos são a fonte do "como"
 
 - Mudar regra do jogo → skill `/change-game-rule`. Mudar decisão → skill `/new-adr`.
-- ADR `accepted` não se edita (um hook bloqueia). Muda-se com ADR novo que faz supersede.
+- ADR `accepted` não se edita (um hook bloqueia, e o `docs:check` compara com o git). Muda-se com ADR novo que faz supersede.
+- Uma restrição `ADR-NNNN.Rn` só está verificada quando o teste, hook ou lint que a garante cita o ID; o `docs:check` cobra (ADR-0019).
 - Termo novo do domínio entra em `docs/glossary.md` antes de entrar no código.
 - Contradição entre docs: **não escolha sozinho.** Pergunte ao mantenedor, com as opções, os tradeoffs e as fontes.
 
@@ -43,7 +44,7 @@ Equipe: 1 mantenedor + IA. O que não está nos docs se pergunta ao mantenedor, 
 - Narrativa em pt-BR; identificadores em inglês (`Room`, `submit_answer`); enums em minúsculo.
 - Commit `<tipo>(<escopo>): <descrição>` em pt-BR. Tipos: feat, fix, docs, refactor, test, chore. Escopos: docs, schema, domain, api, web, harness.
 
-## Docs de terceiros (ADR-0011)
+## Docs de terceiros (ADR-0020)
 
 Nunca responda de memória sobre API de lib. Ordem: MCP oficial → CLI oficial → skill/plugin oficial → `llms.txt` → HTML.
 

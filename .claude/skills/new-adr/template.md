@@ -20,7 +20,7 @@ A escolha em uma frase, seguida só dos detalhes que mudam o código (versão, c
 
 ## Restrições
 
-- **ADR-NNNN.R1** MUST … — Check: pendente — <teste ou regra de lint que vai verificar>
+- **ADR-NNNN.R1** MUST … — Check: pendente (<caminho onde o verificador nasce>) — <teste ou regra de lint que vai verificar>
 - **ADR-NNNN.R2** MUST NOT … — Check: Review: mantenedor
 
 ## Consequências

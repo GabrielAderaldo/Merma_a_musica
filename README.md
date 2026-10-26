@@ -28,11 +28,11 @@ Cada partida tem um pool **único**, formado pelas playlists dos jogadores prese
 | Segurança e anti-cheat · LGPD · metas de operação | [`docs/security.md`](docs/security.md) · [`docs/privacy.md`](docs/privacy.md) · [`docs/operations.md`](docs/operations.md) |
 | Design das telas | [`docs/design/brief.md`](docs/design/brief.md) |
 
-Os docs são curtos de propósito, e `bun run docs:check` acusa quando algum deles envelhece ([ADR-0012](docs/adr/0012-documentacao-executavel-para-agentes.md)).
+Os docs são curtos de propósito, e `bun run docs:check` acusa quando algum deles envelhece ([ADR-0019](docs/adr/0019-restricao-verificada-pela-citacao-do-id.md)).
 
 ## Stack
 
-Bun ≥ 1.4.3 · TypeScript 7 strict (checado pelo `bun check`) · Hono · SolidJS + Vite · Zod · PostgreSQL 17 + Drizzle · Redis 8 · Caddy · Deezer como motor de áudio · oxlint. Cada escolha tem o seu ADR em [`docs/adr/`](docs/adr/).
+Bun 1.4.4 · TypeScript 7 strict (checado pelo `bun check`) · Hono · SolidJS + Vite · Zod · PostgreSQL 17 + Drizzle · Redis 8 · Caddy · Deezer como motor de áudio · oxlint. Cada escolha tem o seu ADR em [`docs/adr/`](docs/adr/).
 
 ## Rodando localmente
 

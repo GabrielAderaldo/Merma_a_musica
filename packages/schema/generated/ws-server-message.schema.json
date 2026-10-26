@@ -1247,6 +1247,11 @@
             "player_not_in_match",
             "player_already_voted",
             "player_not_answered_yet",
+            "total_songs_out_of_range",
+            "solo_requires_single_player",
+            "no_playlists_imported",
+            "not_enough_unique_songs",
+            "illegal_state_transition",
             "rate_limited",
             "invalid_payload",
             "internal_error"

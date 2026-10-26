@@ -8,6 +8,14 @@ export const GameMode = z.enum(["multiplayer", "solo"]);
 export const ConnectionStatus = z.enum(["connected", "reconnecting", "disconnected"]);
 export const Platform = z.enum(["spotify", "deezer", "youtube_music"]);
 export const AudioSource = z.enum(["deezer", "spotify_sdk"]);
+// Tipos dos enums, para packages/domain usá-los sem importar o Zod.
+export type Phase = z.infer<typeof Phase>;
+export type AnswerType = z.infer<typeof AnswerType>;
+export type ScoringRule = z.infer<typeof ScoringRule>;
+export type GameMode = z.infer<typeof GameMode>;
+export type ConnectionStatus = z.infer<typeof ConnectionStatus>;
+export type Platform = z.infer<typeof Platform>;
+export type ErrorCode = z.infer<typeof ErrorCode>;
 
 export const ErrorCode = z.enum([
   "unauthenticated",
@@ -20,6 +28,12 @@ export const ErrorCode = z.enum([
   "player_not_in_match",
   "player_already_voted",
   "player_not_answered_yet",
+  // Recusas da engine que o cliente pode provocar (configure_match, start_game e mensagem fora de hora).
+  "total_songs_out_of_range",
+  "solo_requires_single_player",
+  "no_playlists_imported",
+  "not_enough_unique_songs",
+  "illegal_state_transition",
   "rate_limited",
   "invalid_payload",
   "internal_error",

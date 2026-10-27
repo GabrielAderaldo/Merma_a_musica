@@ -65,6 +65,9 @@
 | Termo | Definição |
 |---|---|
 | `RoomActor` | Objeto que detém o estado de **uma** sala num único processo; toda mutação passa pela fila dele. |
+| `RoomRegistry` | As salas vivas do processo, por `invite_code`. Cria a sala, recria do snapshot e bloqueia o código por 30 min depois de `terminated`. |
+| `WsGateway` | Borda do `/ws/room/{invite_code}`: checa o `Origin`, valida cada mensagem no Zod e só então entrega ao `RoomActor`. |
+| Porta (`SnapshotStore`, `SongSource`, `AudioResolver`, `MatchRepository`) | Interface pela qual o `RoomActor` fala com Redis, playlists, áudio e Postgres. O adapter converte exceção em `Result`. |
 | Bounded context | Fronteira de modelo: Game Engine, Game Orchestrator, Playlist Integration, Progression. Ver [`architecture.md`](architecture.md). |
 | `Result<T, E>` | `{ ok: true, value } \| { ok: false, error }`. Retorno de toda função que pode falhar no domínio. |
 | Branded type | `string & { readonly __brand: "X" }`, para não confundir IDs (`RoomId` ≠ `MatchId`). |

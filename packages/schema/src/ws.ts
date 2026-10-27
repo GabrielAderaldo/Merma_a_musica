@@ -34,6 +34,9 @@ const server = <T extends string, S extends z.ZodRawShape>(type: T, shape: S) =>
 // --- Cliente → servidor -------------------------------------------------------------------------
 
 export const clientMessages = [
+  // 1ª mensagem depois de abrir o socket: entra na sala (ou volta a ela, R-602) com o nickname (R-003).
+  // Antes dela, só ping é aceito. O nickname não vai na URL para não cair no access log do Caddy (ADR-0010.R1).
+  client("join_room", { nickname: Nickname }),
   client("player_ready", {}),
   client("player_unready", {}),
   client("player_afk_changed", { afk: z.boolean() }), // R-601

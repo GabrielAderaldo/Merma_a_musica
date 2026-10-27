@@ -14,6 +14,9 @@
         }
       },
       "messages": {
+        "client_join_room": {
+          "$ref": "#/components/messages/client_join_room"
+        },
         "client_player_ready": {
           "$ref": "#/components/messages/client_player_ready"
         },
@@ -108,6 +111,9 @@
         "$ref": "#/channels/room"
       },
       "messages": [
+        {
+          "$ref": "#/channels/room/messages/client_join_room"
+        },
         {
           "$ref": "#/channels/room/messages/client_player_ready"
         },
@@ -205,6 +211,29 @@
   },
   "components": {
     "messages": {
+      "client_join_room": {
+        "name": "join_room",
+        "contentType": "application/json",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "join_room"
+            },
+            "nickname": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 32
+            }
+          },
+          "required": [
+            "type",
+            "nickname"
+          ],
+          "additionalProperties": false
+        }
+      },
       "client_player_ready": {
         "name": "player_ready",
         "contentType": "application/json",

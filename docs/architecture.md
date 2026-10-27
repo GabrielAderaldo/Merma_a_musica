@@ -118,7 +118,8 @@ stateDiagram-v2
 
 | Transição | Evento |
 |---|---|
-| jogador entrou | `room_state` para ele, `player_joined` para os outros |
+| jogador entrou ou voltou (`join_room`, 1ª mensagem do socket) | `room_state` para ele, `player_joined` para os outros |
+| jogador escolheu playlist | `room_state` para todos (não há evento parcial de `has_playlist`) |
 | Room `lobby → in_match` | `game_starting { countdown_seconds: 3 }` |
 | Round `streaming → grace_period` | `round_starting` (com o `audio_token` de cada jogador) |
 | Round `grace_period → timer_running` | `timer_started { duration_seconds, server_now }` |

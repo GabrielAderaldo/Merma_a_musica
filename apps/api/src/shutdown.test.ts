@@ -71,7 +71,8 @@ describe("ADR-0017.R8 — SIGTERM grava o snapshot das salas e sai antes do SIGK
       if (done) break;
       output += decoder.decode(value);
     }
-    const port = (JSON.parse(output.split("\n")[0] ?? "{}") as { port?: number }).port;
+    const started = output.split("\n").find((line) => line.includes('"server_started"')) ?? "{}";
+    const port = (JSON.parse(started) as { port?: number }).port;
     expect((await fetch(`http://127.0.0.1:${port}/health`)).status).toBe(200);
 
     const start = performance.now();

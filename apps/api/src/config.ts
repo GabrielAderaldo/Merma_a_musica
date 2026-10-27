@@ -9,6 +9,8 @@ export type Config = {
   allowedOrigins: string[];
   logLevel: LogLevel;
   version: string;
+  // Snapshot das salas (ADR-0009). Sem ele (dev e testes), o snapshot fica na memória e não sobrevive a um restart.
+  redisUrl: string | null;
 };
 
 export type LogLevel = "debug" | "info" | "warn" | "error";
@@ -35,5 +37,6 @@ export const loadConfig = (env: Record<string, string | undefined>, version: str
     allowedOrigins: [base.origin],
     logLevel,
     version,
+    redisUrl: env["REDIS_URL"] || null,
   });
 };

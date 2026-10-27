@@ -5,16 +5,22 @@ import { cors } from "hono/cors";
 import { requestId, type RequestIdVariables } from "hono/request-id";
 import { secureHeaders } from "hono/secure-headers";
 import type { Config } from "../config.ts";
+import type { RoomRegistry } from "../room/registry.ts";
 import type { Logger } from "./logger.ts";
+import { roomRoutes } from "./rooms.ts";
 import { session, type SessionVariables } from "./session.ts";
+import type { OpenSockets } from "./socket.ts";
 
 export type AppEnv = { Variables: RequestIdVariables & SessionVariables };
+export type OpenApiApp = OpenAPIHono<AppEnv>;
 
 export type AppDeps = {
   config: Pick<Config, "sessionSecret" | "allowedOrigins" | "version">;
   logger: Logger;
   now: () => number;
   startedAt: number;
+  registry: RoomRegistry;
+  sockets: OpenSockets;
 };
 
 const health = createRoute({
@@ -26,7 +32,12 @@ const health = createRoute({
 });
 
 export const createApp = (deps: AppDeps) => {
-  const app = new OpenAPIHono<AppEnv>();
+  // Entrada fora do schema vira o ErrorResponse do contrato, não o corpo padrão do zod-openapi (ADR-0002.R3).
+  const app = new OpenAPIHono<AppEnv>({
+    defaultHook: (result, c) => {
+      if (!result.success) return c.json({ code: "invalid_payload" as const, message: "Requisição inválida." }, 400);
+    },
+  });
 
   // ADR-0002: secureHeaders → cors (allowlist) → requestId → session → rateLimit → handler.
   // O rateLimit entra com as primeiras rotas que o S-25 limita (POST /rooms, importação).
@@ -52,6 +63,14 @@ export const createApp = (deps: AppDeps) => {
   app.onError((error, c) => {
     deps.logger.error("unhandled_error", { trace_id: c.get("requestId"), route: c.req.routePath, error });
     return c.json({ code: "internal_error", message: "erro interno" }, 500);
+  });
+
+  roomRoutes(app, {
+    registry: deps.registry,
+    sockets: deps.sockets,
+    logger: deps.logger,
+    allowedOrigins: deps.config.allowedOrigins,
+    now: deps.now,
   });
 
   // Postgres e Redis entram no corpo (503 se fora) quando os adapters existirem.

@@ -17,8 +17,6 @@ until: apps/api/src/observability
 | `POST /auth/logout` | sessão | 204; desvincula as contas da sessão, sem apagar a identidade anônima |
 | `GET /auth/me` | sessão | `player_uuid`, `is_authenticated`, `connected_accounts[]` |
 | `POST /api/v1/auth/disconnect/{platform}` | sessão | 204, apaga os tokens |
-| `POST /api/v1/rooms` | sessão | 201 `room_id`, `invite_code`, `host_player_uuid`; 429 (S-25) |
-| `GET /api/v1/rooms/{invite_code}` | — | 200 `invite_code`, `phase`, `player_count`, `max_players: 20`; 404 |
 | `GET /api/v1/playlists` | sessão | Playlists importadas (`playlist_id`, `external_id`, `name`, `platform`, `track_count`, `cover_url`, `imported_at`) |
 | `GET /api/v1/playlists/available/{platform}` | sessão + conta | Catálogo do provedor; 502 se ele estiver fora |
 | `POST /api/v1/playlists/import` | sessão + conta | 202 `job_id`; conclusão via WS `playlist_imported` ou polling |

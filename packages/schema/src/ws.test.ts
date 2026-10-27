@@ -24,6 +24,7 @@ const player = {
 
 // Um exemplo válido por mensagem: se uma mensagem nova entrar sem exemplo, o teste de cobertura falha.
 const validClient: Record<string, Record<string, unknown>> = {
+  join_room: { nickname: "Camila" },
   player_ready: {},
   player_unready: {},
   player_afk_changed: { afk: true },
@@ -129,6 +130,13 @@ describe("WS cliente → servidor", () => {
 
   test("R-104 autocomplete exige ao menos 2 caracteres", () => {
     expect(WsClientMessage.safeParse({ type: "autocomplete_search", query: "e" }).success).toBe(false);
+  });
+
+  test("R-003 join_room exige nickname de 1 a 32 caracteres", () => {
+    for (const nickname of ["", "x".repeat(33)]) {
+      expect(WsClientMessage.safeParse({ type: "join_room", nickname }).success).toBe(false);
+    }
+    expect(WsClientMessage.safeParse({ type: "join_room" }).success).toBe(false);
   });
 
   test("submit_answer vazio é inválido", () => {

@@ -10,6 +10,274 @@
     "parameters": {}
   },
   "paths": {
+    "/api/v1/rooms": {
+      "post": {
+        "responses": {
+          "201": {
+            "description": "Sala criada; quem criou é o host (R-004)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "room_id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "invite_code": {
+                      "type": "string",
+                      "pattern": "^[A-Z0-9]{6}$"
+                    },
+                    "host_player_uuid": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "Emitido pelo servidor no cookie __Host-session (ADR-0013)."
+                    }
+                  },
+                  "required": [
+                    "room_id",
+                    "invite_code",
+                    "host_player_uuid"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Mais de 10 salas na última hora (S-25), com Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "unauthenticated",
+                        "not_host",
+                        "host_is_always_ready",
+                        "room_full",
+                        "room_not_found",
+                        "round_not_accepting_answers",
+                        "round_not_accepting_skip",
+                        "player_not_in_match",
+                        "player_already_voted",
+                        "player_not_answered_yet",
+                        "total_songs_out_of_range",
+                        "solo_requires_single_player",
+                        "no_playlists_imported",
+                        "not_enough_unique_songs",
+                        "illegal_state_transition",
+                        "rate_limited",
+                        "invalid_payload",
+                        "internal_error"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "pt-BR"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Não foi possível gerar um invite_code livre",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "unauthenticated",
+                        "not_host",
+                        "host_is_always_ready",
+                        "room_full",
+                        "room_not_found",
+                        "round_not_accepting_answers",
+                        "round_not_accepting_skip",
+                        "player_not_in_match",
+                        "player_already_voted",
+                        "player_not_answered_yet",
+                        "total_songs_out_of_range",
+                        "solo_requires_single_player",
+                        "no_playlists_imported",
+                        "not_enough_unique_songs",
+                        "illegal_state_transition",
+                        "rate_limited",
+                        "invalid_payload",
+                        "internal_error"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "pt-BR"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rooms/{invite_code}": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Z0-9]{6}$"
+            },
+            "required": true,
+            "name": "invite_code",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resumo da sala",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "invite_code": {
+                      "type": "string",
+                      "pattern": "^[A-Z0-9]{6}$"
+                    },
+                    "phase": {
+                      "type": "string",
+                      "enum": [
+                        "lobby",
+                        "countdown",
+                        "playing",
+                        "reveal",
+                        "results"
+                      ]
+                    },
+                    "player_count": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 20
+                    },
+                    "max_players": {
+                      "type": "number",
+                      "enum": [
+                        20
+                      ]
+                    }
+                  },
+                  "required": [
+                    "invite_code",
+                    "phase",
+                    "player_count",
+                    "max_players"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "invite_code fora do formato",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "unauthenticated",
+                        "not_host",
+                        "host_is_always_ready",
+                        "room_full",
+                        "room_not_found",
+                        "round_not_accepting_answers",
+                        "round_not_accepting_skip",
+                        "player_not_in_match",
+                        "player_already_voted",
+                        "player_not_answered_yet",
+                        "total_songs_out_of_range",
+                        "solo_requires_single_player",
+                        "no_playlists_imported",
+                        "not_enough_unique_songs",
+                        "illegal_state_transition",
+                        "rate_limited",
+                        "invalid_payload",
+                        "internal_error"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "pt-BR"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Sala não existe ou já terminou",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "unauthenticated",
+                        "not_host",
+                        "host_is_always_ready",
+                        "room_full",
+                        "room_not_found",
+                        "round_not_accepting_answers",
+                        "round_not_accepting_skip",
+                        "player_not_in_match",
+                        "player_already_voted",
+                        "player_not_answered_yet",
+                        "total_songs_out_of_range",
+                        "solo_requires_single_player",
+                        "no_playlists_imported",
+                        "not_enough_unique_songs",
+                        "illegal_state_transition",
+                        "rate_limited",
+                        "invalid_payload",
+                        "internal_error"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "pt-BR"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "responses": {

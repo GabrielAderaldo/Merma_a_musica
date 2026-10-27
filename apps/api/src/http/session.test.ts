@@ -13,7 +13,7 @@ const appWithWhoami = (now?: () => number) => {
 
 describe("ADR-0013.R3 — a sessão anônima é emitida antes de qualquer rota", () => {
   test("primeira visita recebe __Host-session com HttpOnly, Secure, SameSite=Strict, Path=/ e 30 dias (S-01)", async () => {
-    const res = await testApp().request("/health");
+    const res = await testApp().request("/auth/me");
     const header = res.headers.getSetCookie().find((c) => c.startsWith("__Host-session="));
     expect(header).toBeDefined();
     expect(header).toContain("Max-Age=2592000");

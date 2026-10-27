@@ -59,6 +59,20 @@ export const createApp = (deps: AppDeps) => {
   // ADR-0002: secureHeaders → cors (allowlist) → requestId → session → rateLimit → handler, com o Origin das
   // mutações (S-04) checado antes do rateLimit. O rateLimit fica nas rotas que o S-25 limita (POST /rooms, importação).
   app.use(secureHeaders());
+  // /health e /metrics antes da sessão: o healthcheck do Podman (a cada 5 s) e quem coleta métricas não são jogadores,
+  // então não ganham cookie nem viram linha de log. O /health só diz que o processo responde: Postgres e Redis têm o
+  // healthcheck deles no pod, e checá-los aqui faria o systemd reiniciar a API à toa (e o merma-deploy voltar uma
+  // imagem boa) quando o banco caísse.
+  const withHealth = app.openapi(health, (c) =>
+    c.json(
+      {
+        status: "ok" as const,
+        uptime_seconds: Math.floor((deps.now() - deps.startedAt) / 1000),
+        version: deps.config.version,
+      },
+      200,
+    ),
+  );
   metricsRoute(app, { metrics: deps.metrics, token: deps.config.metricsToken });
   app.use(cors({ origin: deps.config.allowedOrigins, credentials: true }));
   // O trace_id é sempre do servidor: um X-Request-Id vindo do cliente é ignorado.
@@ -105,17 +119,7 @@ export const createApp = (deps: AppDeps) => {
   });
   audioRoutes(app, { registry: deps.registry, tokens: deps.audioTokens, now: deps.now, metrics: deps.metrics, logger: deps.logger });
 
-  // Postgres e Redis entram no corpo (503 se fora) quando os adapters existirem.
-  return app.openapi(health, (c) =>
-    c.json(
-      {
-        status: "ok" as const,
-        uptime_seconds: Math.floor((deps.now() - deps.startedAt) / 1000),
-        version: deps.config.version,
-      },
-      200,
-    ),
-  );
+  return withHealth;
 };
 
 export type App = ReturnType<typeof createApp>;

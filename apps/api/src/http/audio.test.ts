@@ -48,7 +48,7 @@ const playing = async (opts: { now?: () => number } = {}) => {
   const actor = registry.create() ?? expect.unreachable("sala");
   const players = [];
   for (const nickname of ["P1", "P2"]) {
-    const cookie = sessionCookie(await app.request("/health")) ?? expect.unreachable("cookie");
+    const cookie = sessionCookie(await app.request("/auth/me")) ?? expect.unreachable("cookie");
     const uuid = PlayerUuid(decodeURIComponent(cookie).split("=")[1]?.split(":")[1] ?? "");
     if (!uuid.ok) return expect.unreachable("player_uuid do cookie");
     const socket = new FakeSocket();

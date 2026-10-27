@@ -37,7 +37,7 @@ describe("ADR-0010.R1 — o log nunca leva answer_text, nickname, cookie nem tok
 
   test("o header Cookie da requisição não aparece no log", async () => {
     const { logger, lines } = captureLogs();
-    await testApp({ logger }).request("/health", { headers: { cookie: "__Host-session=valor-secreto" } });
+    await testApp({ logger }).request("/auth/me", { headers: { cookie: "__Host-session=valor-secreto" } });
     expect(JSON.stringify(lines)).not.toContain("valor-secreto");
   });
 });

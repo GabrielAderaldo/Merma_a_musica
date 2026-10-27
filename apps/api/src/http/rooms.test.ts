@@ -19,7 +19,7 @@ const randomCode = () => {
   return () => `R${String(n++).padStart(5, "0")}`;
 };
 
-const cookieOf = async (a: ReturnType<typeof testApp>) => sessionCookie(await a.request("/health")) ?? "";
+const cookieOf = async (a: ReturnType<typeof testApp>) => sessionCookie(await a.request("/auth/me")) ?? "";
 
 describe("POST /api/v1/rooms", () => {
   test("R-004: cria a sala com invite_code de 6 caracteres e o criador como host", async () => {

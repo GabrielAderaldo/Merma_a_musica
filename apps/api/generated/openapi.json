@@ -10,6 +10,43 @@
     "parameters": {}
   },
   "paths": {
+    "/health": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "No ar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "ok",
+                        "unavailable"
+                      ]
+                    },
+                    "uptime_seconds": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "version": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "uptime_seconds",
+                    "version"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/rooms": {
       "post": {
         "responses": {
@@ -3521,43 +3558,6 @@
                   "required": [
                     "code",
                     "message"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/health": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "No ar",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "ok",
-                        "unavailable"
-                      ]
-                    },
-                    "uptime_seconds": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "version": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "status",
-                    "uptime_seconds",
-                    "version"
                   ]
                 }
               }

@@ -39,7 +39,7 @@ const csrfCookie = (res: Response) =>
 
 // Começa o fluxo como o browser: sessão primeiro, depois /auth/spotify.
 const startFlow = async (a: Awaited<ReturnType<typeof app>>["app"], returnTo = "/sala/ABC123") => {
-  const cookie = sessionCookie(await a.request("/health")) ?? "";
+  const cookie = sessionCookie(await a.request("/auth/me")) ?? "";
   const res = await a.request(`/auth/spotify?return_to=${encodeURIComponent(returnTo)}`, { headers: { cookie } });
   const location = new URL(res.headers.get("location") ?? "");
   return { cookie, res, csrf: csrfCookie(res) ?? "", state: location.searchParams.get("state") ?? "" };
@@ -127,7 +127,7 @@ describe("callback", () => {
 describe("/auth/me, logout e disconnect (docs/privacy.md)", () => {
   test("anônimo: sem conta conectada", async () => {
     const { app: a } = await app();
-    const cookie = sessionCookie(await a.request("/health")) ?? "";
+    const cookie = sessionCookie(await a.request("/auth/me")) ?? "";
     const me = MeResponse.parse(await (await a.request("/auth/me", { headers: { cookie } })).json());
     expect(me).toMatchObject({ is_authenticated: false, connected_accounts: [] });
   });
@@ -147,7 +147,7 @@ describe("/auth/me, logout e disconnect (docs/privacy.md)", () => {
 
   test("S-04: mutação sem o Origin da allowlist → 403 origin_not_allowed e evento de auditoria", async () => {
     const { app: a, logs } = await app();
-    const cookie = sessionCookie(await a.request("/health")) ?? "";
+    const cookie = sessionCookie(await a.request("/auth/me")) ?? "";
     for (const headers of [{ cookie }, { cookie, origin: "https://evil.com" }]) {
       const res = await a.request("/auth/logout", { method: "POST", headers });
       expect(res.status).toBe(403);

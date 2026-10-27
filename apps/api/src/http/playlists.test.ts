@@ -16,7 +16,7 @@ const setup = (fetch = fakeFetch(routes)) => {
   return { app: testApp({ logger: captureLogs().logger, playlists }), playlists };
 };
 
-const login = async (a: ReturnType<typeof setup>["app"]) => sessionCookie(await a.request("/health")) ?? "";
+const login = async (a: ReturnType<typeof setup>["app"]) => sessionCookie(await a.request("/auth/me")) ?? "";
 
 const post = (a: ReturnType<typeof setup>["app"], cookie: string, body: unknown, origin: string | null = ORIGIN) =>
   a.request("/api/v1/playlists/import", {

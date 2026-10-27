@@ -74,7 +74,7 @@ describe("WsGateway", () => {
 
   test("sala inexistente responde 404 antes do upgrade", async () => {
     const { url } = serve();
-    const res = await fetch(new URL("/ws/room/ZZZ999", url), { headers: { upgrade: "websocket", cookie: sessionCookie(await fetch(new URL("/health", url))) ?? "" } });
+    const res = await fetch(new URL("/ws/room/ZZZ999", url), { headers: { upgrade: "websocket", cookie: sessionCookie(await fetch(new URL("/auth/me", url))) ?? "" } });
     expect(res.status).toBe(404);
     expect(await res.json()).toEqual({ code: "room_not_found", message: expect.any(String) });
   });
@@ -153,7 +153,7 @@ describe("S-23 — rate limit do WS", () => {
 describe("ADR-0013.R1 — no WS, o player_uuid vem só da sessão (S-01)", () => {
   test("?player_uuid= forjado no handshake é ignorado", async () => {
     const { url, path, actor } = serve();
-    const cookie = sessionCookie(await fetch(new URL("/health", url))) ?? "";
+    const cookie = sessionCookie(await fetch(new URL("/auth/me", url))) ?? "";
     const own = (await (await fetch(new URL("/whoami", url), { headers: { cookie } })).json()) as { player_uuid: string };
     const ws = await connect(url, `${path}?player_uuid=${FORGED}`, { cookie });
     const box = inbox(ws);

@@ -131,7 +131,7 @@ export const sessionCookie = (res: Response): string | undefined =>
 
 // Abre um WS com a sessão emitida por uma requisição REST, como o cliente faz.
 export const connect = async (base: URL, path: string, opts: { cookie?: string; origin?: string } = {}): Promise<WebSocket> => {
-  const cookie = opts.cookie ?? sessionCookie(await fetch(new URL("/health", base))) ?? "";
+  const cookie = opts.cookie ?? sessionCookie(await fetch(new URL("/auth/me", base))) ?? "";
   const url = new URL(path, base);
   url.protocol = "ws:";
   const ws = new WebSocket(url, { headers: { cookie, origin: opts.origin ?? ORIGIN } });

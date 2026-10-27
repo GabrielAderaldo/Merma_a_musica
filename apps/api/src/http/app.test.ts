@@ -11,6 +11,18 @@ describe("GET /health", () => {
     expect(res.status).toBe(200);
     expect(HealthResponse.parse(await res.json())).toEqual({ status: "ok", uptime_seconds: 61, version: "0.0.0-test" });
   });
+
+  test("fica antes da sessão: o healthcheck não ganha cookie nem vira linha de log", async () => {
+    const { logger, lines } = captureLogs();
+    const res = await testApp({ logger }).request("/health");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("set-cookie")).toBeNull();
+    expect(lines.filter((l) => l["event"] === "http_request")).toEqual([]);
+  });
+
+  test("continua com os headers de segurança", async () => {
+    expect((await testApp().request("/health")).headers.get("x-content-type-options")).toBe("nosniff");
+  });
 });
 
 describe("middlewares (ordem do ADR-0002)", () => {
@@ -20,16 +32,16 @@ describe("middlewares (ordem do ADR-0002)", () => {
   });
 
   test("CORS só libera o origin da allowlist, com credenciais", async () => {
-    const allowed = await testApp().request("/health", { headers: { origin: ORIGIN } });
+    const allowed = await testApp().request("/auth/me", { headers: { origin: ORIGIN } });
     expect(allowed.headers.get("access-control-allow-origin")).toBe(ORIGIN);
     expect(allowed.headers.get("access-control-allow-credentials")).toBe("true");
-    const other = await testApp().request("/health", { headers: { origin: "https://evil.test" } });
+    const other = await testApp().request("/auth/me", { headers: { origin: "https://evil.test" } });
     expect(other.headers.get("access-control-allow-origin")).toBeNull();
   });
 
   test("X-Request-Id do cliente é ignorado: o trace_id é do servidor", async () => {
     const { logger, lines } = captureLogs();
-    const res = await testApp({ logger }).request("/health", { headers: { "x-request-id": "forjado" } });
+    const res = await testApp({ logger }).request("/auth/me", { headers: { "x-request-id": "forjado" } });
     expect(res.headers.get("x-request-id")).toBeNull();
     const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
     expect(lines.at(-1)).toMatchObject({ event: "http_request", trace_id: expect.stringMatching(UUID) });

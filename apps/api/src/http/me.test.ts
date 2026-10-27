@@ -16,7 +16,7 @@ const setup = () => {
   const app = testApp({ playlists: { ...testPlaylists({ store }), accounts }, progression, matches });
   app.get("/whoami", (c) => c.json(c.get("session")));
   const login = async () => {
-    const cookie = sessionCookie(await app.request("/health")) ?? "";
+    const cookie = sessionCookie(await app.request("/auth/me")) ?? "";
     const { player_uuid } = (await (await app.request("/whoami", { headers: { cookie } })).json()) as { player_uuid: string };
     return { cookie, player: unwrap(PlayerUuid(player_uuid)) };
   };

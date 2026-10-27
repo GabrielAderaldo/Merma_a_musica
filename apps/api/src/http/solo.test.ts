@@ -15,7 +15,7 @@ const app = (progression: ProgressionStore = new MemoryProgressionStore()) => {
 
 // Sessão nova e o player_uuid dela, que é a única identidade que as rotas aceitam (ADR-0013).
 const login = async (a: ReturnType<typeof app>) => {
-  const cookie = sessionCookie(await a.request("/health")) ?? "";
+  const cookie = sessionCookie(await a.request("/auth/me")) ?? "";
   const me = (await (await a.request("/whoami", { headers: { cookie } })).json()) as { player_uuid: string };
   return { cookie, player: me.player_uuid };
 };

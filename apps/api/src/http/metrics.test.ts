@@ -43,7 +43,7 @@ describe("security_event_total{kind} nas bordas REST", () => {
   test("S-25: o 429 do POST /rooms conta rest_rate_limited", async () => {
     const metrics = testMetrics();
     const app = testApp({ metrics });
-    const cookie = sessionCookie(await app.request("/health")) ?? "";
+    const cookie = sessionCookie(await app.request("/auth/me")) ?? "";
     for (let i = 0; i < 11; i++) await app.request("/api/v1/rooms", { method: "POST", headers: { cookie, origin: ORIGIN } });
     expect(metrics.securityEvents.value({ kind: "rest_rate_limited" })).toBe(1);
   });

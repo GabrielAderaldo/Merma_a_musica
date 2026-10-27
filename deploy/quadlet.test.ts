@@ -29,6 +29,8 @@ describe("ADR-0017 — arquivos Quadlet", () => {
     for (const { name, text } of containers) expect(values(text, "PublishPort"), name).toEqual([]);
     const pod = units.find((u) => u.name === "merma.pod")?.text ?? "";
     expect(values(pod, "PublishPort")).toEqual(["127.0.0.1:3000:3000"]);
+    // A API escuta só no loopback do pod: o pasta precisa entregar ali o que chega no loopback do host.
+    expect(values(pod, "Network")).toEqual(["pasta:--host-lo-to-ns-lo"]);
   });
 
   test("ADR-0017.R2 Postgres e Redis escutam só em 127.0.0.1", () => {

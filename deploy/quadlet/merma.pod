@@ -1,6 +1,9 @@
 # Pod de produção (ADR-0017). Os containers dividem o loopback; só o pod publica porta, e só no loopback da VM
 # (ADR-0017.R2). Quem fala com a internet é o Caddy do host (deploy/caddy/merma.caddy).
+# --host-lo-to-ns-lo: sem ele, o pasta entrega o que chega em 127.0.0.1:3000 do host na interface do pod, não no
+# loopback, e a API (que só escuta em 127.0.0.1) responde com reset.
 # Quadlet: https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html
 [Pod]
 PodName=merma
+Network=pasta:--host-lo-to-ns-lo
 PublishPort=127.0.0.1:3000:3000

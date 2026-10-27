@@ -105,6 +105,23 @@ const contract = (make: () => { playlists: PlaylistStore; accounts: AccountStore
     expect(unwrap(await accounts.get(player, "spotify"))).toBeNull();
     expect(unwrap(await accounts.list(player))).toEqual([]);
   });
+
+  test("LGPD: exportAll traz as playlists com as músicas; deleteAll apaga só as do jogador", async () => {
+    const { playlists: store } = make();
+    const me = fixtures();
+    const other = fixtures();
+    const first = unwrap(await store.save(me.playlist(), newId));
+    const second = unwrap(await store.save(me.playlist({ external_id: null, songs: [song(3)], imported_at: 2_000_000 }), newId));
+    unwrap(await store.save(other.playlist(), newId));
+    expect(unwrap(await store.exportAll(me.player))).toEqual([
+      { ...second, songs: [song(3)] },
+      { ...first, songs: [song(1), song(2)] },
+    ]);
+    unwrap(await store.deleteAll(me.player));
+    expect(unwrap(await store.exportAll(me.player))).toEqual([]);
+    expect(unwrap(await store.songs(me.player, first.playlist_id))).toBeNull();
+    expect(unwrap(await store.list(other.player))).toHaveLength(1);
+  });
 };
 
 describe("stores em memória", () => contract(() => ({ playlists: new MemoryPlaylistStore(), accounts: new MemoryAccountStore() })));

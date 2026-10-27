@@ -5,15 +5,18 @@ import { OpenSockets } from "./http/socket.ts";
 import type { ProgressionStore } from "./progression/solo.ts";
 import { soloRecords } from "./progression/solo.ts";
 import { MemoryProgressionStore } from "./progression/store.ts";
+import { type Metrics, testMetrics } from "./observability/metrics.ts";
+import { MemoryMatchRepository } from "./room/match-store.ts";
+import type { MatchRepository } from "./room/ports.ts";
 import { RoomRegistry } from "./room/registry.ts";
 import { MemorySnapshotStore } from "./room/snapshot-store.ts";
 import { AudioTokens } from "./playlist/audio/token.ts";
-import { noAudio, noMatchStore, systemClock, systemIds } from "./room/system.ts";
+import { noAudio, systemClock, systemIds } from "./room/system.ts";
 import type { SpotifyAuth } from "./playlist/accounts.ts";
 import { DeezerThrottle, deezerClient } from "./playlist/deezer.ts";
 import type { Fetch } from "./playlist/http.ts";
 import { ImportJobs } from "./playlist/importer.ts";
-import { MemoryPlaylistStore, type PlaylistStore } from "./playlist/store.ts";
+import { type AccountStore, MemoryAccountStore, MemoryPlaylistStore, type PlaylistStore } from "./playlist/store.ts";
 import type { PlaylistIntegration } from "./playlist/system.ts";
 import { youtubeClient } from "./playlist/youtube.ts";
 import { playlistSongs } from "./room/playlist-songs.ts";
@@ -49,7 +52,7 @@ export const fakeFetch = (routes: Record<string, unknown>, calls: string[] = [])
 
 // Playlist Integration dos testes: Deezer (e YouTube, com chave) sobre o fakeFetch, sem esperar o throttle.
 export const testPlaylists = (
-  opts: { fetch?: Fetch; store?: PlaylistStore; youtube?: boolean; spotify?: SpotifyAuth | null; logger?: Logger; now?: () => number } = {},
+  opts: { fetch?: Fetch; store?: PlaylistStore; accounts?: AccountStore; youtube?: boolean; spotify?: SpotifyAuth | null; logger?: Logger; now?: () => number } = {},
 ): PlaylistIntegration => {
   const fetch = opts.fetch ?? fakeFetch({});
   const store = opts.store ?? new MemoryPlaylistStore();
@@ -64,7 +67,7 @@ export const testPlaylists = (
     logger: opts.logger ?? captureLogs().logger,
     maxSongs: 500,
   });
-  return { store, jobs, spotify };
+  return { store, accounts: opts.accounts ?? new MemoryAccountStore(), jobs, spotify };
 };
 
 export const testApp = (
@@ -76,9 +79,14 @@ export const testApp = (
     progression?: ProgressionStore;
     playlists?: PlaylistIntegration;
     audioTokens?: AudioTokens;
+    metrics?: Metrics;
+    metricsToken?: string;
+    matches?: MatchRepository;
   } = {},
 ) => {
   const logger = opts.logger ?? captureLogs().logger;
+  const metrics = opts.metrics ?? testMetrics();
+  const matches = opts.matches ?? new MemoryMatchRepository();
   const progression = opts.progression ?? new MemoryProgressionStore();
   const playlists = opts.playlists ?? testPlaylists({ logger });
   const registry =
@@ -90,11 +98,12 @@ export const testApp = (
       snapshots: new MemorySnapshotStore(),
       songs: playlistSongs(playlists.store),
       audio: noAudio,
-      matches: noMatchStore,
+      matches,
       solo: soloRecords(progression),
+      metrics,
     });
   return createApp({
-    config: { sessionSecret: SECRET, allowedOrigins: [ORIGIN], version: "0.0.0-test" },
+    config: { sessionSecret: SECRET, allowedOrigins: [ORIGIN], version: "0.0.0-test", metricsToken: opts.metricsToken ?? null },
     logger,
     now: opts.now ?? (() => 1_000_000),
     startedAt: 0,
@@ -103,6 +112,8 @@ export const testApp = (
     progression,
     playlists,
     audioTokens: opts.audioTokens ?? new AudioTokens(AUDIO_SECRET),
+    metrics,
+    matches,
   });
 };
 

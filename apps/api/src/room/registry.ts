@@ -19,6 +19,16 @@ export class RoomRegistry {
     return this.#rooms.size;
   }
 
+  // rooms_active{phase} (ADR-0010).
+  byPhase(): Record<"empty" | "lobby" | "in_match" | "finished", number> {
+    const count = { empty: 0, lobby: 0, in_match: 0, finished: 0 };
+    for (const actor of this.#rooms.values()) {
+      const state = actor.state.state;
+      if (state !== "terminated") count[state]++;
+    }
+    return count;
+  }
+
   get(invite_code: string): RoomActor | undefined {
     return this.#rooms.get(invite_code);
   }

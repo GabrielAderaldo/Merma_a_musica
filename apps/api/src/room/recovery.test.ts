@@ -33,7 +33,7 @@ describe("ADR-0009.R4 — recuperação: snapshot → RoomActor aceitando WS em 
     const { fresh, registry } = newProcess(setup);
 
     const start = performance.now();
-    const report = await recoverRooms({ store: fresh.snapshots, registry, clock: fresh.clock, logger: fresh.deps.logger });
+    const report = await recoverRooms({ store: fresh.snapshots, registry, clock: fresh.clock, logger: fresh.deps.logger, metrics: fresh.metrics });
     const restored = registry.get(actor.inviteCode) ?? expect.unreachable("sala recuperada");
     const back = new FakeSocket();
     expect(await restored.join(player(2), "P2", back)).toBe(true);
@@ -49,7 +49,7 @@ describe("ADR-0009.R4 — recuperação: snapshot → RoomActor aceitando WS em 
   test("o timer da rodada retoma pelo tempo que faltava, não do zero", async () => {
     const { setup, actor } = await snapshotOfRunningMatch();
     const { fresh, registry } = newProcess(setup);
-    await recoverRooms({ store: fresh.snapshots, registry, clock: fresh.clock, logger: fresh.deps.logger });
+    await recoverRooms({ store: fresh.snapshots, registry, clock: fresh.clock, logger: fresh.deps.logger, metrics: fresh.metrics });
     const restored = registry.get(actor.inviteCode) ?? expect.unreachable("sala recuperada");
     const back = new FakeSocket();
     await restored.join(player(1), "P1", back);
@@ -62,7 +62,7 @@ describe("ADR-0009.R4 — recuperação: snapshot → RoomActor aceitando WS em 
   test("snapshot com mais de 2 min é sala expirada: apagado, não recuperado", async () => {
     const { setup, actor } = await snapshotOfRunningMatch();
     const { fresh, registry } = newProcess(setup, SNAPSHOT_MAX_AGE_MS + 1);
-    const report = await recoverRooms({ store: fresh.snapshots, registry, clock: fresh.clock, logger: fresh.deps.logger });
+    const report = await recoverRooms({ store: fresh.snapshots, registry, clock: fresh.clock, logger: fresh.deps.logger, metrics: fresh.metrics });
     expect(report).toEqual({ restored: 0, expired: 1 });
     expect(registry.get(actor.inviteCode)).toBeUndefined();
     expect(setup.snapshots.get(actor.inviteCode)).toBeUndefined();

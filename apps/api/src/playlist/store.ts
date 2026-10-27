@@ -1,7 +1,7 @@
 // Playlists do jogador e conta do Spotify: Postgres em produção (ADR-0006) e memória nos testes e em dev sem
 // POSTGRES_URL. Os dois adapters passam pelo mesmo teste de contrato (store.test.ts).
 import type { Platform } from "@merma/schema";
-import { and, asc, count, eq } from "drizzle-orm";
+import { and, asc, count, eq, inArray } from "drizzle-orm";
 import type { Database } from "../db/client.ts";
 import { connectedAccounts, playlistSongs, playlists } from "../db/schema.ts";
 import { err, ok, type Result } from "./result.ts";
@@ -36,7 +36,12 @@ export type PlaylistStore = Readonly<{
   // null: não existe ou é de outro jogador.
   songs(player: string, playlist_id: string): Promise<Result<{ platform: Platform; songs: readonly StoredSong[] } | null, StoreError>>;
   delete(player: string, playlist_id: string): Promise<Result<boolean, StoreError>>;
+  // LGPD (docs/privacy.md): todas as playlists do jogador, com as músicas, e a exclusão delas.
+  exportAll(player: string): Promise<Result<readonly PlaylistExport[], StoreError>>;
+  deleteAll(player: string): Promise<Result<void, StoreError>>;
 }>;
+
+export type PlaylistExport = PlaylistRecord & Readonly<{ songs: readonly StoredSong[] }>;
 
 // O refresh token chega aqui já cifrado (ADR-0006.R3): o store nunca vê o texto puro.
 export type AccountRecord = Readonly<{
@@ -104,6 +109,19 @@ export class MemoryPlaylistStore implements PlaylistStore {
     if (p === undefined || p.player_uuid !== player) return ok(false);
     this.#playlists.delete(playlist_id);
     return ok(true);
+  };
+
+  exportAll = async (player: string) =>
+    ok(
+      [...this.#playlists.values()]
+        .filter((p) => p.player_uuid === player)
+        .toSorted((a, b) => b.imported_at - a.imported_at)
+        .map((p) => ({ ...record(p), songs: p.songs })),
+    );
+
+  deleteAll = async (player: string) => {
+    for (const [id, p] of this.#playlists) if (p.player_uuid === player) this.#playlists.delete(id);
+    return ok(undefined);
   };
 }
 
@@ -212,6 +230,27 @@ export const postgresPlaylistStore = (db: Database): PlaylistStore => {
           .where(and(eq(playlists.playlist_id, playlist_id), eq(playlists.player_uuid, player)))
           .returning({ id: playlists.playlist_id });
         return deleted.length > 0;
+      }),
+    exportAll: (player) =>
+      attempt(async () => {
+        const records = (await withCount(player)).map(toRecord).toSorted((a, b) => b.imported_at - a.imported_at);
+        if (records.length === 0) return [];
+        const rows = await db
+          .select()
+          .from(playlistSongs)
+          .where(inArray(playlistSongs.playlist_id, records.map((r) => r.playlist_id)))
+          .orderBy(asc(playlistSongs.playlist_id), asc(playlistSongs.position));
+        return records.map((r) => ({
+          ...r,
+          songs: rows
+            .filter((s) => s.playlist_id === r.playlist_id)
+            .map(({ deezer_id, isrc, name, artist, album, cover_url }) => ({ deezer_id, isrc, name, artist, album, cover_url })),
+        }));
+      }),
+    // As músicas saem pelo ON DELETE CASCADE de playlist_songs.
+    deleteAll: (player) =>
+      attempt(async () => {
+        await db.delete(playlists).where(eq(playlists.player_uuid, player));
       }),
   };
 };

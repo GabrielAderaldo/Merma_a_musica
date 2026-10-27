@@ -1,6 +1,18 @@
 // Corpos das rotas REST (ADR-0014). Entram aqui junto com a rota da apps/api, que gera o openapi.json.
 import { z } from "zod";
-import { AnswerType, ErrorCode, InviteCode, MatchId, MAX_PLAYERS, Phase, Platform, PlayerUuid, PlaylistId, RoomId } from "./common.ts";
+import {
+  AnswerType,
+  ErrorCode,
+  InviteCode,
+  MatchConfiguration,
+  MatchId,
+  MAX_PLAYERS,
+  Phase,
+  Platform,
+  PlayerUuid,
+  PlaylistId,
+  RoomId,
+} from "./common.ts";
 
 export const HealthResponse = z.object({
   status: z.enum(["ok", "unavailable"]), // unavailable vem com 503
@@ -126,3 +138,55 @@ export const MeResponse = z.object({
   is_authenticated: z.boolean(),
   connected_accounts: z.array(z.object({ platform: z.literal("spotify"), connected_at: z.iso.datetime() })),
 });
+
+// --- LGPD (docs/privacy.md, art. 18) ---------------------------------------------------------------------
+// GET /api/v1/me/export: tudo o que o servidor guarda do jogador. O refresh token não sai (é segredo, não dado do
+// titular); answer_text e nickname nunca foram guardados. Tempos em segundos, com fração; datas em ISO 8601 UTC.
+export const MeExportResponse = z.object({
+  player_uuid: PlayerUuid,
+  exported_at: z.iso.datetime(),
+  connected_accounts: z.array(
+    z.object({ platform: z.literal("spotify"), external_user_id: z.string(), connected_at: z.iso.datetime() }),
+  ),
+  playlists: z.array(
+    ImportedPlaylist.extend({
+      songs: z.array(
+        z.object({
+          deezer_id: z.string(),
+          isrc: z.string().nullable(),
+          name: z.string(),
+          artist: z.string(),
+          album: z.string().nullable(),
+          cover_url: z.url().nullable(),
+        }),
+      ),
+    }),
+  ),
+  solo: PersonalBestsResponse.extend({
+    known_songs: z.array(
+      z.object({
+        playlist_id: PlaylistId,
+        song_keys: z.array(z.string()).meta({ description: "R-304: o ISRC, ou nome e artista normalizados" }),
+      }),
+    ),
+  }),
+  matches: z.array(
+    z.object({
+      match_id: MatchId,
+      config: MatchConfiguration,
+      started_at: z.iso.datetime(),
+      ended_at: z.iso.datetime(),
+      total_points: Count,
+      rounds: z.array(
+        z.object({
+          round_index: Count,
+          is_correct: z.boolean(),
+          is_near_miss: z.boolean(),
+          points: Count,
+          response_time: Seconds.nullable(),
+        }),
+      ),
+    }),
+  ),
+});
+export type MeExportResponse = z.infer<typeof MeExportResponse>;

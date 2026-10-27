@@ -1,7 +1,7 @@
 // Rotas REST dos recordes do solo (R-504 a R-506), lidas da Progression. Tempos em segundos, datas em ISO 8601.
 import { createRoute, z } from "@hono/zod-openapi";
 import { ErrorResponse, PersonalBestsResponse, PlaylistId, PlaylistProgress } from "@merma/schema";
-import type { PersonalBestRecord, PlaylistProgressRecord, ProgressionStore } from "../progression/solo.ts";
+import type { PersonalBestRecord, PlaylistProgressRecord, ProgressionStore, SoloProgress } from "../progression/solo.ts";
 import type { OpenApiApp } from "./app.ts";
 
 const json = <S extends z.ZodType>(schema: S, description: string) => ({
@@ -54,6 +54,17 @@ const toWirePlaylist = (p: PlaylistProgressRecord): z.infer<typeof PlaylistProgr
   personal_bests: p.personal_bests.map(toWireBest),
 });
 
+// Também o bloco solo do GET /me/export.
+export const toWireSolo = (progress: SoloProgress): z.infer<typeof PersonalBestsResponse> => ({
+  global_stats: {
+    max_streak: progress.global_stats.max_streak,
+    fastest_correct_answer: seconds(progress.global_stats.fastest_correct),
+    solo_matches_completed: progress.global_stats.solo_matches_completed,
+    known_songs: progress.global_stats.known_songs,
+  },
+  by_playlist: progress.by_playlist.map(toWirePlaylist),
+});
+
 const STORE_DOWN = { code: "internal_error" as const, message: "Tente de novo." };
 
 export const soloRoutes = (app: OpenApiApp, deps: { progression: ProgressionStore }) =>
@@ -61,19 +72,7 @@ export const soloRoutes = (app: OpenApiApp, deps: { progression: ProgressionStor
     .openapi(personalBestsRoute, async (c) => {
       const progress = await deps.progression.progress(c.get("session").player_uuid);
       if (!progress.ok) return c.json(STORE_DOWN, 503);
-      const g = progress.value.global_stats;
-      return c.json(
-        {
-          global_stats: {
-            max_streak: g.max_streak,
-            fastest_correct_answer: seconds(g.fastest_correct),
-            solo_matches_completed: g.solo_matches_completed,
-            known_songs: g.known_songs,
-          },
-          by_playlist: progress.value.by_playlist.map(toWirePlaylist),
-        },
-        200,
-      );
+      return c.json(toWireSolo(progress.value), 200);
     })
     .openapi(playlistRoute, async (c) => {
       const progress = await deps.progression.playlistProgress(c.get("session").player_uuid, c.req.valid("param").playlist_id);

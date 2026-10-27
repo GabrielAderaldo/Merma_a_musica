@@ -55,3 +55,6 @@ Em dev, Postgres e Redis vêm da `~/.infra` (`infra up postgres redis`). A aplic
 ## Telemetria
 
 Métricas em `/metrics` (Bearer `METRICS_AUTH_TOKEN`) e eventos em [ADR-0010](adr/0010-observabilidade-minima.md). Labels de métrica só com enums fechados: nunca `player_uuid`, `room_id`, `match_id` ou `isrc` (esses ficam nos logs).
+
+- Sem `METRICS_AUTH_TOKEN`, `/metrics` responde 404; com ele, o token tem 32+ caracteres. Sem `SENTRY_DSN`, nada vai ao Sentry. A API avisa os dois no log ao subir (`metrics_disabled`, `sentry_disabled`).
+- Vai ao Sentry todo `logger.error`, que é o "reportado explicitamente" do ADR-0010, mais exceção e rejeição não tratadas. As integrações automáticas do SDK ficam desligadas: elas anexariam URL, header e query, e o `audio_token` anda na URL.

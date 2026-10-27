@@ -14,6 +14,7 @@
     "@hono/zod-openapi": "1.6.3",
     "@merma/domain": "workspace:*",
     "@merma/schema": "workspace:*",
+    "@sentry/bun": "11.9.0",
     "drizzle-orm": "1.0.0-rc.5",
     "hono": "4.13.14",
     "zod": "4.6.7"

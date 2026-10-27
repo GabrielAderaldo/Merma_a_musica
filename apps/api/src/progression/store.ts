@@ -87,6 +87,20 @@ export class MemoryProgressionStore implements ProgressionStore {
     return ok(stats === undefined ? null : this.#playlistRecord(stats));
   };
 
+  knownSongs = async (player: string) =>
+    ok(
+      [...this.#known]
+        .filter(([pair]) => pair.startsWith(`${player}/`))
+        .map(([pair, keys]) => ({ playlist_id: pair.slice(player.length + 1), song_keys: [...keys].toSorted() })),
+    );
+
+  deleteAll = async (player: string) => {
+    const mine = (key: string) => key.startsWith(`${player}/`);
+    for (const map of [this.#bests, this.#playlists, this.#known]) for (const key of map.keys()) if (mine(key)) map.delete(key);
+    this.#players.delete(player);
+    return ok(undefined);
+  };
+
   #playlistRecord(p: PlaylistStats & { player_uuid: string; playlist_id: string }): PlaylistProgressRecord {
     return {
       playlist_id: p.playlist_id,
@@ -257,5 +271,28 @@ export const postgresProgressionStore = (db: Database): ProgressionStore => {
       }),
 
     playlistProgress: (player, playlist_id) => attempt(async () => (await playlistRecords(player, playlist_id))[0] ?? null),
+
+    knownSongs: (player) =>
+      attempt(async () => {
+        const rows = await db
+          .select({ playlist_id: soloKnownSongs.playlist_id, song_key: soloKnownSongs.song_key })
+          .from(soloKnownSongs)
+          .where(eq(soloKnownSongs.player_uuid, player));
+        const by = new Map<string, string[]>();
+        for (const r of rows) by.set(r.playlist_id, [...(by.get(r.playlist_id) ?? []), r.song_key]);
+        // Ordem por code point, como na memória: o ORDER BY do Postgres segue a collation.
+        return [...by].map(([playlist_id, song_keys]) => ({ playlist_id, song_keys: song_keys.toSorted() }));
+      }),
+
+    // As quatro tabelas da Progression numa transação: exclusão pela metade não fica.
+    deleteAll: (player) =>
+      attempt(() =>
+        db.transaction(async (tx) => {
+          await tx.delete(soloPersonalBests).where(eq(soloPersonalBests.player_uuid, player));
+          await tx.delete(soloPlaylistStats).where(eq(soloPlaylistStats.player_uuid, player));
+          await tx.delete(soloKnownSongs).where(eq(soloKnownSongs.player_uuid, player));
+          await tx.delete(soloPlayerStats).where(eq(soloPlayerStats.player_uuid, player));
+        }),
+      ),
   };
 };

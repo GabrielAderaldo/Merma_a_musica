@@ -103,6 +103,8 @@ describe("GET /api/v1/solo/personal-bests", () => {
       recordSolo: async () => ({ ok: false, error: "store_unavailable" }),
       progress: async () => ({ ok: false, error: "store_unavailable" }),
       playlistProgress: async () => ({ ok: false, error: "store_unavailable" }),
+      knownSongs: async () => ({ ok: false, error: "store_unavailable" }),
+      deleteAll: async () => ({ ok: false, error: "store_unavailable" }),
     };
     const a = app(down);
     const { cookie } = await login(a);

@@ -99,6 +99,24 @@ const contract = (make: () => ProgressionStore) => {
     });
     expect(unwrap(await store.playlistProgress(player, playlist))).toBeNull();
   });
+
+  test("LGPD: knownSongs exporta as chaves por playlist; deleteAll apaga as quatro tabelas, só do jogador", async () => {
+    const store = make();
+    const me = fixtures();
+    const other = fixtures();
+    await store.recordSolo(me.entry());
+    await store.recordSolo(other.entry());
+    expect(unwrap(await store.knownSongs(me.player))).toEqual([
+      { playlist_id: me.playlist, song_keys: ["BRUM71500001", "asa branca\u001fluiz gonzaga"] },
+    ]);
+    unwrap(await store.deleteAll(me.player));
+    expect(unwrap(await store.progress(me.player))).toEqual({
+      global_stats: { max_streak: 0, fastest_correct: null, solo_matches_completed: 0, known_songs: 0 },
+      by_playlist: [],
+    });
+    expect(unwrap(await store.knownSongs(me.player))).toEqual([]);
+    expect(unwrap(await store.progress(other.player)).global_stats.solo_matches_completed).toBe(1);
+  });
 };
 
 describe("MemoryProgressionStore", () => contract(() => new MemoryProgressionStore()));
@@ -123,6 +141,8 @@ describe.skipIf(url === undefined || url === "")("postgresProgressionStore (Post
     },
     progress: store.progress,
     playlistProgress: store.playlistProgress,
+    knownSongs: store.knownSongs,
+    deleteAll: store.deleteAll,
   };
 
   test("migra", async () => {

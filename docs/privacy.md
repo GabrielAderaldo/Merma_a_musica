@@ -52,8 +52,8 @@ Sentry e backup podem ficar fora do Brasil: execução de contrato + garantia co
 
 Todos por endpoint, com resposta imediata (o prazo legal é de 15 dias). Os contratos nascem em `packages/schema`:
 
-- Confirmação e acesso: `GET /auth/me`, `GET /api/v1/me/export` (JSON com tudo).
-- Exclusão: `DELETE /api/v1/me`, em cascata em contas, playlists e recordes; o histórico agregado fica anonimizado.
+- Confirmação e acesso: `GET /auth/me`, `GET /api/v1/me/export` (JSON com tudo: conta conectada sem o refresh token, playlists com as músicas, recordes e músicas já acertadas no solo, partidas com as respostas do jogador).
+- Exclusão: `DELETE /api/v1/me` apaga a conta conectada, as playlists, os recordes do solo e as importações em andamento. No histórico de partidas, o `player_uuid` vira o hash truncado, como no jogador inativo (decidido em 2026-10-27): o placar dos outros fica de pé, mas quem guardou o `player_uuid` antigo ainda acha as linhas, então é pseudonimização. A resposta traz uma sessão com `player_uuid` novo, sem ligação com o apagado.
 - Revogar consentimento: `POST /api/v1/auth/disconnect/{platform}`, que apaga os tokens na hora. Manter ou apagar as playlists é escolha do jogador.
 - Correção: o `nickname` direto na UI.
 

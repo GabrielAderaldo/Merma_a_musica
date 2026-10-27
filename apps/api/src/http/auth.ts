@@ -156,7 +156,10 @@ export const authRoutes = (
       // Recusa no consentimento, ou usuário fora da allowlist do app (403 do Spotify).
       if (query.code === undefined) return back(c, pending.return_to, "denied");
       const connected = await deps.spotify.accounts.connect(player.value, query.code, pending.verifier);
-      if (!connected.ok) return back(c, pending.return_to, connected.error);
+      if (!connected.ok) {
+        deps.logger.error("oauth_failure", { platform: "spotify", error: connected.error });
+        return back(c, pending.return_to, connected.error);
+      }
       await rotateSession(c, { secret: deps.secret, now: deps.now }, player.value);
       deleteCookie(c, CSRF, { path: "/", secure: true, prefix: "host" });
       deps.logger.info("oauth_account_connected", { player_uuid: player.value, platform: "spotify" });

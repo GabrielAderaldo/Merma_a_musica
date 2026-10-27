@@ -1,4 +1,4 @@
-// Rotas REST da sala (docs/specs/rest.md até nascerem aqui) e o WebSocket /ws/room/{invite_code}.
+// Rotas REST da sala e o WebSocket /ws/room/{invite_code}.
 import { createRoute, z } from "@hono/zod-openapi";
 import { CreateRoomResponse, ErrorResponse, InviteCode, MAX_PLAYERS, RoomSummaryResponse } from "@merma/schema";
 import { roomSocketHandler, type GatewayDeps } from "../room/gateway.ts";
@@ -36,7 +36,7 @@ const roomSummaryRoute = createRoute({
 
 export const roomRoutes = (app: OpenApiApp, deps: GatewayDeps) => {
   // ADR-0002: session → rateLimit → handler.
-  app.post(createRoomRoute.path, rateLimit({ ...CREATE_ROOM_LIMIT, now: deps.now }));
+  app.post(createRoomRoute.path, rateLimit({ ...CREATE_ROOM_LIMIT, now: deps.now, metrics: deps.metrics }));
   app.get("/ws/room/:invite_code", roomSocketHandler(deps));
   return app
     .openapi(createRoomRoute, (c) => {

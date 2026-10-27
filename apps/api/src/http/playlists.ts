@@ -81,7 +81,7 @@ const STORE_DOWN = { code: "internal_error" as const, message: "Tente de novo." 
 // Retry-After do S-25: uma importação comum termina em segundos.
 const IMPORT_RETRY_AFTER_SECONDS = 10;
 
-const toWire = (p: PlaylistRecord): z.infer<typeof PlaylistsResponse>["playlists"][number] => ({
+export const toWirePlaylist = (p: PlaylistRecord): z.infer<typeof PlaylistsResponse>["playlists"][number] => ({
   playlist_id: p.playlist_id,
   name: p.name,
   platform: p.platform,
@@ -98,7 +98,7 @@ export const playlistRoutes = (app: OpenApiApp, deps: PlaylistRouteDeps) =>
     .openapi(listRoute, async (c) => {
       const list = await deps.store.list(c.get("session").player_uuid);
       if (!list.ok) return c.json(STORE_DOWN, 503);
-      return c.json({ playlists: list.value.map(toWire) }, 200);
+      return c.json({ playlists: list.value.map(toWirePlaylist) }, 200);
     })
     .openapi(availableRoute, async (c) => {
       if (deps.spotify === null) return c.json({ code: "platform_not_connected" as const, message: "Conecte o Spotify antes." }, 403);

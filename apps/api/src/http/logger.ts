@@ -31,6 +31,9 @@ export const createLogger = (opts: {
   level: LogLevel;
   write?: (line: string) => void;
   now?: () => number;
+  // logger.error é o "reportado explicitamente" do ADR-0010: segue também para o Sentry, com os campos crus (o
+  // Error inteiro, com a stack); quem recebe sanitiza (ADR-0010.R3).
+  onError?: (event: string, fields: LogFields) => void;
 }): Logger => {
   const write = opts.write ?? ((line) => process.stdout.write(`${line}\n`));
   const now = opts.now ?? Date.now;
@@ -38,6 +41,7 @@ export const createLogger = (opts: {
     if (RANK[level] < RANK[opts.level]) return;
     // ts, level e event vêm por último para nenhum campo do evento sobrescrevê-los.
     write(JSON.stringify({ ...(scrub(fields) as LogFields), ts: new Date(now()).toISOString(), level, event }));
+    if (level === "error") opts.onError?.(event, fields);
   };
   return { debug: log("debug"), info: log("info"), warn: log("warn"), error: log("error") };
 };

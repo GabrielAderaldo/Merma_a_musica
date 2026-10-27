@@ -284,7 +284,7 @@ describe("partida", () => {
     const r = await started(1, {}, again);
     expect(currentSong(r)).not.toBe(name);
     expect(r.socket(1).of("round_starting")).toHaveLength(1);
-    expect(r.lines).toContainEqual(expect.objectContaining({ event: "round_song_unplayable" }));
+    expect(r.lines).toContainEqual(expect.objectContaining({ event: "audio_unavailable" }));
   });
 
   test("R-602: quem volta com o timer correndo recebe o áudio de novo no room_state", async () => {
@@ -476,5 +476,53 @@ describe("ADR-0009.R2 — snapshot só com a sala em in_match", () => {
     const r = await room(1, setup);
     await r.actor.snapshot();
     expect(setup.snapshots.saves).toBe(0);
+  });
+});
+
+describe("ADR-0010 — eventos do funil e métricas do actor", () => {
+  const events = (lines: Record<string, unknown>[]) => lines.map((l) => l["event"]);
+
+  test("partida inteira: match_started, round_completed por rodada, match_completed; round_duration e S-26", async () => {
+    const setup = actorDeps();
+    setup.songs.count = 2;
+    const r = await timerRunning(1, { game_mode: "solo", total_songs: 2 }, setup);
+    // Acerta as duas na hora: 100% e média abaixo de 1s (S-26).
+    await r.send(1, { type: "submit_answer", answer_text: currentSong(r) });
+    await r.advance(10_000 + TIMING.revealMs + TIMING.gracePeriodMs);
+    await r.send(1, { type: "submit_answer", answer_text: currentSong(r) });
+    await r.advance(10_000 + TIMING.revealMs);
+    const seen = events(setup.lines);
+    expect(seen.filter((e) => e === "round_completed")).toHaveLength(2);
+    for (const e of ["match_started", "match_completed", "solo_personal_best_broken"]) expect(seen).toContain(e);
+    expect(seen).not.toContain("match_abandoned");
+    expect(setup.metrics.roundDuration.count).toBe(2);
+    expect(setup.metrics.suspiciousPatterns.value()).toBe(1);
+  });
+
+  test("todos saem no meio: match_abandoned, sem match_completed", async () => {
+    const setup = actorDeps();
+    const r = await timerRunning(1, {}, setup);
+    await r.send(1, { type: "player_leave" });
+    await r.advance(TIMING.resultsMs);
+    expect(events(setup.lines)).toContain("match_abandoned");
+    expect(events(setup.lines)).not.toContain("match_completed");
+  });
+
+  test("player_reconnected ao voltar; player_timeout depois de 2 min fora (R-602)", async () => {
+    const setup = actorDeps();
+    const r = await room(2, setup);
+    await r.actor.disconnect(player(2), r.socket(2));
+    await r.actor.join(player(2), "P2", new FakeSocket());
+    expect(events(setup.lines)).toContain("player_reconnected");
+    await r.actor.disconnect(player(1), r.socket(1));
+    await r.advance(TIMING.reconnectWindowMs);
+    expect(setup.lines).toContainEqual(expect.objectContaining({ event: "player_timeout", player_uuid: player(1) }));
+  });
+
+  test("snapshot gravado conta redis_snapshot_total{result=ok}", async () => {
+    const setup = actorDeps();
+    const r = await timerRunning(1, {}, setup);
+    await r.actor.snapshot();
+    expect(setup.metrics.redisSnapshots.value({ result: "ok" })).toBeGreaterThan(0);
   });
 });

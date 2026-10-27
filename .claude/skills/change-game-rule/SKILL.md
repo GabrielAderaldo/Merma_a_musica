@@ -13,6 +13,6 @@ Pedido: $ARGUMENTS
 2. Se a mudança contradiz outra regra, um ADR ou `docs/security.md`, **pare e pergunte** ao mantenedor com `AskUserQuestion`: opções, tradeoffs, fontes.
 3. Edite o `docs/gdd.md`: mude o texto da regra **mantendo o ID**, atualize as tabelas de casos e marque a decisão (`(decidido em AAAA-MM-DD)`). Regra nova recebe o próximo ID livre da seção. Regra removida vira `R-NNN (removida em AAAA-MM-DD)`.
 4. Termo novo → `docs/glossary.md`.
-5. Se o protocolo muda: schema em `packages/schema` (exemplo em `src/ws.test.ts` e `bun run schema:gen`). Rota REST, enquanto a `apps/api` não existir: `docs/specs/rest.md`.
+5. Se o protocolo muda: schema em `packages/schema` (exemplo em `src/ws.test.ts` e `bun run schema:gen`). Rota REST: o corpo em `packages/schema/src/rest.ts`, a rota na `apps/api` e `bun run openapi:gen`.
 6. Testes primeiro: atualize ou crie `test.each` citando o ID (`"R-NNN …"`) e veja falhar. Depois mude o código.
 7. Rode `bun run docs:check`, `bun test` e `bun run lint`. Mostre a saída.

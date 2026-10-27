@@ -6,6 +6,7 @@ import { CloseCode, InviteCode, WsClientMessage } from "@merma/schema";
 import type { Context, Next } from "hono";
 import type { WSContext } from "hono/ws";
 import type { Logger } from "../http/logger.ts";
+import type { Metrics } from "../observability/metrics.ts";
 import { type OpenSockets, serverSocket, type ServerSocket } from "../http/socket.ts";
 import type { RoomActor } from "./actor.ts";
 import { WsRateLimiter } from "./rate-limit.ts";
@@ -21,6 +22,7 @@ export type GatewayDeps = Readonly<{
   logger: Logger;
   allowedOrigins: readonly string[];
   now: () => number;
+  metrics: Metrics;
 }>;
 
 type Env = { Variables: { session: { player_uuid: PlayerUuid } } };
@@ -43,14 +45,18 @@ class Connection {
   readonly #actor: RoomActor;
   readonly #socket: ServerSocket;
   readonly #limiter: WsRateLimiter;
+  readonly #metrics: Metrics;
+  readonly #now: () => number;
   #joined = false;
   #invalid = 0;
 
-  constructor(player: PlayerUuid, actor: RoomActor, socket: ServerSocket, limiter: WsRateLimiter) {
+  constructor(player: PlayerUuid, actor: RoomActor, socket: ServerSocket, deps: { limiter: WsRateLimiter; metrics: Metrics; now: () => number }) {
     this.#player = player;
     this.#actor = actor;
     this.#socket = socket;
-    this.#limiter = limiter;
+    this.#limiter = deps.limiter;
+    this.#metrics = deps.metrics;
+    this.#now = deps.now;
   }
 
   get socket(): ServerSocket {
@@ -60,12 +66,14 @@ class Connection {
   receive(data: unknown): void {
     const message = parse(data);
     if (message === null) {
+      this.#metrics.securityEvents.inc({ kind: "invalid_payload" });
       this.#invalid++;
       if (this.#invalid >= MAX_INVALID_PAYLOADS) return this.#socket.close(CloseCode.invalid_payload_repeated, "invalid_payload");
       return this.#socket.send(JSON.stringify(errorMessage("invalid_payload")));
     }
     // S-23: o limite conta por tipo de mensagem, então vem depois do Zod e antes de tudo o mais.
     const verdict = this.#limiter.check(this.#player, this.#actor.roomId, message.type);
+    if (verdict !== "allowed") this.#metrics.securityEvents.inc({ kind: "ws_rate_limited" });
     if (verdict === "close") return this.#socket.close(CloseCode.rate_limited_repeated, "rate_limited");
     if (verdict === "rate_limited") return this.#socket.send(JSON.stringify(errorMessage("rate_limited")));
     if (verdict === "dropped") return;
@@ -82,7 +90,12 @@ class Connection {
     }
     // Antes do join_room o jogador não está na sala.
     if (!this.#joined) return this.#socket.send(JSON.stringify(errorMessage("illegal_state_transition")));
-    void this.#actor.receive(this.#player, message, this.#socket);
+    if (message.type !== "submit_answer") return void this.#actor.receive(this.#player, message, this.#socket);
+    // Da chegada ao fim do processamento na fila do actor (ADR-0010).
+    const start = this.#now();
+    void this.#actor.receive(this.#player, message, this.#socket).then(() => {
+      this.#metrics.submitAnswerDuration.observe((this.#now() - start) / 1000);
+    });
   }
 
   closed(): void {
@@ -104,9 +117,12 @@ export const roomSocketHandler = (deps: GatewayDeps) => {
     const handler = upgradeWebSocket(() => ({
       onOpen: (_event, ws: WSContext) => {
         const socket = serverSocket(ws);
-        if (!originAllowed) return socket.close(CloseCode.origin_not_allowed, "origin_not_allowed");
+        if (!originAllowed) {
+          deps.metrics.securityEvents.inc({ kind: "origin_not_allowed" });
+          return socket.close(CloseCode.origin_not_allowed, "origin_not_allowed");
+        }
         deps.sockets.add(socket);
-        connection = new Connection(player, actor, socket, limiter);
+        connection = new Connection(player, actor, socket, { limiter, metrics: deps.metrics, now: deps.now });
       },
       onMessage: (event) => connection?.receive(event.data),
       onClose: () => {

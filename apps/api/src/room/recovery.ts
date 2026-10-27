@@ -1,6 +1,7 @@
 // RecoveryService (docs/architecture.md#recuperação): ao subir, antes de aceitar conexões, recria cada sala órfã do
 // snapshot, com todos os jogadores reconectando.
 import type { Logger } from "../http/logger.ts";
+import type { Metrics } from "../observability/metrics.ts";
 import type { Clock, SnapshotStore } from "./ports.ts";
 import type { RoomRegistry } from "./registry.ts";
 
@@ -14,10 +15,11 @@ export const recoverRooms = async (deps: {
   registry: RoomRegistry;
   clock: Clock;
   logger: Logger;
+  metrics: Metrics;
 }): Promise<RecoveryReport> => {
   const snapshots = await deps.store.list();
   if (!snapshots.ok) {
-    deps.logger.error("recovery_failed", { error: snapshots.error });
+    deps.logger.error("redis_recovery_failed", { error: snapshots.error });
     return { restored: 0, expired: 0 };
   }
   let restored = 0;
@@ -32,6 +34,7 @@ export const recoverRooms = async (deps: {
     const start = performance.now();
     await deps.registry.restore(snapshot.room);
     restored++;
+    deps.metrics.recoveries.inc();
     deps.logger.info("room_recovered", { invite_code: code, duration_ms: Math.round(performance.now() - start) });
   }
   return { restored, expired };

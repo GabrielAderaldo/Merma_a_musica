@@ -31,6 +31,16 @@ const finished = async (s: ReturnType<typeof setup>, player: string, job_id: str
 };
 
 describe("importação (R-002, R-010)", () => {
+  test("LGPD: forget no meio da importação some com o job, e a playlist não é gravada", async () => {
+    const s = setup();
+    const player = crypto.randomUUID();
+    const started = await s.jobs.start(player, { source: "link", url: "https://www.deezer.com/br/playlist/42" });
+    if (!started.ok) return expect.unreachable(started.error);
+    s.jobs.forget(player);
+    expect(await finished(s, player, started.value)).toBeNull();
+    expect(await s.store.list(player)).toEqual({ ok: true, value: [] });
+  });
+
   test("link da Deezer: grava as músicas sem repetir, com a capa da playlist", async () => {
     const s = setup();
     const started = await s.jobs.start(PLAYER, { source: "link", url: "https://www.deezer.com/br/playlist/42" });

@@ -85,6 +85,19 @@ export type CompletedMatch = Readonly<{
 }>;
 export type MatchRepository = Readonly<{
   saveCompleted(match: CompletedMatch): Promise<Result<void, "store_unavailable">>;
+  // LGPD (docs/privacy.md): as partidas em que o jogador aparece, e a troca do player_uuid dele pelo hash truncado
+  // (decidido em 2026-10-27: o mesmo tratamento do jogador inativo). O placar e as respostas ficam, sem a identidade.
+  history(player: string): Promise<Result<readonly PlayerMatchRecord[], "store_unavailable">>;
+  anonymize(player: string): Promise<Result<void, "store_unavailable">>;
+}>;
+
+export type PlayerMatchRecord = Readonly<{
+  match_id: string;
+  config: MatchConfiguration;
+  started_at: number;
+  ended_at: number;
+  total_points: number;
+  rounds: readonly Readonly<{ round_index: number; is_correct: boolean; is_near_miss: boolean; points: number; response_time: number | null }>[];
 }>;
 
 // Progression vista pelo Orchestrator: no solo, soma a partida ao histórico e compara com o recorde (R-504, R-704).

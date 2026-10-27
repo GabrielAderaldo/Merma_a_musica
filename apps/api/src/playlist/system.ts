@@ -11,7 +11,8 @@ import { spotifyClient } from "./spotify.ts";
 import type { AccountStore, PlaylistStore } from "./store.ts";
 import { youtubeClient } from "./youtube.ts";
 
-export type PlaylistIntegration = Readonly<{ store: PlaylistStore; jobs: ImportJobs; spotify: SpotifyAuth | null }>;
+// accounts direto, além do SpotifyAuth: o DELETE /me apaga a conta mesmo numa instância que desligou o Spotify.
+export type PlaylistIntegration = Readonly<{ store: PlaylistStore; accounts: AccountStore; jobs: ImportJobs; spotify: SpotifyAuth | null }>;
 
 export const playlistIntegration = async (deps: {
   fetch: Fetch;
@@ -42,5 +43,5 @@ export const playlistIntegration = async (deps: {
     logger: deps.logger,
     maxSongs,
   });
-  return ok({ store: deps.store, jobs, spotify });
+  return ok({ store: deps.store, accounts: deps.accounts, jobs, spotify });
 };

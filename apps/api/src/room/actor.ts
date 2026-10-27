@@ -46,6 +46,7 @@ import {
 } from "@merma/domain";
 import { CloseCode, type ErrorCode, type Phase, type WsClientMessage, type WsServerMessage } from "@merma/schema";
 import type { Logger } from "../http/logger.ts";
+import type { Metrics } from "../observability/metrics.ts";
 import type { ServerSocket } from "../http/socket.ts";
 import type {
   AudioResolver,
@@ -59,6 +60,7 @@ import type {
   SoloRecords,
   SongSource,
 } from "./ports.ts";
+import { suspiciousPlayers } from "./suspicious.ts";
 import { errorMessage, fromWireConfig, gameEnded, roomState, roundEnded, toErrorCode, toWireConfig, toWirePlayer } from "./wire.ts";
 
 export type ActorDeps = Readonly<{
@@ -70,6 +72,7 @@ export type ActorDeps = Readonly<{
   audio: AudioResolver;
   matches: MatchRepository;
   solo: SoloRecords;
+  metrics: Metrics;
 }>;
 
 // Mensagens que chegam ao actor: join_room e ping o WsGateway trata antes.
@@ -108,6 +111,8 @@ export class RoomActor {
   readonly #audioTokens = new Map<PlayerUuid, Readonly<{ token: string; issued: number }>>();
   readonly #usedAudioTokens = new Set<string>();
   #tail: Promise<void> = Promise.resolve();
+  // round_duration_seconds: do round_starting ao round_ended.
+  #roundStartedAt: number | null = null;
 
   constructor(room: Room, deps: ActorDeps, onTerminated: (invite_code: string) => void = () => {}) {
     this.#room = room;
@@ -152,6 +157,7 @@ export class RoomActor {
     let accepted = false;
     await this.#enqueue(() => {
       const before = this.#room;
+      const reconnecting = findPlayer(before, player)?.connection_status === "reconnecting";
       const known = findPlayer(before, player) !== undefined;
       const joined = joinRoom(before, { player_uuid: player, nickname, platform: null }, this.#deps.clock.now());
       if (!joined.ok) return this.#reject(socket, toErrorCode(joined.error));
@@ -166,6 +172,7 @@ export class RoomActor {
       this.#sendTo(player, this.#roomStateFor(player));
       if (me !== undefined) this.#broadcast({ type: "player_joined", player: toWirePlayer(this.#room, me) }, player);
       if (!known) this.#deps.logger.info("room_player_joined", { invite_code: before.invite_code, player_uuid: player });
+      if (reconnecting) this.#deps.logger.info("player_reconnected", { invite_code: before.invite_code, player_uuid: player });
     });
     return accepted;
   }
@@ -308,6 +315,14 @@ export class RoomActor {
     const input = { match_id: this.#deps.ids.matchId(), songs, seed: this.#deps.ids.seed(), now: this.#deps.clock.now() };
     if (!this.#apply(socket, startGame(this.#room, player, input))) return;
     this.#broadcast({ type: "game_starting", countdown_seconds: 3 });
+    const match = this.#room.match;
+    this.#deps.logger.info("match_started", {
+      invite_code: this.#room.invite_code,
+      match_id: match?.match_id,
+      game_mode: match?.config.game_mode,
+      total_rounds: match?.total_rounds,
+      players: match?.participants.length,
+    });
     this.#startSnapshots();
     this.#schedule("flow", TIMING.countdownMs, () => this.#enqueue(() => this.#countdownDone()));
   }
@@ -321,6 +336,7 @@ export class RoomActor {
     if (!left.ok) return;
     this.#commit(before, left.value);
     this.#broadcast({ type: "player_left", player_uuid: player, reason });
+    if (reason === "timeout") this.#deps.logger.info("player_timeout", { invite_code: this.#room.invite_code, player_uuid: player });
     if (this.#room.state === "lobby") this.#broadcastConfig();
     this.#checkRoundEnd();
   }
@@ -369,7 +385,7 @@ export class RoomActor {
         if (this.#advance(markAudioResolved(this.#room))) this.#beginGracePeriod();
         return;
       }
-      this.#deps.logger.warn("round_song_unplayable", { invite_code: this.#room.invite_code, round_id: round.round_id });
+      this.#deps.logger.warn("audio_unavailable", { invite_code: this.#room.invite_code, round_id: round.round_id });
       if (!this.#advance(replaceUnplayableSong(this.#room))) return;
     }
   }
@@ -377,6 +393,7 @@ export class RoomActor {
   // streaming → grace_period: round_starting leva o audio_token de cada jogador (ADR-0004).
   #beginGracePeriod(): void {
     if (!this.#advance(startGracePeriod(this.#room))) return;
+    this.#roundStartedAt = this.#deps.clock.now();
     const match = this.#room.match;
     const round = match === null ? undefined : currentRound(match);
     if (match === null || round === undefined) return;
@@ -412,7 +429,19 @@ export class RoomActor {
     this.#clearAudio(); // S-14: o token morre com a rodada
     const match = this.#room.match;
     const round = match === null ? undefined : currentRound(match);
-    if (match !== null && round !== undefined) this.#broadcast(roundEnded(match, round));
+    if (match !== null && round !== undefined) {
+      this.#broadcast(roundEnded(match, round));
+      this.#deps.logger.info("round_completed", {
+        invite_code: this.#room.invite_code,
+        match_id: match.match_id,
+        round_index: round.index,
+        end_reason: round.end_reason,
+        answers: round.answers.length,
+        correct: round.answers.filter((a) => a.is_correct).length,
+      });
+    }
+    if (this.#roundStartedAt !== null) this.#deps.metrics.roundDuration.observe((this.#deps.clock.now() - this.#roundStartedAt) / 1000);
+    this.#roundStartedAt = null;
     this.#schedule("flow", TIMING.revealMs, () => this.#enqueue(() => this.#afterReveal()));
   }
 
@@ -438,7 +467,15 @@ export class RoomActor {
     const match = this.#room.match;
     if (match === null) return;
     this.#stopSnapshots();
-    if (this.#room.players.length > 0) this.#broadcast(gameEnded(match, await this.#soloOutcome(match)));
+    // Todos saíram antes do fim: a engine encerra a partida do mesmo jeito (in_match → finished).
+    const abandoned = this.#room.players.length === 0;
+    this.#deps.logger.info(abandoned ? "match_abandoned" : "match_completed", {
+      invite_code: this.#room.invite_code,
+      match_id: match.match_id,
+      rounds: match.rounds.length,
+    });
+    for (let n = suspiciousPlayers(match).length; n > 0; n--) this.#deps.metrics.suspiciousPatterns.inc();
+    if (!abandoned) this.#broadcast(gameEnded(match, await this.#soloOutcome(match)));
     this.#schedule("flow", TIMING.resultsMs, () => this.#enqueue(() => this.#backToLobby()));
     const saved = await this.#deps.matches.saveCompleted(completedMatch(this.#room.room_id, match));
     if (!saved.ok) {
@@ -455,7 +492,12 @@ export class RoomActor {
     const playlist = this.#room.players[0]?.playlist;
     if (match.config.game_mode !== "solo" || playlist == null) return null;
     const outcome = await this.#deps.solo.complete(match, playlist.playlist_id);
-    if (outcome.ok) return outcome.value;
+    if (outcome.ok) {
+      if (outcome.value?.is_new_personal_best === true) {
+        this.#deps.logger.info("solo_personal_best_broken", { player_uuid: this.#room.players[0]?.player_uuid, match_id: match.match_id });
+      }
+      return outcome.value;
+    }
     this.#deps.logger.error("solo_record_failed", { invite_code: this.#room.invite_code, match_id: match.match_id });
     return null;
   }
@@ -530,6 +572,7 @@ export class RoomActor {
     const host = after.host_uuid === null ? undefined : findPlayer(after, after.host_uuid);
     if (host !== undefined && before.host_uuid !== null && before.host_uuid !== host.player_uuid) {
       this.#broadcast({ type: "host_changed", new_host_uuid: host.player_uuid, new_host_nickname: host.nickname, reason: "previous_host_disconnected" });
+      this.#deps.logger.info("host_changed", { invite_code: after.invite_code, player_uuid: host.player_uuid });
       this.#cancel("host");
       if (host.connection_status !== "connected") this.#scheduleHostTimeout();
     }
@@ -544,7 +587,7 @@ export class RoomActor {
   }
 
   #logIllegal(error: DomainError): void {
-    this.#deps.logger.error("room_illegal_transition", { invite_code: this.#room.invite_code, error });
+    this.#deps.logger.error("engine_invalid_state", { invite_code: this.#room.invite_code, error });
   }
 
   // Emite o token do jogador para a rodada e invalida o anterior (S-12). Depois do 3º, não há mais áudio para ele.
@@ -623,7 +666,8 @@ export class RoomActor {
   async #writeSnapshot(): Promise<void> {
     if (this.#room.state !== "in_match") return;
     const saved = await this.#deps.snapshots.save({ version: 1, saved_at: this.#deps.clock.now(), room: this.#room });
-    if (!saved.ok) this.#deps.logger.error("snapshot_failed", { invite_code: this.#room.invite_code, error: saved.error });
+    this.#deps.metrics.redisSnapshots.inc({ result: saved.ok ? "ok" : "failed" });
+    if (!saved.ok) this.#deps.logger.error("redis_snapshot_failed", { invite_code: this.#room.invite_code, error: saved.error });
   }
 
   // --- Timers --------------------------------------------------------------------------------------------------------

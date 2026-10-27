@@ -2,10 +2,12 @@
 // de consumir o token, S-13), HMAC e jogador (S-11), prazo (S-14), rodada, uso único (S-12) e MP3 pronto.
 import { createRoute, z } from "@hono/zod-openapi";
 import { type ErrorCode, ErrorResponse } from "@merma/schema";
+import type { Metrics } from "../observability/metrics.ts";
 import type { AudioTokens } from "../playlist/audio/token.ts";
 import type { RoomRegistry } from "../room/registry.ts";
 import { errorText } from "../room/wire.ts";
 import type { OpenApiApp } from "./app.ts";
+import type { Logger } from "./logger.ts";
 
 const json = <S extends z.ZodType>(schema: S, description: string) => ({
   description,
@@ -29,8 +31,12 @@ const audioRoute = createRoute({
   },
 });
 
-export const audioRoutes = (app: OpenApiApp, deps: { registry: RoomRegistry; tokens: AudioTokens; now: () => number }) =>
+export const audioRoutes = (
+  app: OpenApiApp,
+  deps: { registry: RoomRegistry; tokens: AudioTokens; now: () => number; metrics: Metrics; logger: Logger },
+) =>
   app.openapi(audioRoute, async (c) => {
+    const start = deps.now();
     const fail = <S extends 401 | 405 | 410 | 416 | 503>(code: ErrorCode, status: S) =>
       c.json({ code, message: errorText(code) }, status, { "Cache-Control": "no-store, private" });
     // O Hono responde HEAD com o handler do GET, que consumiria o token sem entregar o áudio.
@@ -41,11 +47,19 @@ export const audioRoutes = (app: OpenApiApp, deps: { registry: RoomRegistry; tok
     }
     const player = c.get("session").player_uuid;
     const claims = deps.tokens.verify(c.req.valid("param").audio_token, player, deps.now());
-    if (!claims.ok) return fail(claims.error, claims.error === "expired" ? 410 : 401);
+    if (!claims.ok) {
+      if (claims.error !== "expired") deps.metrics.securityEvents.inc({ kind: "audio_token_rejected" });
+      return fail(claims.error, claims.error === "expired" ? 410 : 401);
+    }
     const actor = deps.registry.byPlayingRound(claims.value.round_id);
     if (actor === undefined) return fail("round_expired", 410);
     const mp3 = await actor.takeAudio(player, claims.value.round_id, c.req.valid("param").audio_token);
-    if (!mp3.ok) return fail(mp3.error, mp3.error === "audio_not_ready" ? 503 : 410);
+    if (!mp3.ok) {
+      // ADR-0010: 5xx do proxy vai ao Sentry. O token sai com o round_starting, depois de o MP3 ficar pronto.
+      if (mp3.error === "audio_not_ready") deps.logger.error("audio_proxy_failed", { round_id: claims.value.round_id, status: 503 });
+      return fail(mp3.error, mp3.error === "audio_not_ready" ? 503 : 410);
+    }
+    deps.metrics.audioFirstByte.observe((deps.now() - start) / 1000);
     // Bytes em memória, nunca Bun.file: desde a 1.4.3 o Bun.serve atende Range e If-Range sozinho num arquivo (S-13).
     return c.body(mp3.value, 200, {
       "Content-Type": "audio/mpeg",

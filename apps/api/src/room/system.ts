@@ -1,5 +1,5 @@
 // Adapters de produção do relógio e dos IDs, e as portas que ainda não têm implementação.
-import { err, MatchId, RoomId, RoundId, Timestamp } from "@merma/domain";
+import { err, MatchId, ok, RoomId, RoundId, Timestamp } from "@merma/domain";
 import type { AudioResolver, Clock, Ids, MatchRepository } from "./ports.ts";
 
 // Os smart constructors só falham com entrada fora do formato, o que Date.now e randomUUID não produzem.
@@ -40,4 +40,9 @@ export const systemIds: Ids = {
 // noAudio: toda música fica sem áudio e cai na reserva (R-307), para os testes que não chegam à rodada. O
 // noMatchStore fica para quando não há POSTGRES_URL (dev sem banco).
 export const noAudio: AudioResolver = { resolve: async () => null, token: () => "" };
-export const noMatchStore: MatchRepository = { saveCompleted: async () => err("store_unavailable") };
+export const noMatchStore: MatchRepository = {
+  saveCompleted: async () => err("store_unavailable"),
+  // Sem banco, nada foi gravado: nada a exportar nem a anonimizar.
+  history: async () => ok([]),
+  anonymize: async () => ok(undefined),
+};

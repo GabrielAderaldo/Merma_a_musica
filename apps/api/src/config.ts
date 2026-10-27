@@ -19,6 +19,10 @@ export type Config = {
   youtubeApiKey: string | null;
   // OAuth do Spotify, opcional (R-002). Ligado só com SPOTIFY_CLIENT_ID, e aí exige a chave de cifra (ADR-0006.R3).
   spotify: { clientId: string; redirectUri: string; tokenKey: string } | null;
+  // Bearer de GET /metrics (ADR-0010). Sem ele, a rota não existe.
+  metricsToken: string | null;
+  // Sentry (ADR-0010). Sem ele (dev), nada vai ao Sentry.
+  sentryDsn: string | null;
 };
 
 export type LogLevel = "debug" | "info" | "warn" | "error";
@@ -32,7 +36,9 @@ export type ConfigError =
   | "invalid_public_base_url"
   | "invalid_log_level"
   | "invalid_spotify_redirect_uri"
-  | "invalid_oauth_token_encryption_key";
+  | "invalid_oauth_token_encryption_key"
+  | "metrics_token_too_short"
+  | "invalid_sentry_dsn";
 
 export const loadConfig = (env: Record<string, string | undefined>, version: string): Result<Config, ConfigError> => {
   const port = Number(env["PORT"] ?? "3000");
@@ -48,6 +54,11 @@ export const loadConfig = (env: Record<string, string | undefined>, version: str
   if (!isLogLevel(logLevel)) return err("invalid_log_level");
   const spotify = spotifyConfig(env);
   if (!spotify.ok) return spotify;
+  // Mesmo tamanho dos outros segredos (`openssl rand -base64 32`).
+  const metricsToken = env["METRICS_AUTH_TOKEN"] || null;
+  if (metricsToken !== null && metricsToken.length < 32) return err("metrics_token_too_short");
+  const sentryDsn = env["SENTRY_DSN"] || null;
+  if (sentryDsn !== null && !URL.canParse(sentryDsn)) return err("invalid_sentry_dsn");
   return ok({
     port,
     // Só loopback: o Caddy é quem fala com a internet (docs/operations.md).
@@ -61,6 +72,8 @@ export const loadConfig = (env: Record<string, string | undefined>, version: str
     postgresUrl: env["POSTGRES_URL"] || null,
     youtubeApiKey: env["YOUTUBE_API_KEY"] || null,
     spotify: spotify.value,
+    metricsToken,
+    sentryDsn,
   });
 };
 

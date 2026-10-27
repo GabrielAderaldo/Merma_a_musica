@@ -61,7 +61,12 @@ export type ProgressionStore = Readonly<{
   progress(player: string): Promise<Result<SoloProgress, StoreError>>;
   // null: nenhuma partida solo nessa playlist.
   playlistProgress(player: string, playlist_id: string): Promise<Result<PlaylistProgressRecord | null, StoreError>>;
+  // LGPD (docs/privacy.md): as músicas já acertadas, pela chave de R-304, e a exclusão de tudo do jogador.
+  knownSongs(player: string): Promise<Result<readonly KnownSongsRecord[], StoreError>>;
+  deleteAll(player: string): Promise<Result<void, StoreError>>;
 }>;
+
+export type KnownSongsRecord = Readonly<{ playlist_id: string; song_keys: readonly string[] }>;
 
 // A chave de R-304 separa nome e artista com NUL, que o text do Postgres não aceita.
 const storedKey = (key: string) => key.replaceAll("\u0000", "\u001f");

@@ -80,6 +80,11 @@ export class ImportJobs {
     return job === undefined || job.player_uuid !== player ? null : job;
   }
 
+  // DELETE /me: os jobs do jogador somem, e o que estiver em andamento não grava mais a playlist.
+  forget(player: string): void {
+    for (const [id, job] of this.#jobs) if (job.player_uuid === player) this.#jobs.delete(id);
+  }
+
   // Espera os jobs em andamento (testes e desligamento).
   async idle(): Promise<void> {
     while (this.#running.size > 0) await Promise.all(this.#running);
@@ -128,6 +133,8 @@ export class ImportJobs {
       job.progress.done++;
     }
     if (songs.length === 0) return this.#fail(job, "no_songs_found");
+    // O jogador pediu a exclusão dos dados no meio da importação (forget).
+    if (!this.#jobs.has(job.job_id)) return;
     const { platform, external_id, name, cover_url } = source.value;
     const saved = await this.#deps.store.save(
       {
@@ -157,7 +164,9 @@ export class ImportJobs {
     job.status = "failed";
     job.error_code = error;
     job.finished_at = this.#deps.now();
-    this.#deps.logger.warn("playlist_import_failed", { player_uuid: job.player_uuid, error });
+    // Link ruim ou playlist vazia é do jogador (warn); provedor fora ou erro nosso vai ao Sentry (ADR-0010).
+    const ours = error === "provider_unavailable" || error === "internal_error";
+    this.#deps.logger[ours ? "error" : "warn"]("playlist_import_failed", { player_uuid: job.player_uuid, error });
   }
 
   #sweep(): void {

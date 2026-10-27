@@ -50,6 +50,17 @@ export const rotateSession = async (c: Context, opts: { secret: string; now: () 
   c.set("session", { session_id: rotated.session_id, player_uuid });
 };
 
+// DELETE /me (docs/privacy.md): a identidade apagada não volta. A resposta já leva um player_uuid novo, e o que o
+// jogador fizer depois não fica ligado ao anterior.
+export const replaceIdentity = async (c: Context, opts: { secret: string; now: () => number }): Promise<boolean> => {
+  const next = fresh(opts.now());
+  if (next === null) return false;
+  c.header("Set-Cookie", undefined);
+  await issue(c, opts.secret, next);
+  c.set("session", { session_id: next.session_id, player_uuid: next.player_uuid });
+  return true;
+};
+
 export const session = (opts: { secret: string; now: () => number }) =>
   createMiddleware<{ Variables: SessionVariables }>(async (c, next) => {
     const now = opts.now();

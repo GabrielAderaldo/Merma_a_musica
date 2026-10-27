@@ -16,10 +16,12 @@ import {
 } from "@merma/domain";
 import { WsServerMessage } from "@merma/schema";
 import type { ServerSocket } from "../http/socket.ts";
+import { testMetrics } from "../observability/metrics.ts";
 import { soloRecords } from "../progression/solo.ts";
 import { MemoryProgressionStore } from "../progression/store.ts";
 import { captureLogs } from "../testing.ts";
 import type { ActorDeps } from "./actor.ts";
+import { MemoryMatchRepository } from "./match-store.ts";
 import type {
   AudioResolver,
   Cancel,
@@ -146,12 +148,15 @@ export class FakeMatches implements MatchRepository {
   // Momentos em que o repositório foi chamado, com o estado da sala naquele instante (ADR-0006.R1).
   readonly calls: string[] = [];
   stateAtCall: () => string = () => "";
+  readonly #store = new MemoryMatchRepository();
 
   saveCompleted = async (match: CompletedMatch) => {
     this.calls.push(this.stateAtCall());
     this.saved.push(match);
-    return ok(undefined);
+    return this.#store.saveCompleted(match);
   };
+  history = (player: string) => this.#store.history(player);
+  anonymize = (player: string) => this.#store.anonymize(player);
 }
 
 // A Progression de verdade sobre a memória, com o registro das chamadas e uma falha opcional.
@@ -177,8 +182,9 @@ export const actorDeps = (shared: { clock?: FakeClock; snapshots?: MemorySnapsho
   const matches = new FakeMatches();
   const solo = new FakeSolo();
   const logs = captureLogs();
-  const deps: ActorDeps = { clock, ids: fakeIds(), logger: logs.logger, snapshots, songs, audio, matches, solo };
-  return { deps, clock, snapshots, songs, audio, matches, solo, lines: logs.lines };
+  const metrics = testMetrics();
+  const deps: ActorDeps = { clock, ids: fakeIds(), logger: logs.logger, snapshots, songs, audio, matches, solo, metrics };
+  return { deps, clock, snapshots, songs, audio, matches, solo, metrics, lines: logs.lines };
 };
 
 // Socket falso: guarda o que o servidor mandou, já validado pelo contrato do fio (ADR-0014.R2).

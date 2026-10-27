@@ -3,6 +3,7 @@ import { websocket } from "@hono/bun";
 import { CloseCode, WsServerMessage } from "@merma/schema";
 import type { Server } from "bun";
 import { OpenSockets } from "../http/socket.ts";
+import { testMetrics } from "../observability/metrics.ts";
 import { closed, connect, sessionCookie, testApp } from "../testing.ts";
 import { MAX_INVALID_PAYLOADS } from "./gateway.ts";
 import { WS_RATE_LIMITS, WS_RATE_WINDOW_MS } from "./rate-limit.ts";
@@ -22,11 +23,12 @@ const serve = (now?: () => number) => {
   const setup = actorDeps();
   const registry = new RoomRegistry(setup.deps);
   const sockets = new OpenSockets();
-  const app = testApp({ registry, sockets, ...(now === undefined ? {} : { now }) });
+  const metrics = testMetrics();
+  const app = testApp({ registry, sockets, metrics, ...(now === undefined ? {} : { now }) });
   app.get("/whoami", (c) => c.json(c.get("session")));
   server = Bun.serve({ port: 0, fetch: app.fetch, websocket });
   const actor = registry.create() ?? expect.unreachable("sala");
-  return { url: server.url, actor, sockets, path: `/ws/room/${actor.inviteCode}` };
+  return { url: server.url, actor, sockets, metrics, path: `/ws/room/${actor.inviteCode}` };
 };
 
 // Mensagens do servidor, validadas pelo contrato do fio (ADR-0014.R2).
@@ -78,9 +80,10 @@ describe("WsGateway", () => {
   });
 
   test("S-02: Origin fora da allowlist fecha com 1008", async () => {
-    const { url, path } = serve();
+    const { url, path, metrics } = serve();
     const ws = await connect(url, path, { origin: "https://evil.test" });
     expect((await closed(ws)).code).toBe(CloseCode.origin_not_allowed);
+    expect(metrics.securityEvents.value({ kind: "origin_not_allowed" })).toBe(1);
   });
 });
 
@@ -101,7 +104,7 @@ describe("ADR-0002.R3 / ADR-0014.R2 — toda mensagem do cliente passa pelo Zod 
   });
 
   test(`${MAX_INVALID_PAYLOADS} payloads inválidos fecham com 1003`, async () => {
-    const { url, path } = serve();
+    const { url, path, metrics } = serve();
     const ws = await connect(url, path);
     const box = inbox(ws);
     const event = closed(ws);
@@ -111,13 +114,14 @@ describe("ADR-0002.R3 / ADR-0014.R2 — toda mensagem do cliente passa pelo Zod 
     expect((await box.next()).type).toBe("error");
     send(ws, "{");
     expect((await event).code).toBe(CloseCode.invalid_payload_repeated);
+    expect(metrics.securityEvents.value({ kind: "invalid_payload" })).toBe(3);
   });
 });
 
 describe("S-23 — rate limit do WS", () => {
   test("estourar o limite responde rate_limited uma vez por janela; a 3ª violação fecha com 4029", async () => {
     let now = 1_000_000;
-    const { url, path } = serve(() => now);
+    const { url, path, metrics } = serve(() => now);
     const ws = await connect(url, path);
     const box = inbox(ws);
     const event = closed(ws);
@@ -141,6 +145,8 @@ describe("S-23 — rate limit do WS", () => {
     now += WS_RATE_WINDOW_MS;
     flood();
     expect((await event).code).toBe(CloseCode.rate_limited_repeated);
+    // Cada mensagem recusada conta, inclusive as descartadas sem resposta: 5 + 5 e a que fechou a conexão.
+    expect(metrics.securityEvents.value({ kind: "ws_rate_limited" })).toBe(11);
   });
 });
 

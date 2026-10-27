@@ -37,8 +37,8 @@ export const systemIds: Ids = {
   inviteCode,
 };
 
-// Até a Playlist Integration (apps/api/src/playlist) e o Postgres (apps/api/src/db) nascerem, ninguém escolhe
-// playlist, então nenhuma partida começa e estas portas nunca chegam a tocar áudio ou gravar.
+// Até a Playlist Integration (apps/api/src/playlist) nascer, ninguém escolhe playlist, então nenhuma partida começa e
+// estas portas nunca chegam a tocar áudio. O noMatchStore fica para quando não há POSTGRES_URL (dev sem banco).
 export const noPlaylists: SongSource = { playlist: async () => err("no_playlists_imported") };
 export const noAudio: AudioResolver = { resolve: async () => null, token: () => "" };
 export const noMatchStore: MatchRepository = { saveCompleted: async () => err("store_unavailable") };

@@ -6,14 +6,19 @@
   "scripts": {
     "dev": "bun --watch src/index.ts",
     "start": "bun --disallow-code-generation-from-strings=strict src/index.ts",
-    "generate": "bun scripts/generate.ts"
+    "generate": "bun scripts/generate.ts",
+    "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
     "@hono/bun": "1.0.1",
     "@hono/zod-openapi": "1.6.3",
     "@merma/domain": "workspace:*",
     "@merma/schema": "workspace:*",
+    "drizzle-orm": "1.0.0-rc.5",
     "hono": "4.13.14",
     "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "drizzle-kit": "1.0.0-rc.5"
   }
 }

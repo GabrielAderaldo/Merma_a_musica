@@ -17,15 +17,25 @@ jobs:
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # Mesma imagem (e digest) da deploy/quadlet/merma-redis.container: o adaptador do snapshot é testado contra o
-    # Redis da produção. O deploy/quadlet.test.ts confere que as duas não divergem.
+    # Mesmas imagens (e digests) da deploy/quadlet/merma-redis.container e da merma-postgres.container: os adapters do
+    # snapshot e do histórico são testados contra o Redis e o Postgres da produção. O deploy/quadlet.test.ts confere
+    # que não divergem.
     services:
       redis:
         image: docker.io/library/redis:8@sha256:701d27eed8cbd5042c98ec4035146ed036c2390a31ddd9f3f617b4a5e316e12d
         ports: ["6379:6379"]
         options: --health-cmd "redis-cli ping" --health-interval 2s --health-timeout 2s --health-retries 15
+      postgres:
+        image: docker.io/library/postgres:17@sha256:8630835ad34e3e09007371ac2d8785bd941c3c1fccc02145e3af050b9e520659
+        ports: ["5432:5432"]
+        env:
+          POSTGRES_USER: merma
+          POSTGRES_PASSWORD: merma
+          POSTGRES_DB: merma
+        options: --health-cmd "pg_isready -U merma" --health-interval 2s --health-timeout 2s --health-retries 15
     env:
       REDIS_URL: redis://127.0.0.1:6379
+      POSTGRES_URL: postgres://merma:merma@127.0.0.1:5432/merma
     steps:
       - uses: actions/checkout@v7
         with:

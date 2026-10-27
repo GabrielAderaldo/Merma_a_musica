@@ -1,11 +1,14 @@
-// Entrada da apps/api: lê a config, recupera as salas do snapshot, sobe o Bun.serve com o app Hono e trata o SIGTERM.
+// Entrada da apps/api: lê a config, migra o Postgres, recupera as salas do snapshot, sobe o Bun.serve com o app Hono
+// e trata o SIGTERM.
 import { websocket } from "@hono/bun";
 import { RedisClient } from "bun";
 import pkg from "../package.json" with { type: "json" };
 import { loadConfig } from "./config.ts";
+import { connect, migrateDatabase } from "./db/client.ts";
 import { createApp } from "./http/app.ts";
 import { createLogger } from "./http/logger.ts";
 import { OpenSockets } from "./http/socket.ts";
+import { postgresMatchRepository } from "./room/match-store.ts";
 import { recoverRooms } from "./room/recovery.ts";
 import { RoomRegistry } from "./room/registry.ts";
 import { MemorySnapshotStore, redisSnapshotStore } from "./room/snapshot-store.ts";
@@ -22,6 +25,15 @@ const logger = createLogger({ level: config.value.logLevel });
 const redis = config.value.redisUrl === null ? null : new RedisClient(config.value.redisUrl);
 if (redis === null) logger.warn("snapshot_store_in_memory");
 const snapshots = redis === null ? new MemorySnapshotStore() : redisSnapshotStore(redis);
+const db = config.value.postgresUrl === null ? null : connect(config.value.postgresUrl);
+if (db === null) logger.warn("match_store_disabled");
+else {
+  const migrated = await migrateDatabase(db);
+  if (!migrated.ok) {
+    logger.error("database_migration_failed");
+    process.exit(1);
+  }
+}
 const sockets = new OpenSockets();
 const registry = new RoomRegistry({
   clock: systemClock,
@@ -30,7 +42,7 @@ const registry = new RoomRegistry({
   snapshots,
   songs: noPlaylists,
   audio: noAudio,
-  matches: noMatchStore,
+  matches: db === null ? noMatchStore : postgresMatchRepository(db),
 });
 const hooks: ShutdownHook[] = [{ name: "room_snapshot", run: () => registry.snapshotAll() }];
 const app = createApp({ config: config.value, logger, now: Date.now, startedAt: Date.now(), registry, sockets });

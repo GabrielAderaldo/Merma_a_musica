@@ -11,6 +11,8 @@ export type Config = {
   version: string;
   // Snapshot das salas (ADR-0009). Sem ele (dev e testes), o snapshot fica na memória e não sobrevive a um restart.
   redisUrl: string | null;
+  // Histórico de partidas (ADR-0006). Sem ele (dev e testes), a partida concluída não é gravada.
+  postgresUrl: string | null;
 };
 
 export type LogLevel = "debug" | "info" | "warn" | "error";
@@ -38,5 +40,6 @@ export const loadConfig = (env: Record<string, string | undefined>, version: str
     logLevel,
     version,
     redisUrl: env["REDIS_URL"] || null,
+    postgresUrl: env["POSTGRES_URL"] || null,
   });
 };

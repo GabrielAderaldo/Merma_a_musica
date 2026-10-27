@@ -69,9 +69,9 @@ describe("ADR-0017 — arquivos Quadlet", () => {
   });
 });
 
-describe("CI e produção usam o mesmo Redis", () => {
-  test("o service redis do ci.yml tem a imagem e o digest da merma-redis.container", () => {
-    const unit = containers.find((u) => u.name === "merma-redis.container")?.text ?? "";
+describe("CI e produção usam o mesmo Redis e o mesmo Postgres", () => {
+  test.each(["redis", "postgres"])("o service %s do ci.yml tem a imagem e o digest da merma-%s.container", (service) => {
+    const unit = containers.find((u) => u.name === `merma-${service}.container`)?.text ?? "";
     const [image] = values(unit, "Image");
     const ci = readFileSync(join(import.meta.dir, "..", ".github", "workflows", "ci.yml"), "utf8");
     expect(image).toMatch(/@sha256:[0-9a-f]{64}$/);

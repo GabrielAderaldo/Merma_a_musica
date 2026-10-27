@@ -1,0 +1,515 @@
+{
+  "type": "base",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "d0687d48-f7a2-45e8-83db-87ee6b68ad0d",
+  "prevIds": [
+    "00000000-0000-0000-0000-000000000000"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "match_rounds"
+      ],
+      "writes": [
+        "s|tbl|public.match_rounds",
+        "n|tbl|public.match_rounds",
+        "e|tbl|public.match_rounds",
+        "n|rel|public.match_rounds",
+        "n|type|public.match_rounds",
+        "n|rel|public.match_rounds_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "match_scores"
+      ],
+      "writes": [
+        "s|tbl|public.match_scores",
+        "n|tbl|public.match_scores",
+        "e|tbl|public.match_scores",
+        "n|rel|public.match_scores",
+        "n|type|public.match_scores",
+        "n|rel|public.match_scores_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "matches"
+      ],
+      "writes": [
+        "s|tbl|public.matches",
+        "n|tbl|public.matches",
+        "e|tbl|public.matches",
+        "n|rel|public.matches",
+        "n|type|public.matches",
+        "n|rel|public.matches_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "round_answers"
+      ],
+      "writes": [
+        "s|tbl|public.round_answers",
+        "n|tbl|public.round_answers",
+        "e|tbl|public.round_answers",
+        "n|rel|public.round_answers",
+        "n|type|public.round_answers",
+        "n|rel|public.round_answers_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "match_rounds"
+      ],
+      "writes": [
+        "s|fk|public.match_rounds.match_rounds_match_id_matches_match_id_fkey",
+        "n|fk|public.match_rounds.match_rounds_match_id_matches_match_id_fkey",
+        "e|fk|public.match_rounds.match_rounds_match_id_matches_match_id_fkey",
+        "n|con|public.match_rounds.match_rounds_match_id_matches_match_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.match_rounds",
+        "n|sch|public",
+        "n|tbl|public.matches",
+        "n|sch|public",
+        "n|col|public.match_rounds.match_id",
+        "n|col|public.matches.match_id",
+        "e|uniqueness|public.matches.match_id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "match_scores"
+      ],
+      "writes": [
+        "s|fk|public.match_scores.match_scores_match_id_matches_match_id_fkey",
+        "n|fk|public.match_scores.match_scores_match_id_matches_match_id_fkey",
+        "e|fk|public.match_scores.match_scores_match_id_matches_match_id_fkey",
+        "n|con|public.match_scores.match_scores_match_id_matches_match_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.match_scores",
+        "n|sch|public",
+        "n|tbl|public.matches",
+        "n|sch|public",
+        "n|col|public.match_scores.match_id",
+        "n|col|public.matches.match_id",
+        "e|uniqueness|public.matches.match_id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "round_answers"
+      ],
+      "writes": [
+        "s|fk|public.round_answers.round_answers_EXaTiTHVF8vw_fkey",
+        "n|fk|public.round_answers.round_answers_EXaTiTHVF8vw_fkey",
+        "e|fk|public.round_answers.round_answers_EXaTiTHVF8vw_fkey",
+        "n|con|public.round_answers.round_answers_EXaTiTHVF8vw_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.round_answers",
+        "n|sch|public",
+        "n|tbl|public.match_rounds",
+        "n|sch|public",
+        "n|col|public.round_answers.match_id",
+        "n|col|public.round_answers.round_index",
+        "n|col|public.match_rounds.match_id",
+        "n|col|public.match_rounds.round_index",
+        "e|uniqueness|public.match_rounds.match_id.round_index"
+      ]
+    }
+  ],
+  "ddl": [
+    {
+      "schema": "public",
+      "name": "match_rounds",
+      "isRlsEnabled": false,
+      "entityType": "tables"
+    },
+    {
+      "schema": "public",
+      "name": "match_scores",
+      "isRlsEnabled": false,
+      "entityType": "tables"
+    },
+    {
+      "schema": "public",
+      "name": "matches",
+      "isRlsEnabled": false,
+      "entityType": "tables"
+    },
+    {
+      "schema": "public",
+      "name": "round_answers",
+      "isRlsEnabled": false,
+      "entityType": "tables"
+    },
+    {
+      "schema": "public",
+      "table": "match_rounds",
+      "name": "match_id",
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "match_rounds",
+      "name": "round_index",
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "match_rounds",
+      "name": "isrc",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "match_scores",
+      "name": "match_id",
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "match_scores",
+      "name": "player_uuid",
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "match_scores",
+      "name": "total_points",
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "matches",
+      "name": "match_id",
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "matches",
+      "name": "room_id",
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "matches",
+      "name": "config",
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "matches",
+      "name": "started_at",
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "matches",
+      "name": "ended_at",
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "round_answers",
+      "name": "match_id",
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "round_answers",
+      "name": "round_index",
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "round_answers",
+      "name": "player_uuid",
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "round_answers",
+      "name": "is_correct",
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "round_answers",
+      "name": "is_near_miss",
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "round_answers",
+      "name": "points",
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "round_answers",
+      "name": "response_time_ms",
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "match_rounds",
+      "name": "match_rounds_match_id_matches_match_id_fkey",
+      "nameExplicit": false,
+      "columns": [
+        "match_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "matches",
+      "columnsTo": [
+        "match_id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "entityType": "fks"
+    },
+    {
+      "schema": "public",
+      "table": "match_scores",
+      "name": "match_scores_match_id_matches_match_id_fkey",
+      "nameExplicit": false,
+      "columns": [
+        "match_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "matches",
+      "columnsTo": [
+        "match_id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "entityType": "fks"
+    },
+    {
+      "schema": "public",
+      "table": "round_answers",
+      "name": "round_answers_EXaTiTHVF8vw_fkey",
+      "nameExplicit": false,
+      "columns": [
+        "match_id",
+        "round_index"
+      ],
+      "schemaTo": "public",
+      "tableTo": "match_rounds",
+      "columnsTo": [
+        "match_id",
+        "round_index"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "entityType": "fks"
+    },
+    {
+      "schema": "public",
+      "table": "match_rounds",
+      "name": "match_rounds_pkey",
+      "columns": [
+        "match_id",
+        "round_index"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "schema": "public",
+      "table": "match_scores",
+      "name": "match_scores_pkey",
+      "columns": [
+        "match_id",
+        "player_uuid"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "schema": "public",
+      "table": "round_answers",
+      "name": "round_answers_pkey",
+      "columns": [
+        "match_id",
+        "round_index",
+        "player_uuid"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "schema": "public",
+      "table": "matches",
+      "name": "matches_pkey",
+      "columns": [
+        "match_id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    }
+  ]
+}

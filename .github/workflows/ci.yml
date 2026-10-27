@@ -17,6 +17,15 @@ jobs:
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # Mesma imagem (e digest) da deploy/quadlet/merma-redis.container: o adaptador do snapshot é testado contra o
+    # Redis da produção. O deploy/quadlet.test.ts confere que as duas não divergem.
+    services:
+      redis:
+        image: docker.io/library/redis:8@sha256:701d27eed8cbd5042c98ec4035146ed036c2390a31ddd9f3f617b4a5e316e12d
+        ports: ["6379:6379"]
+        options: --health-cmd "redis-cli ping" --health-interval 2s --health-timeout 2s --health-retries 15
+    env:
+      REDIS_URL: redis://127.0.0.1:6379
     steps:
       - uses: actions/checkout@v7
         with:

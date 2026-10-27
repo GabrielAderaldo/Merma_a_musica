@@ -41,7 +41,7 @@ contract("MemorySnapshotStore", async () => {
   return { store, corrupt: async (code) => void store.entries.set(`room:${code}:snapshot`, "{") };
 });
 
-// Contra o Redis da ~/.infra quando REDIS_URL existe (`infra up redis`). O CI ainda não tem Redis.
+// Contra o Redis de verdade quando REDIS_URL existe: no CI (service redis) e em dev com `infra up redis`.
 const url = process.env["REDIS_URL"];
 describe.skipIf(url === undefined || url === "")("redisSnapshotStore (Redis de verdade)", () => {
   const redis = new RedisClient(url);

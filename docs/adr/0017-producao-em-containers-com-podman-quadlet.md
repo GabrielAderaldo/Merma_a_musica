@@ -1,12 +1,12 @@
 ---
 id: ADR-0017
 title: Rodar a produção em containers com Podman + Quadlet, num pod só
-status: proposed
+status: accepted
 date: 2026-10-21
 revised: 2026-10-27
 supersedes: null
 scope: ["apps/api/**", "apps/web/**", ".github/**", "deploy/**"]
-revisit_when: "O primeiro deploy numa VPS real divergir da PoC (boot, network-online, RAM), ou a Fase 1 (N VPS) chegar"
+revisit_when: "A VPS de produção divergir do staging (boot, network-online, RAM), o Caddy do host deixar de servir, ou a Fase 1 (N VPS) chegar"
 ---
 
 # ADR-0017 — Rodar a produção em containers com Podman + Quadlet, num pod só
@@ -38,9 +38,21 @@ Produção em **Podman 5.x com Quadlet**, **rootless**, sob um usuário de servi
   3. o `Notify=healthy` faz o restart esperar o healthcheck;
   4. se a API não ficar healthy em 30s, volta para o digest anterior.
 - Host:
-  - `net.ipv4.ip_unprivileged_port_start=80` em `/etc/sysctl.d/`;
   - `loginctl enable-linger` no usuário de serviço;
-  - o `network-online.target` do sistema precisa ficar ativo.
+  - o `network-online.target` do sistema precisa ficar ativo;
+  - a rede do pod é `pasta:--host-lo-to-ns-lo`. Sem a flag, o que chega em `127.0.0.1:3000` do host cai na interface do pod, não no loopback, e a API responde com reset. Com o Caddy no host, o sysctl de porta baixa da PoC deixou de ser preciso.
+
+### Resultado do staging (2026-10-27, Magalu BV1-2-10, 1 vCPU e 2 GB, Ubuntu 26.04.1, Podman 5.7.0)
+
+Validou os pontos que a PoC deixou em aberto. Por isso a ADR passou a `accepted` nesta data.
+
+| Ponto | Resultado |
+|---|---|
+| `network-online.target` | ✅ Ativo; boot em 12 s. |
+| Ponta a ponta | ✅ Caddy do host (TLS, Let's Encrypt) → API → Postgres e Redis. WebSocket 101, migrações no boot e `/metrics` fechado para fora. |
+| `merma-deploy` | ✅ API healthy em 6 s, sem reiniciar Postgres e Redis. |
+| RAM ociosa | ✅ API 42 MB, Postgres 28 MB, Redis 8,6 MB, todos abaixo do `Memory=`. A VM inteira, com o caninha-games, usa ~520 MB. |
+| Ubuntu 24.04 | ❌ Só tem o Podman 4.9; o `.pod` e o `Notify=healthy` pedem 5.0+. Com 1 GB, o 26.04 dava kernel panic no boot. |
 
 ### Resultado da PoC (2026-10-21, VM Ubuntu 26.04.1 arm64 no OrbStack, Podman 5.7.0)
 

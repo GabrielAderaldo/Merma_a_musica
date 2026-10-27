@@ -42,12 +42,10 @@ FCP < 2s · TTI < 3s · chunk principal < 30 KB gzip (< 60 KB com Solid + Tailwi
 
 ## Topologia da Fase 0
 
-> Em avaliação: [ADR-0017](adr/0017-producao-em-containers-com-podman-quadlet.md) (`proposed`) põe a API, o Postgres e o Redis num pod Podman/Quadlet, com o Caddy nativo no host e o deploy por imagem fixada por digest. O staging sobe assim, na VM do caninha-games. Até a ADR virar `accepted`, vale o texto abaixo.
+Uma VPS com o Caddy 2 nativo no host (TLS automático, serve `apps/web/dist`, faz proxy de `/api/*`, `/auth/*` e `/ws/room/*` para `127.0.0.1:3000`) e um pod Podman/Quadlet rootless ([ADR-0017](adr/0017-producao-em-containers-com-podman-quadlet.md)) com a `apps/api` (Bun 1.4.4, [ADR-0018](adr/0018-bun-1-4-4.md), iniciada com `--disallow-code-generation-from-strings=strict`, S-27), o **Postgres 17** e o **Redis 8** (`requirepass` + AOF), os três só em loopback. As variáveis canônicas estão em [`.env.example`](../.env.example). O staging roda assim em https://merma.caninhagames.fortal.br, na VM do caninha-games.
 
-Uma VPS rodando, via systemd: Caddy 2 (TLS automático, serve `apps/web/dist`, faz proxy de `/api/*`, `/auth/*` e `/ws/room/*` para `127.0.0.1:3000`), `apps/api` (Bun 1.4.4, [ADR-0018](adr/0018-bun-1-4-4.md), iniciado com `--disallow-code-generation-from-strings=strict`, S-27), **Postgres 17** e **Redis 8** (`requirepass` + AOF), estes três só em loopback. As variáveis canônicas estão em [`.env.example`](../.env.example).
-
-- Deploy hard-cut entre 03h e 05h BRT: parar → `git pull` → `bun install` → build → subir. A `apps/api` aplica as migrações do Drizzle ao subir, antes de aceitar conexões; se falharem, ela não fica saudável. O `RecoveryService` reidrata as salas ([`architecture.md`](architecture.md#recuperação)). Meta: < 30s fora do ar.
-- Backup: `pg_dump` diário, cifrado, enviado para fora da VPS, retenção de 14 dias. Redis sem backup (estado transiente).
+- Deploy hard-cut entre 03h e 05h BRT: `deploy/publish-api.sh` publica a imagem no GHCR e imprime o digest; na VPS, `merma-deploy <imagem@sha256:…>` reinicia só a API e volta a imagem anterior se ela não ficar healthy. A `apps/api` aplica as migrações do Drizzle ao subir, antes de aceitar conexões; se falharem, ela não fica saudável. O `RecoveryService` reidrata as salas ([`architecture.md`](architecture.md#recuperação)). Meta: < 30s fora do ar.
+- Backup: `pg_dump` diário (`podman exec`), cifrado, enviado para fora da VPS, retenção de 14 dias. Redis sem backup (estado transiente). O staging fica sem backup.
 - Ainda **em aberto**, decidir quando chegar perto do gatilho da Fase 1: como o Caddy faz hash do `invite_code` extraído do path.
 
 Em dev, Postgres e Redis vêm da `~/.infra` (`infra up postgres redis`). A aplicação roda nativa, nunca em container.

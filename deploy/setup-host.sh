@@ -37,6 +37,8 @@ loginctl enable-linger "$SVC"
 uid=$(id -u "$SVC")
 home=$(getent passwd "$SVC" | cut -d: -f6)
 for _ in $(seq 1 40); do [[ -S /run/user/$uid/bus ]] && break; sleep 0.5; done
+# O sudo mantém a pasta atual, e o podman do usuário de serviço não roda numa pasta que ele não pode abrir.
+cd "$home"
 
 # Roda um comando como o usuário de serviço, com o systemd --user dele.
 as_svc() {

@@ -133,7 +133,7 @@ export class FakeAudio implements AudioResolver {
   readonly expiries: number[] = [];
 
   resolve = async (_round: RoundIdType, s: Song): Promise<ResolvedAudio | null> =>
-    this.unplayable.has(s.name) ? null : { audio_source: "deezer", mp3: FAKE_MP3 };
+    this.unplayable.has(s.name) ? null : { mp3: FAKE_MP3 };
 
   token = (p: PlayerUuid, round: RoundIdType, expires_at: number) => {
     this.expiries.push(expires_at);

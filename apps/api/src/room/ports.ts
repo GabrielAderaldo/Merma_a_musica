@@ -54,12 +54,9 @@ export type SongSource = Readonly<{
   ): Promise<Result<PlaylistSongs, "no_playlists_imported" | "source_unavailable">>;
 }>;
 
-// Áudio da rodada (ADR-0004). null: a música não tem áudio e sai pela reserva (R-307). O MP3 já vem sem ID3 e fica
-// na memória do actor até round_ended: um download serve a sala toda. O fallback spotify_sdk (R-801) só existe no
-// tipo: com a ADR-0024 toda música importada já está na Deezer, então nenhum resolver o produz.
-export type ResolvedAudio = Readonly<
-  { audio_source: "deezer"; mp3: Uint8Array<ArrayBuffer> } | { audio_source: "spotify_sdk"; spotify_uri: string }
->;
+// Áudio da rodada, só da Deezer (R-801, ADR-0025). null: a música não tem áudio e sai pela reserva (R-307). O MP3
+// já vem sem ID3 e fica na memória do actor até round_ended: um download serve a sala toda.
+export type ResolvedAudio = Readonly<{ mp3: Uint8Array<ArrayBuffer> }>;
 export type AudioResolver = Readonly<{
   resolve(round_id: RoundId, song: Song): Promise<ResolvedAudio | null>;
   // audio_token HMAC de (player, round, expiry), com expires_at em Unix ms (playlist/audio/token.ts).

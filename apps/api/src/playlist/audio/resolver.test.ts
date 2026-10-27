@@ -28,7 +28,7 @@ const resolver = (fetch: Fetch, cache: IsrcCache = new MemoryIsrcCache()) =>
 const track = (id: number, extra: Record<string, unknown> = {}) => deezerTrack(id, "Tempo Perdido", "Legião Urbana", { preview: CDN, ...extra });
 const song = (extra: Partial<AudioSong> = {}): AudioSong => ({ deezer_id: null, isrc: null, name: "Tempo Perdido", artist: "Legião Urbana", ...extra });
 
-describe("previewResolver (ADR-0004, R-801)", () => {
+describe("previewResolver (ADR-0025, R-801)", () => {
   test("com o deezer_id da importação: pega o preview da faixa direto, sem ISRC nem busca", async () => {
     const calls: string[] = [];
     const mp3 = await resolver(fetchWith({ [`${API}/track/7`]: track(7) }, calls)).resolve(song({ deezer_id: "7", isrc: "BRXXX2600007" }));
@@ -41,7 +41,7 @@ describe("previewResolver (ADR-0004, R-801)", () => {
     expect(String.fromCharCode(...(mp3 ?? []).slice(0, 3))).not.toBe("ID3");
   });
 
-  test("ADR-0004.R5: ISRC no cache não chama a Deezer para achar a faixa", async () => {
+  test("ADR-0025.R5: ISRC no cache não chama a Deezer para achar a faixa", async () => {
     const cache = new MemoryIsrcCache();
     await cache.set("BRXXX2600001", "1");
     const calls: string[] = [];
@@ -49,7 +49,7 @@ describe("previewResolver (ADR-0004, R-801)", () => {
     expect(calls).toEqual([`${API}/track/1`, CDN]);
   });
 
-  test("ADR-0004.R5: ISRC fora do cache vai à Deezer e grava isrc:{isrc}:deezer", async () => {
+  test("ADR-0025.R5: ISRC fora do cache vai à Deezer e grava isrc:{isrc}:deezer", async () => {
     const cache = new MemoryIsrcCache();
     const routes = { [`${API}/track/isrc:BRXXX2600001`]: track(1), [`${API}/track/1`]: track(1) };
     expect(await resolver(fetchWith(routes), cache).resolve(song({ isrc: "BRXXX2600001" }))).not.toBeNull();
@@ -91,7 +91,7 @@ describe("previewResolver (ADR-0004, R-801)", () => {
 // Contra o Redis de verdade quando REDIS_URL existe: no CI (service redis) e em dev com `infra up redis`.
 const url = process.env["REDIS_URL"];
 describe.skipIf(url === undefined || url === "")("redisIsrcCache (Redis de verdade)", () => {
-  test("ADR-0004.R5: a chave é isrc:{isrc}:deezer, com TTL de 24h", async () => {
+  test("ADR-0025.R5: a chave é isrc:{isrc}:deezer, com TTL de 24h", async () => {
     const redis = new RedisClient(url);
     const cache = redisIsrcCache(redis);
     await cache.set("BRTST2600001", "42");

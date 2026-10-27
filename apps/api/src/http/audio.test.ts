@@ -74,8 +74,8 @@ const playing = async (opts: { now?: () => number } = {}) => {
 // Status e código do erro, validado pelo contrato.
 const failure = async (res: Response) => [res.status, ErrorResponse.parse(await res.json()).code];
 
-describe("proxy GET /api/v1/audio/{audio_token} (ADR-0004)", () => {
-  test("ADR-0004.R1 / S-10: 200 com o MP3 sem ID3, no-store, e nenhum dado da Deezer no fio antes de round_ended", async () => {
+describe("proxy GET /api/v1/audio/{audio_token} (ADR-0025)", () => {
+  test("ADR-0025.R1 / S-10: 200 com o MP3 sem ID3, no-store, e nenhum dado da Deezer no fio antes de round_ended", async () => {
     const { a, tokenOf, get } = await playing();
     const res = await get(tokenOf(a), a.cookie);
     expect(res.status).toBe(200);
@@ -89,7 +89,7 @@ describe("proxy GET /api/v1/audio/{audio_token} (ADR-0004)", () => {
     expect(wire).not.toContain("deezer_id");
   });
 
-  test("ADR-0004.R2 / S-13: Range → 416 antes de consumir o token, que continua valendo", async () => {
+  test("ADR-0025.R2 / S-13: Range → 416 antes de consumir o token, que continua valendo", async () => {
     const { a, tokenOf, get } = await playing();
     expect((await get(tokenOf(a), a.cookie, { range: "bytes=0-99" })).status).toBe(416);
     expect((await get(tokenOf(a), a.cookie, { "if-range": "x", range: "bytes=0-" })).status).toBe(416);
@@ -102,7 +102,7 @@ describe("proxy GET /api/v1/audio/{audio_token} (ADR-0004)", () => {
     expect((await get(tokenOf(a), a.cookie)).status).toBe(200);
   });
 
-  test("ADR-0004.R3 / S-11: token de outro jogador → 401 player_mismatch, sem consumir", async () => {
+  test("ADR-0025.R3 / S-11: token de outro jogador → 401 player_mismatch, sem consumir", async () => {
     const { a, b, tokenOf, get } = await playing();
     expect(await failure(await get(tokenOf(a), b.cookie))).toEqual([401, "player_mismatch"]);
     expect((await get(tokenOf(a), a.cookie)).status).toBe(200);
@@ -117,7 +117,7 @@ describe("proxy GET /api/v1/audio/{audio_token} (ADR-0004)", () => {
     expect(await failure(junk)).toEqual([401, "malformed"]);
   });
 
-  test("ADR-0004.R3 / S-12: token reusado → 410 token_already_used", async () => {
+  test("ADR-0025.R3 / S-12: token reusado → 410 token_already_used", async () => {
     const { a, tokenOf, get } = await playing();
     expect((await get(tokenOf(a), a.cookie)).status).toBe(200);
     const again = await get(tokenOf(a), a.cookie);

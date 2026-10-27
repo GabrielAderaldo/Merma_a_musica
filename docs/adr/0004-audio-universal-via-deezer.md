@@ -1,7 +1,8 @@
 ---
 id: ADR-0004
 title: Áudio universal via Deezer (ISRC primeiro), entregue por proxy com token HMAC
-status: accepted
+status: superseded
+superseded_by: ADR-0025
 date: 2026-05-13
 revised: 2026-10-21
 scope: ["apps/api/**/audio/**", "apps/web/**/audio*"]

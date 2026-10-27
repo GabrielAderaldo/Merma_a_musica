@@ -56,7 +56,7 @@ else {
 }
 // Sem Postgres (dev), os recordes do solo ficam na memória e somem num restart.
 const progression = db === null ? new MemoryProgressionStore() : postgresProgressionStore(db);
-// Um throttle da Deezer por processo (ADR-0004.R4), dividido entre a importação e o áudio.
+// Um throttle da Deezer por processo (ADR-0025.R4), dividido entre a importação e o áudio.
 const deezerThrottle = new DeezerThrottle();
 // Idem para as playlists e a conta do Spotify.
 // O registry e os sockets entram nas métricas antes de existirem: os gauges só os leem na coleta.
@@ -83,7 +83,7 @@ if (!playlists.ok) {
 }
 if (config.value.youtubeApiKey === null) logger.warn("youtube_import_disabled");
 if (config.value.spotify === null) logger.warn("spotify_login_disabled");
-// O áudio da rodada (ADR-0004): pool de conexões próprio para a Deezer, separado do resto da API.
+// O áudio da rodada (ADR-0025): pool de conexões próprio para a Deezer, separado do resto da API.
 const deezerSession = new Bun.FetchSession({ keepAlive: { idleTimeout: 30, maxIdleSockets: 8 } });
 const audioTokens = new AudioTokens(config.value.audioSecret);
 const resolver = previewResolver({

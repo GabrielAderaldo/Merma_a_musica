@@ -2,7 +2,7 @@
 // docs/architecture.md): o que sai daqui já é a música achada na Deezer (R-010).
 import type { Platform } from "@merma/schema";
 
-// Uma música da playlist do jogador, como a Deezer a devolveu. O deezer_id fica no servidor (ADR-0004.R1).
+// Uma música da playlist do jogador, como a Deezer a devolveu. O deezer_id fica no servidor (ADR-0025.R1).
 export type StoredSong = Readonly<{
   deezer_id: string;
   isrc: string | null;

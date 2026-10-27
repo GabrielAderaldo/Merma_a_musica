@@ -65,7 +65,7 @@ export const serverMessages = [
     song_range: SongRange,
     current_round_index: z.int().nonnegative().optional(),
     total_rounds: z.int().min(1).optional(),
-    // Token reemitido ao reconectar no meio da rodada (ADR-0004).
+    // Token reemitido ao reconectar no meio da rodada (ADR-0025).
     audio: RoundAudio.optional(),
   }),
   server("player_joined", { player: Player }),

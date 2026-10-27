@@ -1,4 +1,4 @@
-// Proxy de áudio GET /api/v1/audio/{audio_token} (ADR-0004). As checagens seguem uma ordem fixa: sessão, Range (antes
+// Proxy de áudio GET /api/v1/audio/{audio_token} (ADR-0025). As checagens seguem uma ordem fixa: sessão, Range (antes
 // de consumir o token, S-13), HMAC e jogador (S-11), prazo (S-14), rodada, uso único (S-12) e MP3 pronto.
 import { createRoute, z } from "@hono/zod-openapi";
 import { type ErrorCode, ErrorResponse } from "@merma/schema";
@@ -41,7 +41,7 @@ export const audioRoutes = (
       c.json({ code, message: errorText(code) }, status, { "Cache-Control": "no-store, private" });
     // O Hono responde HEAD com o handler do GET, que consumiria o token sem entregar o áudio.
     if (c.req.method === "HEAD") return fail("illegal_state_transition", 405);
-    // ADR-0004.R2: antes de qualquer coisa que consuma o token.
+    // ADR-0025.R2: antes de qualquer coisa que consuma o token.
     if (c.req.header("range") !== undefined || c.req.header("if-range") !== undefined) {
       return fail("partial_request_not_supported", 416);
     }

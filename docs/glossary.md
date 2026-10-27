@@ -48,7 +48,7 @@
 |---|---|
 | Preview | Trecho de 30s do Deezer. É o que toca no jogo. |
 | ISRC (`isrc`) | Código global de uma gravação. Chave para achar "a mesma música" entre plataformas. |
-| `audio_token` | Token HMAC por `(player_uuid, round_id, expiry)`, de uso único, usado em `GET /api/v1/audio/{audio_token}` ([ADR-0004](adr/0004-audio-universal-via-deezer.md)). |
+| `audio_token` | Token HMAC por `(player_uuid, round_id, expiry)`, de uso único, usado em `GET /api/v1/audio/{audio_token}` ([ADR-0025](adr/0025-audio-so-pela-deezer-sem-fallback-spotify.md)). |
 | Proxy de áudio | Endpoint que baixa o preview, remove os metadados e o entrega ao cliente. |
 | `NormalizedSong` | Música importada, já independente da plataforma: `{ isrc?, name, artist, album?, contributed_by, source_platform }`. |
 | Resolução na Deezer | Achar na Deezer, na importação, a música de cada linha ou vídeo (R-010). O que não é achado fica fora da playlist. |

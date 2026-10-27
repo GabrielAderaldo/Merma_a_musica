@@ -1,4 +1,4 @@
-// audio_token (ADR-0004, S-11): HMAC-SHA256 de (player_uuid, round_id, expiry), no formato
+// audio_token (ADR-0025, S-11): HMAC-SHA256 de (player_uuid, round_id, expiry), no formato
 // base64url(HMAC(payload)) + "." + payload, com payload = base64url(JSON { p, r, x }). Quem verifica passa o jogador
 // da sessão (ADR-0013), nunca um que veio na requisição.
 import { timingSafeEqual } from "node:crypto";

@@ -676,45 +676,22 @@
               "maximum": 9007199254740991
             },
             "audio": {
-              "oneOf": [
-                {
-                  "type": "object",
-                  "properties": {
-                    "audio_source": {
-                      "type": "string",
-                      "const": "deezer"
-                    },
-                    "audio_token": {
-                      "type": "string",
-                      "minLength": 1
-                    }
-                  },
-                  "required": [
-                    "audio_source",
-                    "audio_token"
-                  ],
-                  "additionalProperties": false
+              "type": "object",
+              "properties": {
+                "audio_source": {
+                  "type": "string",
+                  "const": "deezer"
                 },
-                {
-                  "type": "object",
-                  "properties": {
-                    "audio_source": {
-                      "type": "string",
-                      "const": "spotify_sdk"
-                    },
-                    "spotify_uri": {
-                      "type": "string",
-                      "format": "starts_with",
-                      "pattern": "^spotify:track:.*"
-                    }
-                  },
-                  "required": [
-                    "audio_source",
-                    "spotify_uri"
-                  ],
-                  "additionalProperties": false
+                "audio_token": {
+                  "type": "string",
+                  "minLength": 1
                 }
-              ]
+              },
+              "required": [
+                "audio_source",
+                "audio_token"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
@@ -1065,45 +1042,22 @@
               "maximum": 9007199254740991
             },
             "audio": {
-              "oneOf": [
-                {
-                  "type": "object",
-                  "properties": {
-                    "audio_source": {
-                      "type": "string",
-                      "const": "deezer"
-                    },
-                    "audio_token": {
-                      "type": "string",
-                      "minLength": 1
-                    }
-                  },
-                  "required": [
-                    "audio_source",
-                    "audio_token"
-                  ],
-                  "additionalProperties": false
+              "type": "object",
+              "properties": {
+                "audio_source": {
+                  "type": "string",
+                  "const": "deezer"
                 },
-                {
-                  "type": "object",
-                  "properties": {
-                    "audio_source": {
-                      "type": "string",
-                      "const": "spotify_sdk"
-                    },
-                    "spotify_uri": {
-                      "type": "string",
-                      "format": "starts_with",
-                      "pattern": "^spotify:track:.*"
-                    }
-                  },
-                  "required": [
-                    "audio_source",
-                    "spotify_uri"
-                  ],
-                  "additionalProperties": false
+                "audio_token": {
+                  "type": "string",
+                  "minLength": 1
                 }
-              ]
+              },
+              "required": [
+                "audio_source",
+                "audio_token"
+              ],
+              "additionalProperties": false
             },
             "grace_period_seconds": {
               "type": "number",

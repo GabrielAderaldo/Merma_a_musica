@@ -5,7 +5,7 @@ export type Config = {
   port: number;
   hostname: string;
   sessionSecret: string;
-  // HMAC do audio_token (ADR-0004), separado do da sessão.
+  // HMAC do audio_token (ADR-0025), separado do da sessão.
   audioSecret: string;
   // Origins aceitos no CORS e no handshake do WS (S-02).
   allowedOrigins: string[];

@@ -63,7 +63,7 @@ describe("deezerClient.playlist — link público, sem login (R-002)", () => {
   });
 });
 
-describe("ADR-0004.R4 — 50 requisições a cada 5s ao Deezer, com fila que espera", () => {
+describe("ADR-0025.R4 — 50 requisições a cada 5s ao Deezer, com fila que espera", () => {
   test("a 4ª requisição de uma janela de 3 espera a janela abrir, e as seguintes saem na ordem", async () => {
     let now = 0;
     const waits: number[] = [];

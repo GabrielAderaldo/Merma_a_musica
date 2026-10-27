@@ -230,7 +230,7 @@ export class RoomActor {
     });
   }
 
-  // Proxy de áudio (ADR-0004.R3, S-12, S-14), depois de o token ter sido verificado: a rodada ainda toca, o token não
+  // Proxy de áudio (ADR-0025.R3, S-12, S-14), depois de o token ter sido verificado: a rodada ainda toca, o token não
   // foi usado nem substituído, e o MP3 existe. Marcar o token como usado é mutação, por isso entra na fila.
   async takeAudio(player: PlayerUuid, round_id: string, token: string): Promise<Result<Uint8Array<ArrayBuffer>, AudioError>> {
     let result: Result<Uint8Array<ArrayBuffer>, AudioError> = err("round_expired");
@@ -244,7 +244,7 @@ export class RoomActor {
     if (this.playingRoundId !== round_id) return err("round_expired");
     if (this.#usedAudioTokens.has(token)) return err("token_already_used");
     const audio = this.#audio?.round_id === round_id ? this.#audio.audio : undefined;
-    if (audio?.audio_source !== "deezer") return err("audio_not_ready");
+    if (audio === undefined) return err("audio_not_ready");
     this.#usedAudioTokens.add(token);
     // Token assinado mas não emitido por este actor: só acontece com um emitido antes de uma recuperação.
     if (this.#audioTokens.get(player)?.token !== token) this.#deps.logger.warn("audio_token_unknown", { invite_code: this.#room.invite_code });
@@ -390,7 +390,7 @@ export class RoomActor {
     }
   }
 
-  // streaming → grace_period: round_starting leva o audio_token de cada jogador (ADR-0004).
+  // streaming → grace_period: round_starting leva o audio_token de cada jogador (ADR-0025).
   #beginGracePeriod(): void {
     if (!this.#advance(startGracePeriod(this.#room))) return;
     this.#roundStartedAt = this.#deps.clock.now();
@@ -593,8 +593,6 @@ export class RoomActor {
   // Emite o token do jogador para a rodada e invalida o anterior (S-12). Depois do 3º, não há mais áudio para ele.
   #audioFor(player: PlayerUuid, round_id: RoundId): WireAudio | undefined {
     if (this.#audio?.round_id !== round_id) return undefined;
-    const audio = this.#audio.audio;
-    if (audio.audio_source === "spotify_sdk") return audio;
     const previous = this.#audioTokens.get(player);
     const issued = previous?.issued ?? 0;
     if (issued >= MAX_AUDIO_TOKENS_PER_ROUND) return undefined;

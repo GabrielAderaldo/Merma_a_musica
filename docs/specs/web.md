@@ -34,7 +34,6 @@ until: apps/web/package.json
 
 - `round_starting` com `deezer`: `fetch` de `/api/v1/audio/{token}` (o cookie vai junto), cria um blob, `URL.createObjectURL` e toca num `<audio>`. O blob é a **única** fonte da rodada: a revelação recomeça a partir dele (R-131). `revokeObjectURL` no fim da revelação.
 - Reconectou no meio da rodada: usa o token novo que vem no `room_state`.
-- `spotify_sdk`: carrega `https://sdk.scdn.co/spotify-player.js` sob demanda.
 
 ## Local storage
 

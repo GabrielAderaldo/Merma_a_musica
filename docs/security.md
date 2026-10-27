@@ -18,7 +18,7 @@ Fora do modelo de ameaça no MVP: atacante estatal, zero-day em Bun/Postgres/Red
 | S-03 | Segunda conexão do mesmo `player_uuid` na mesma sala fecha a anterior com close code 4001. | `apps/api/src/room/actor.test.ts` |
 | S-04 | Mutações REST validam o header `Origin` (CSRF). O cookie de state do OAuth é `__Host-csrf`, `SameSite=Lax`, 10 min. | `apps/api/src/http/auth.test.ts` e `apps/api/src/http/playlists.test.ts` |
 
-## Áudio ([ADR-0004](adr/0004-audio-universal-via-deezer.md))
+## Áudio ([ADR-0025](adr/0025-audio-so-pela-deezer-sem-fallback-spotify.md))
 
 | ID | Ameaça → mitigação | Verificação |
 |---|---|---|
@@ -27,7 +27,7 @@ Fora do modelo de ameaça no MVP: atacante estatal, zero-day em Bun/Postgres/Red
 | S-12 | Baixar de novo para analisar → token de uso único (`410 token_already_used`). A revelação toca o blob que o cliente já tem. Ao reconectar, o servidor emite um token novo para o mesmo `(player, round)` e invalida o anterior, no máximo 3 por rodada. | `apps/api/src/http/audio.test.ts` e `apps/api/src/room/actor.test.ts` |
 | S-13 | Inspeção fragmentada → requisição com `Range` recebe `416`, **antes** de consumir o token. Nunca `Bun.file`, que atende `Range` sozinho. | `apps/api/src/http/audio.test.ts` |
 | S-14 | Token vazado para fora da sala → expira no fim previsto da rodada, e a rodada encerrada recusa com `410 round_expired`. | `apps/api/src/http/audio.test.ts`, `apps/api/src/room/actor.test.ts` e `apps/api/src/playlist/audio/token.test.ts` |
-| S-15 | Fallback Spotify SDK expõe metadados ao cliente. **Aceito**: é raro (R-801). Desde a [ADR-0024](adr/0024-playlist-por-link-publico-e-lista-resolvidos-na-deezer.md) toda música importada já está na Deezer, e nenhum resolver produz o fallback. | — |
+| S-15 | (removida em 2026-10-27) O fallback do Spotify SDK, que expunha metadados ao cliente, saiu com a R-801: o áudio só chega pelo proxy (ADR-0025.R6). | `packages/schema/src/ws.test.ts` |
 
 ## Tempo, resposta e bots
 
@@ -47,7 +47,7 @@ Fora do modelo de ameaça no MVP: atacante estatal, zero-day em Bun/Postgres/Red
 ## Transporte, headers e cookies
 
 - **S-30** TLS 1.3 obrigatório via Caddy, com HSTS `max-age=31536000; includeSubDomains; preload`.
-- **S-31** CSP: `default-src 'self'; connect-src 'self' wss://<domínio> https://sdk.scdn.co; img-src 'self' data: https://*.scdn.co https://*.dzcdn.net; media-src 'self' blob:; script-src 'self' https://sdk.scdn.co; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'`. Mais `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin` e `Permissions-Policy: camera=(), microphone=(), geolocation=()`.
+- **S-31** CSP: `default-src 'self'; connect-src 'self' wss://<domínio>; img-src 'self' data: https://*.scdn.co https://*.dzcdn.net; media-src 'self' blob:; script-src 'self'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'`. Mais `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin` e `Permissions-Policy: camera=(), microphone=(), geolocation=()`.
 - **S-32** Só dois cookies: `__Host-session` (30 dias) e `__Host-csrf` (durante o OAuth).
 
 Verificação de S-30 a S-32: pendente, teste de headers contra o Caddyfile quando o deploy existir.

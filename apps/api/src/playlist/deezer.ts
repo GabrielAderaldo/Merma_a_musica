@@ -24,7 +24,7 @@ const Track = z.object({
   isrc: z.string().optional(),
   artist: z.object({ name: z.string() }),
   album: z.object({ title: z.string(), cover_medium: z.string().nullish() }).optional(),
-  // URL assinada e com prazo do MP3 de 30s: pedida de novo a cada rodada, nunca guardada (ADR-0004).
+  // URL assinada e com prazo do MP3 de 30s: pedida de novo a cada rodada, nunca guardada (ADR-0025).
   preview: z.string().optional(),
 });
 type Track = z.infer<typeof Track>;
@@ -41,7 +41,7 @@ const song = (t: Track): StoredSong => ({
   cover_url: t.album?.cover_medium ?? null,
 });
 
-// ADR-0004.R4: 50 requisições a cada 5s por IP. A fila espera, não descarta. Um por processo.
+// ADR-0025.R4: 50 requisições a cada 5s por IP. A fila espera, não descarta. Um por processo.
 export class DeezerThrottle {
   readonly #limit: number;
   readonly #windowMs: number;
@@ -113,7 +113,7 @@ export const deezerClient = (deps: { fetch: Fetch; throttle: DeezerThrottle; max
         candidates: candidates.slice(0, deps.maxSongs),
       });
     },
-    // O endpoint track/isrc: funciona, mas não é documentado (ADR-0004).
+    // O endpoint track/isrc: funciona, mas não é documentado (ADR-0025).
     byIsrc: async (isrc) => {
       const res = await get(`/track/isrc:${encodeURIComponent(isrc)}`, Track);
       if (!res.ok) return err("provider_unavailable");

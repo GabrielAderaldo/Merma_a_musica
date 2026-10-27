@@ -1,6 +1,6 @@
-// Áudio da rodada (ADR-0004, R-801): a faixa da Deezer, o preview dela e o MP3 já sem ID3. A faixa vem da importação
+// Áudio da rodada (ADR-0025, R-801): a faixa da Deezer, o preview dela e o MP3 já sem ID3. A faixa vem da importação
 // (deezer_id); sem ela, do ISRC (cache no Redis, depois a API) e, por fim, da busca com a mesma regra da importação.
-// Toda chamada à API passa pelo throttle do DeezerClient (ADR-0004.R4); o CDN do preview não conta nele.
+// Toda chamada à API passa pelo throttle do DeezerClient (ADR-0025.R4); o CDN do preview não conta nele.
 import type { DeezerClient } from "../deezer.ts";
 import type { Fetch } from "../http.ts";
 import { matches, searchText } from "../resolve.ts";

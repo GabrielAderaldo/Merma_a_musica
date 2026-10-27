@@ -1,4 +1,4 @@
-// Cache ISRC → faixa da Deezer (ADR-0004.R5): Redis, compartilhado entre nodes e sobrevivendo a deploy. É a porta
+// Cache ISRC → faixa da Deezer (ADR-0025.R5): Redis, compartilhado entre nodes e sobrevivendo a deploy. É a porta
 // IsrcCache da regra da apps/api; trocar o Redis pelo Postgres foi adiado, não descartado (ADR-0021).
 import type { RedisClient } from "bun";
 import { err, ok, type Result } from "../result.ts";

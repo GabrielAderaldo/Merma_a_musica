@@ -179,10 +179,10 @@ describe("WS servidor → cliente", () => {
     expect(WsServerMessage.safeParse({ type: "autocomplete_results", query: "ev", results }).success).toBe(false);
   });
 
-  test("R-801 áudio do Spotify exige spotify_uri, e o do Deezer exige audio_token", () => {
+  test("R-801 / ADR-0025.R6 o áudio só vem da Deezer, pelo audio_token do proxy; o Spotify SDK não é fonte", () => {
     const round = { ...validServer["round_starting"], type: "round_starting" };
-    expect(WsServerMessage.safeParse({ ...round, audio: { audio_source: "spotify_sdk", spotify_uri: "spotify:track:1" } }).success).toBe(true);
-    expect(WsServerMessage.safeParse({ ...round, audio: { audio_source: "spotify_sdk", audio_token: "tok" } }).success).toBe(false);
+    expect(WsServerMessage.safeParse({ ...round, audio: { audio_source: "deezer", audio_token: "tok" } }).success).toBe(true);
+    expect(WsServerMessage.safeParse({ ...round, audio: { audio_source: "spotify_sdk", spotify_uri: "spotify:track:1" } }).success).toBe(false);
     expect(WsServerMessage.safeParse({ ...round, audio: { audio_source: "deezer" } }).success).toBe(false);
   });
 

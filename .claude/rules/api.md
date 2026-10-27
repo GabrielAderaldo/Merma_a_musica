@@ -3,7 +3,7 @@ paths:
   - "apps/api/**"
 ---
 <!-- Regra por caminho. https://code.claude.com/docs/pt/memory -->
-# apps/api — Hono + RoomActor (ADR-0002, ADR-0004, ADR-0009, ADR-0013)
+# apps/api — Hono + RoomActor (ADR-0002, ADR-0009, ADR-0013, ADR-0025)
 
 - `throw` só na camada de adapter (fetch externo, driver), convertido em `Result` antes de subir. `class` é permitida (`RoomActor`, services).
 - Toda mutação de sala passa pela fila do `RoomActor` dela. Nada de estado de sala fora dele.

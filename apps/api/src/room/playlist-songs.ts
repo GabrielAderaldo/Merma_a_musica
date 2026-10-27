@@ -1,5 +1,5 @@
 // Adapter do SongSource sobre o PlaylistStore: a música já achada na Deezer (R-010) vira a Song da engine, com o
-// jogador como dono (R-130). O deezer_id vai junto para o áudio (ADR-0004); o fio nunca o leva (ADR-0004.R1).
+// jogador como dono (R-130). O deezer_id vai junto para o áudio (ADR-0025); o fio nunca o leva (ADR-0025.R1).
 import { err, Isrc, ok, type PlayerUuid, type Song } from "@merma/domain";
 import type { PlaylistStore } from "../playlist/store.ts";
 import type { StoredSong } from "../playlist/types.ts";

@@ -8,7 +8,6 @@ export const GameMode = z.enum(["multiplayer", "solo"]);
 export const ConnectionStatus = z.enum(["connected", "reconnecting", "disconnected"]);
 // Origem da playlist do jogador (R-002, R-010): `text` é a lista colada, que não vem de plataforma nenhuma.
 export const Platform = z.enum(["spotify", "deezer", "youtube_music", "text"]);
-export const AudioSource = z.enum(["deezer", "spotify_sdk"]);
 // Tipos dos enums, para packages/domain usá-los sem importar o Zod.
 export type Phase = z.infer<typeof Phase>;
 export type AnswerType = z.infer<typeof AnswerType>;
@@ -44,7 +43,7 @@ export const ErrorCode = z.enum([
   "platform_not_connected",
   "provider_unavailable",
   "import_not_found",
-  // Proxy de áudio GET /api/v1/audio/{audio_token} (ADR-0004, S-11 a S-14), na ordem das checagens.
+  // Proxy de áudio GET /api/v1/audio/{audio_token} (ADR-0025, S-11 a S-14), na ordem das checagens.
   "partial_request_not_supported",
   "malformed",
   "invalid_signature",
@@ -98,11 +97,9 @@ export const Player = z.object({
 // Placar acumulado por jogador.
 export const Scores = z.record(PlayerUuid, Count);
 
-// Áudio da rodada: token do proxy (Deezer) ou URI do Spotify Web Playback SDK (R-801).
-export const RoundAudio = z.discriminatedUnion("audio_source", [
-  z.object({ audio_source: z.literal("deezer"), audio_token: z.string().min(1) }),
-  z.object({ audio_source: z.literal("spotify_sdk"), spotify_uri: z.string().startsWith("spotify:track:") }),
-]);
+// Áudio da rodada: só o token do proxy da Deezer (R-801, ADR-0025.R6). O audio_source fica no fio para uma fonte
+// nova entrar sem quebrar o cliente, mas qualquer outra pede ADR.
+export const RoundAudio = z.object({ audio_source: z.literal("deezer"), audio_token: z.string().min(1) });
 
 // Revelação (R-130). isrc e album podem faltar na importação (NormalizedSong).
 export const RevealedSong = z.object({

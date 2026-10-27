@@ -75,7 +75,7 @@ Casos canônicos de acerto (R-112 a R-114):
 ### Revelação
 
 - **R-130** Mostra música, artista, álbum, capa, dono (nickname de quem a trouxe), o que cada um digitou, quem acertou, errou ou não respondeu, os pontos da rodada e o placar acumulado. Dura 3s.
-- **R-131** Na revelação a música continua tocando. Se o trecho já tinha acabado, recomeça do início, tocando o áudio que o cliente já baixou ([ADR-0004](adr/0004-audio-universal-via-deezer.md)).
+- **R-131** Na revelação a música continua tocando. Se o trecho já tinha acabado, recomeça do início, tocando o áudio que o cliente já baixou ([ADR-0025](adr/0025-audio-so-pela-deezer-sem-fallback-spotify.md)).
 
 ## 3. Pontuação
 
@@ -155,7 +155,7 @@ Modo próprio, com regras e UI próprias, focado em bater os próprios recordes.
 
 ## 9. Áudio
 
-- **R-801** Todo áudio é o preview de 30s do Deezer, resolvido por ISRC e depois por nome + artista. Fallback: Spotify Web Playback SDK, só quando a música não existe no Deezer, não há reserva e o dono tem Premium (não funciona no Safari iOS). Detalhes em [ADR-0004](adr/0004-audio-universal-via-deezer.md).
+- **R-801** Todo áudio é o preview de 30s da Deezer: o da faixa achada na importação (R-010) e, se ela não tocar mais, o achado por ISRC e depois por nome + artista. Sem áudio, a música sai pela reserva (R-307). Não há outra fonte: o fallback pelo Spotify Web Playback SDK saiu, porque toda música já entra resolvida na Deezer (decidido em 2026-10-27). Detalhes em [ADR-0025](adr/0025-audio-so-pela-deezer-sem-fallback-spotify.md).
 - **R-802** O áudio toca durante o timer. Com `time_per_round` > 30s, o resto da rodada fica em silêncio.
 - **R-803** Nada no cliente pode revelar a música antes de `round_ended` ([`security.md`](security.md)).
 

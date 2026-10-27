@@ -68,6 +68,7 @@
                         "no_playlists_imported",
                         "not_enough_unique_songs",
                         "illegal_state_transition",
+                        "personal_best_not_found",
                         "rate_limited",
                         "invalid_payload",
                         "internal_error"
@@ -111,6 +112,7 @@
                         "no_playlists_imported",
                         "not_enough_unique_songs",
                         "illegal_state_transition",
+                        "personal_best_not_found",
                         "rate_limited",
                         "invalid_payload",
                         "internal_error"
@@ -214,6 +216,7 @@
                         "no_playlists_imported",
                         "not_enough_unique_songs",
                         "illegal_state_transition",
+                        "personal_best_not_found",
                         "rate_limited",
                         "invalid_payload",
                         "internal_error"
@@ -257,6 +260,456 @@
                         "no_playlists_imported",
                         "not_enough_unique_songs",
                         "illegal_state_transition",
+                        "personal_best_not_found",
+                        "rate_limited",
+                        "invalid_payload",
+                        "internal_error"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "pt-BR"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/solo/personal-bests": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Estatísticas globais (R-506) e o progresso por playlist (R-504, R-505)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "global_stats": {
+                      "type": "object",
+                      "properties": {
+                        "max_streak": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "fastest_correct_answer": {
+                          "type": [
+                            "number",
+                            "null"
+                          ],
+                          "minimum": 0
+                        },
+                        "solo_matches_completed": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "known_songs": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "max_streak",
+                        "fastest_correct_answer",
+                        "solo_matches_completed",
+                        "known_songs"
+                      ]
+                    },
+                    "by_playlist": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "playlist_id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "max_streak": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "avg_response_time": {
+                            "type": [
+                              "number",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
+                          "known_songs": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Músicas distintas já acertadas; o total vem da playlist"
+                          },
+                          "last_played_at": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "personal_bests": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "answer_type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "song",
+                                    "artist",
+                                    "both"
+                                  ]
+                                },
+                                "time_per_round": {
+                                  "type": "integer",
+                                  "minimum": 10,
+                                  "maximum": 60
+                                },
+                                "avg_points_per_song": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 1000
+                                },
+                                "max_streak": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "avg_response_time": {
+                                  "type": [
+                                    "number",
+                                    "null"
+                                  ],
+                                  "minimum": 0
+                                },
+                                "known_songs": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "match_id": {
+                                  "type": "string",
+                                  "format": "uuid"
+                                },
+                                "achieved_at": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                }
+                              },
+                              "required": [
+                                "answer_type",
+                                "time_per_round",
+                                "avg_points_per_song",
+                                "max_streak",
+                                "avg_response_time",
+                                "known_songs",
+                                "match_id",
+                                "achieved_at"
+                              ]
+                            },
+                            "minItems": 1
+                          }
+                        },
+                        "required": [
+                          "playlist_id",
+                          "max_streak",
+                          "avg_response_time",
+                          "known_songs",
+                          "last_played_at",
+                          "personal_bests"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "global_stats",
+                    "by_playlist"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Postgres fora do ar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "unauthenticated",
+                        "not_host",
+                        "host_is_always_ready",
+                        "room_full",
+                        "room_not_found",
+                        "round_not_accepting_answers",
+                        "round_not_accepting_skip",
+                        "player_not_in_match",
+                        "player_already_voted",
+                        "player_not_answered_yet",
+                        "total_songs_out_of_range",
+                        "solo_requires_single_player",
+                        "no_playlists_imported",
+                        "not_enough_unique_songs",
+                        "illegal_state_transition",
+                        "personal_best_not_found",
+                        "rate_limited",
+                        "invalid_payload",
+                        "internal_error"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "pt-BR"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/solo/personal-bests/{playlist_id}": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "playlist_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recordes e progresso na playlist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "playlist_id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "max_streak": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "avg_response_time": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "known_songs": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Músicas distintas já acertadas; o total vem da playlist"
+                    },
+                    "last_played_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "personal_bests": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "answer_type": {
+                            "type": "string",
+                            "enum": [
+                              "song",
+                              "artist",
+                              "both"
+                            ]
+                          },
+                          "time_per_round": {
+                            "type": "integer",
+                            "minimum": 10,
+                            "maximum": 60
+                          },
+                          "avg_points_per_song": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1000
+                          },
+                          "max_streak": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "avg_response_time": {
+                            "type": [
+                              "number",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
+                          "known_songs": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "match_id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "achieved_at": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "answer_type",
+                          "time_per_round",
+                          "avg_points_per_song",
+                          "max_streak",
+                          "avg_response_time",
+                          "known_songs",
+                          "match_id",
+                          "achieved_at"
+                        ]
+                      },
+                      "minItems": 1
+                    }
+                  },
+                  "required": [
+                    "playlist_id",
+                    "max_streak",
+                    "avg_response_time",
+                    "known_songs",
+                    "last_played_at",
+                    "personal_bests"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "playlist_id fora do formato",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "unauthenticated",
+                        "not_host",
+                        "host_is_always_ready",
+                        "room_full",
+                        "room_not_found",
+                        "round_not_accepting_answers",
+                        "round_not_accepting_skip",
+                        "player_not_in_match",
+                        "player_already_voted",
+                        "player_not_answered_yet",
+                        "total_songs_out_of_range",
+                        "solo_requires_single_player",
+                        "no_playlists_imported",
+                        "not_enough_unique_songs",
+                        "illegal_state_transition",
+                        "personal_best_not_found",
+                        "rate_limited",
+                        "invalid_payload",
+                        "internal_error"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "pt-BR"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Nenhuma partida solo nessa playlist ainda",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "unauthenticated",
+                        "not_host",
+                        "host_is_always_ready",
+                        "room_full",
+                        "room_not_found",
+                        "round_not_accepting_answers",
+                        "round_not_accepting_skip",
+                        "player_not_in_match",
+                        "player_already_voted",
+                        "player_not_answered_yet",
+                        "total_songs_out_of_range",
+                        "solo_requires_single_player",
+                        "no_playlists_imported",
+                        "not_enough_unique_songs",
+                        "illegal_state_transition",
+                        "personal_best_not_found",
+                        "rate_limited",
+                        "invalid_payload",
+                        "internal_error"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "pt-BR"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Postgres fora do ar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "unauthenticated",
+                        "not_host",
+                        "host_is_always_ready",
+                        "room_full",
+                        "room_not_found",
+                        "round_not_accepting_answers",
+                        "round_not_accepting_skip",
+                        "player_not_in_match",
+                        "player_already_voted",
+                        "player_not_answered_yet",
+                        "total_songs_out_of_range",
+                        "solo_requires_single_player",
+                        "no_playlists_imported",
+                        "not_enough_unique_songs",
+                        "illegal_state_transition",
+                        "personal_best_not_found",
                         "rate_limited",
                         "invalid_payload",
                         "internal_error"

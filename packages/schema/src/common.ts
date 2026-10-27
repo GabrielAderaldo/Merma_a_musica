@@ -34,6 +34,8 @@ export const ErrorCode = z.enum([
   "no_playlists_imported",
   "not_enough_unique_songs",
   "illegal_state_transition",
+  // GET /api/v1/solo/personal-bests/{playlist_id}: nenhuma partida solo nessa playlist ainda.
+  "personal_best_not_found",
   "rate_limited",
   "invalid_payload",
   "internal_error",

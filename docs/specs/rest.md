@@ -23,8 +23,6 @@ until: apps/api/src/observability
 | `GET /api/v1/playlists/imports/{job_id}` | sessão | `status: queued \| in_progress \| completed \| failed`, `progress`, `imported_playlist_id?`, `error_code?` |
 | `DELETE /api/v1/playlists/{playlist_id}` | sessão | 204 |
 | `GET /api/v1/audio/{audio_token}` | sessão | MP3; erros em [`audio.md`](audio.md#proxy-get-apiv1audioaudio_token) |
-| `GET /api/v1/solo/personal-bests` | sessão | `global_stats` (R-506) + `by_playlist[]` (R-504/R-505) |
-| `GET /api/v1/solo/personal-bests/{playlist_id}` | sessão | Recorde, ou 404 se for a 1ª partida |
 | `GET /api/v1/me/export` · `DELETE /api/v1/me` | sessão | LGPD ([`privacy.md`](../privacy.md)) |
 | `GET /metrics` | Bearer `METRICS_AUTH_TOKEN` | Prometheus |
 

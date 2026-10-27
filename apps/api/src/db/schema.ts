@@ -1,7 +1,20 @@
-// Schema Drizzle do Postgres (ADR-0006). Por enquanto só o histórico de partidas: a escrita única em `completed`
-// (docs/architecture.md). Sem answer_text nem nickname (docs/privacy.md); o schema.test.ts confere.
+// Schema Drizzle do Postgres (ADR-0006): o histórico de partidas (a escrita única em `completed`,
+// docs/architecture.md) e os recordes do solo (Progression). Sem answer_text nem nickname (docs/privacy.md);
+// o schema.test.ts confere.
 import type { MatchConfiguration } from "@merma/domain";
-import { boolean, foreignKey, integer, jsonb, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import type { AnswerType } from "@merma/schema";
+import {
+  boolean,
+  doublePrecision,
+  foreignKey,
+  integer,
+  jsonb,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
 
 const instant = () => timestamp({ withTimezone: true, mode: "date" }).notNull();
 
@@ -58,3 +71,57 @@ export const roundAnswers = pgTable(
     ),
   ],
 );
+
+// --- Progression: recordes do solo (R-504 a R-506) ------------------------------------------------------------
+// Sem FK para matches: a Progression não depende das tabelas do Orchestrator, e as duas gravações são separadas.
+
+// R-504: um recorde por (player, playlist, answer_type, time_per_round), com os números da partida que o fez.
+export const soloPersonalBests = pgTable(
+  "solo_personal_bests",
+  {
+    player_uuid: uuid().notNull(),
+    playlist_id: uuid().notNull(),
+    answer_type: text().$type<AnswerType>().notNull(),
+    time_per_round_ms: integer().notNull(),
+    avg_points_per_song: doublePrecision().notNull(),
+    max_streak: integer().notNull(),
+    avg_response_time_ms: doublePrecision(),
+    known_songs: integer().notNull(),
+    match_id: uuid().notNull(),
+    achieved_at: instant(),
+  },
+  (t) => [primaryKey({ columns: [t.player_uuid, t.playlist_id, t.answer_type, t.time_per_round_ms] })],
+);
+
+// R-505. O tempo médio é soma ÷ respostas de todas as partidas solo na playlist.
+export const soloPlaylistStats = pgTable(
+  "solo_playlist_stats",
+  {
+    player_uuid: uuid().notNull(),
+    playlist_id: uuid().notNull(),
+    max_streak: integer().notNull(),
+    response_time_total_ms: doublePrecision().notNull(),
+    answers: integer().notNull(),
+    last_played_at: instant(),
+  },
+  (t) => [primaryKey({ columns: [t.player_uuid, t.playlist_id] })],
+);
+
+// R-505 e R-506: músicas distintas já acertadas, pela chave de R-304 (ISRC ou nome e artista normalizados).
+export const soloKnownSongs = pgTable(
+  "solo_known_songs",
+  {
+    player_uuid: uuid().notNull(),
+    playlist_id: uuid().notNull(),
+    song_key: text().notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.player_uuid, t.playlist_id, t.song_key] })],
+);
+
+// R-506
+export const soloPlayerStats = pgTable("solo_player_stats", {
+  player_uuid: uuid().primaryKey(),
+  max_streak: integer().notNull(),
+  fastest_correct_ms: integer(),
+  solo_matches_completed: integer().notNull(),
+});

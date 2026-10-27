@@ -24,6 +24,8 @@
 | Modo de jogo (`game_mode`) | `multiplayer` ou `solo`. |
 | Modo solo | Partida de 1 jogador, de uma playlist, focada em recorde (R-501 a R-508). |
 | Recorde (`personal_best`) | Maior média de pontos por rodada jogada no solo, por `(player, playlist, answer_type, time_per_round)` (R-504). |
+| Músicas conhecidas (`known_songs`) | Músicas distintas que o jogador já acertou no solo, pela chave de R-304, numa playlist ou no geral (R-505, R-506). |
+| Progresso na playlist (`PlaylistProgress`) | O que o jogador fez no solo numa playlist: streak máximo, tempo médio, músicas conhecidas, última partida e um recorde por `(answer_type, time_per_round)` (R-504, R-505). |
 | Streak (`streak`) | Acertos consecutivos na partida (R-203). |
 
 ## Resposta e pontuação

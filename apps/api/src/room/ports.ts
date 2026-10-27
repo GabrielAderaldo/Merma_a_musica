@@ -2,6 +2,7 @@
 // convertem exceção em Result antes de devolver (regra da apps/api).
 import type {
   Duration,
+  Match,
   MatchConfiguration,
   MatchId,
   PlayerUuid,
@@ -11,6 +12,7 @@ import type {
   RoomId,
   RoundId,
   Song,
+  SoloOutcome,
   Timestamp,
 } from "@merma/domain";
 import type { Platform } from "@merma/schema";
@@ -79,4 +81,10 @@ export type CompletedMatch = Readonly<{
 }>;
 export type MatchRepository = Readonly<{
   saveCompleted(match: CompletedMatch): Promise<Result<void, "store_unavailable">>;
+}>;
+
+// Progression vista pelo Orchestrator: no solo, soma a partida ao histórico e compara com o recorde (R-504, R-704).
+// Também só em `completed` (ADR-0006.R1). null: nenhuma rodada jogada, o recorde não muda.
+export type SoloRecords = Readonly<{
+  complete(match: Match, playlist_id: PlaylistId): Promise<Result<SoloOutcome | null, "store_unavailable">>;
 }>;

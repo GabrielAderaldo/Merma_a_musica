@@ -1252,6 +1252,7 @@
             "no_playlists_imported",
             "not_enough_unique_songs",
             "illegal_state_transition",
+            "personal_best_not_found",
             "rate_limited",
             "invalid_payload",
             "internal_error"

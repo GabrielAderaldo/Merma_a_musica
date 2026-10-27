@@ -13,8 +13,17 @@ const migrations = readdirSync(MIGRATIONS_DIR, { recursive: true, encoding: "utf
   .map((f) => readFileSync(join(MIGRATIONS_DIR, f), "utf8"));
 
 describe("ADR-0006.R2 — o Postgres não guarda answer_text (docs/privacy.md)", () => {
-  test("o schema tem as quatro tabelas do histórico", () => {
-    expect(tables.map((t) => getTableConfig(t).name).toSorted()).toEqual(["match_rounds", "match_scores", "matches", "round_answers"]);
+  test("o schema tem as tabelas do histórico e dos recordes", () => {
+    expect(tables.map((t) => getTableConfig(t).name).toSorted()).toEqual([
+      "match_rounds",
+      "match_scores",
+      "matches",
+      "round_answers",
+      "solo_known_songs",
+      "solo_personal_bests",
+      "solo_player_stats",
+      "solo_playlist_stats",
+    ]);
   });
 
   test.each(tables.map((t) => [getTableConfig(t).name, t] as const))("%s não tem answer_text nem nickname", (_, table) => {

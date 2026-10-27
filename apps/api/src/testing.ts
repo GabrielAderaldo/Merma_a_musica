@@ -2,6 +2,9 @@
 import { createApp } from "./http/app.ts";
 import { createLogger, type Logger } from "./http/logger.ts";
 import { OpenSockets } from "./http/socket.ts";
+import type { ProgressionStore } from "./progression/solo.ts";
+import { soloRecords } from "./progression/solo.ts";
+import { MemoryProgressionStore } from "./progression/store.ts";
 import { RoomRegistry } from "./room/registry.ts";
 import { MemorySnapshotStore } from "./room/snapshot-store.ts";
 import { noAudio, noMatchStore, noPlaylists, systemClock, systemIds } from "./room/system.ts";
@@ -16,8 +19,11 @@ export const captureLogs = (): Captured => {
   return { lines, logger: createLogger({ level: "debug", write: (line) => lines.push(JSON.parse(line)) }) };
 };
 
-export const testApp = (opts: { now?: () => number; logger?: Logger; registry?: RoomRegistry; sockets?: OpenSockets } = {}) => {
+export const testApp = (
+  opts: { now?: () => number; logger?: Logger; registry?: RoomRegistry; sockets?: OpenSockets; progression?: ProgressionStore } = {},
+) => {
   const logger = opts.logger ?? captureLogs().logger;
+  const progression = opts.progression ?? new MemoryProgressionStore();
   const registry =
     opts.registry ??
     new RoomRegistry({
@@ -28,6 +34,7 @@ export const testApp = (opts: { now?: () => number; logger?: Logger; registry?: 
       songs: noPlaylists,
       audio: noAudio,
       matches: noMatchStore,
+      solo: soloRecords(progression),
     });
   return createApp({
     config: { sessionSecret: SECRET, allowedOrigins: [ORIGIN], version: "0.0.0-test" },
@@ -36,6 +43,7 @@ export const testApp = (opts: { now?: () => number; logger?: Logger; registry?: 
     startedAt: 0,
     registry,
     sockets: opts.sockets ?? new OpenSockets(),
+    progression,
   });
 };
 

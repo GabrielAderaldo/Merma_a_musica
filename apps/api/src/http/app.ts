@@ -5,10 +5,12 @@ import { cors } from "hono/cors";
 import { requestId, type RequestIdVariables } from "hono/request-id";
 import { secureHeaders } from "hono/secure-headers";
 import type { Config } from "../config.ts";
+import type { ProgressionStore } from "../progression/solo.ts";
 import type { RoomRegistry } from "../room/registry.ts";
 import type { Logger } from "./logger.ts";
 import { roomRoutes } from "./rooms.ts";
 import { session, type SessionVariables } from "./session.ts";
+import { soloRoutes } from "./solo.ts";
 import type { OpenSockets } from "./socket.ts";
 
 export type AppEnv = { Variables: RequestIdVariables & SessionVariables };
@@ -21,6 +23,7 @@ export type AppDeps = {
   startedAt: number;
   registry: RoomRegistry;
   sockets: OpenSockets;
+  progression: ProgressionStore;
 };
 
 const health = createRoute({
@@ -72,6 +75,7 @@ export const createApp = (deps: AppDeps) => {
     allowedOrigins: deps.config.allowedOrigins,
     now: deps.now,
   });
+  soloRoutes(app, { progression: deps.progression });
 
   // Postgres e Redis entram no corpo (503 se fora) quando os adapters existirem.
   return app.openapi(health, (c) =>

@@ -13,6 +13,8 @@ import {
   type Room,
   type RoomPlayer,
   type Round,
+  type SoloOutcome,
+  type SoloStats,
 } from "@merma/domain";
 import { ErrorCode, type WsClientMessage, type WsServerMessage } from "@merma/schema";
 import type { ResolvedAudio } from "./ports.ts";
@@ -100,8 +102,16 @@ export const roundEnded = (match: Match, round: Round): Msg<"round_ended"> => ({
   next_round_in_seconds: 3,
 });
 
-// R-701 e R-702. O solo_comparison (R-704) entra com a Progression.
-export const gameEnded = (match: Match): Msg<"game_ended"> => {
+type WireSoloStats = NonNullable<Msg<"game_ended">["solo_comparison"]>["current"];
+const toWireSoloStats = (s: SoloStats): WireSoloStats => ({
+  avg_points_per_song: s.avg_points_per_song,
+  max_streak: s.max_streak,
+  avg_response_time: s.avg_response_time === null ? null : toSeconds(s.avg_response_time),
+  known_songs: s.known_songs,
+});
+
+// R-701 e R-702; no solo, a comparação com o recorde (R-704) que a Progression devolveu.
+export const gameEnded = (match: Match, solo: SoloOutcome | null = null): Msg<"game_ended"> => {
   const result = matchResult(match);
   const highlight = (h: (typeof result.highlights)["best_streak"], scale = 1) =>
     h === null ? null : { player_uuid: h.player_uuid, nickname: h.nickname, value: h.value * scale };
@@ -124,6 +134,15 @@ export const gameEnded = (match: Match): Msg<"game_ended"> => {
       most_correct: highlight(result.highlights.most_correct),
       near_miss_champion: highlight(result.highlights.near_miss_champion),
     },
+    ...(solo === null
+      ? {}
+      : {
+          solo_comparison: {
+            current: toWireSoloStats(solo.current),
+            previous_best: solo.previous_best === null ? null : toWireSoloStats(solo.previous_best),
+            is_new_personal_best: solo.is_new_personal_best,
+          },
+        }),
     return_to_lobby_in_seconds: 5,
   };
 };
@@ -144,6 +163,7 @@ const MESSAGES: Record<ErrorCode, string> = {
   no_playlists_imported: "Ninguém escolheu uma playlist com músicas.",
   not_enough_unique_songs: "Não há músicas diferentes suficientes.",
   illegal_state_transition: "Ação indisponível agora.",
+  personal_best_not_found: "Nenhuma partida solo nessa playlist ainda.",
   rate_limited: "Muitas mensagens. Espere um pouco.",
   invalid_payload: "Mensagem inválida.",
   internal_error: "Erro interno.",

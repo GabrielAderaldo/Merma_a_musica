@@ -34,11 +34,13 @@ import {
   voteSkip,
   type DomainError,
   type LeaveReason,
+  type Match,
   type PlayerUuid,
   type Result,
   type Room,
   type RoundId,
   type Song,
+  type SoloOutcome,
 } from "@merma/domain";
 import { CloseCode, type ErrorCode, type Phase, type WsClientMessage, type WsServerMessage } from "@merma/schema";
 import type { Logger } from "../http/logger.ts";
@@ -52,6 +54,7 @@ import type {
   MatchRepository,
   ResolvedAudio,
   SnapshotStore,
+  SoloRecords,
   SongSource,
 } from "./ports.ts";
 import { errorMessage, fromWireConfig, gameEnded, roomState, roundEnded, toErrorCode, toWireAudio, toWireConfig, toWirePlayer } from "./wire.ts";
@@ -64,6 +67,7 @@ export type ActorDeps = Readonly<{
   songs: SongSource;
   audio: AudioResolver;
   matches: MatchRepository;
+  solo: SoloRecords;
 }>;
 
 // Mensagens que chegam ao actor: join_room e ping o WsGateway trata antes.
@@ -396,7 +400,7 @@ export class RoomActor {
     const match = this.#room.match;
     if (match === null) return;
     this.#stopSnapshots();
-    if (this.#room.players.length > 0) this.#broadcast(gameEnded(match));
+    if (this.#room.players.length > 0) this.#broadcast(gameEnded(match, await this.#soloOutcome(match)));
     this.#schedule("flow", TIMING.resultsMs, () => this.#enqueue(() => this.#backToLobby()));
     const saved = await this.#deps.matches.saveCompleted(completedMatch(this.#room.room_id, match));
     if (!saved.ok) {
@@ -406,6 +410,16 @@ export class RoomActor {
     const persisted = markPersisted(this.#room);
     if (persisted.ok) this.#room = persisted.value;
     await this.#deps.snapshots.delete(this.#room.invite_code);
+  }
+
+  // R-704: o game_ended do solo espera a Progression. Se ela falhar, sai sem solo_comparison (o campo é opcional).
+  async #soloOutcome(match: Match): Promise<SoloOutcome | null> {
+    const playlist = this.#room.players[0]?.playlist;
+    if (match.config.game_mode !== "solo" || playlist == null) return null;
+    const outcome = await this.#deps.solo.complete(match, playlist.playlist_id);
+    if (outcome.ok) return outcome.value;
+    this.#deps.logger.error("solo_record_failed", { invite_code: this.#room.invite_code, match_id: match.match_id });
+    return null;
   }
 
   #backToLobby(): void {

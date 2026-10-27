@@ -8,6 +8,8 @@ import { connect, migrateDatabase } from "./db/client.ts";
 import { createApp } from "./http/app.ts";
 import { createLogger } from "./http/logger.ts";
 import { OpenSockets } from "./http/socket.ts";
+import { soloRecords } from "./progression/solo.ts";
+import { MemoryProgressionStore, postgresProgressionStore } from "./progression/store.ts";
 import { postgresMatchRepository } from "./room/match-store.ts";
 import { recoverRooms } from "./room/recovery.ts";
 import { RoomRegistry } from "./room/registry.ts";
@@ -34,6 +36,8 @@ else {
     process.exit(1);
   }
 }
+// Sem Postgres (dev), os recordes do solo ficam na memória e somem num restart.
+const progression = db === null ? new MemoryProgressionStore() : postgresProgressionStore(db);
 const sockets = new OpenSockets();
 const registry = new RoomRegistry({
   clock: systemClock,
@@ -43,9 +47,10 @@ const registry = new RoomRegistry({
   songs: noPlaylists,
   audio: noAudio,
   matches: db === null ? noMatchStore : postgresMatchRepository(db),
+  solo: soloRecords(progression),
 });
 const hooks: ShutdownHook[] = [{ name: "room_snapshot", run: () => registry.snapshotAll() }];
-const app = createApp({ config: config.value, logger, now: Date.now, startedAt: Date.now(), registry, sockets });
+const app = createApp({ config: config.value, logger, now: Date.now, startedAt: Date.now(), registry, sockets, progression });
 
 // Antes de aceitar conexões (docs/architecture.md#recuperação).
 const recovery = await recoverRooms({ store: snapshots, registry, clock: systemClock, logger });

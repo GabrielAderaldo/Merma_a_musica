@@ -16,9 +16,21 @@ import {
 } from "@merma/domain";
 import { WsServerMessage } from "@merma/schema";
 import type { ServerSocket } from "../http/socket.ts";
+import { soloRecords } from "../progression/solo.ts";
+import { MemoryProgressionStore } from "../progression/store.ts";
 import { captureLogs } from "../testing.ts";
 import type { ActorDeps } from "./actor.ts";
-import type { AudioResolver, Cancel, Clock, CompletedMatch, Ids, MatchRepository, ResolvedAudio, SongSource } from "./ports.ts";
+import type {
+  AudioResolver,
+  Cancel,
+  Clock,
+  CompletedMatch,
+  Ids,
+  MatchRepository,
+  ResolvedAudio,
+  SoloRecords,
+  SongSource,
+} from "./ports.ts";
 import { MemorySnapshotStore } from "./snapshot-store.ts";
 
 const unwrap = <T, E>(r: Result<T, E>): T => {
@@ -137,6 +149,20 @@ export class FakeMatches implements MatchRepository {
   };
 }
 
+// A Progression de verdade sobre a memória, com o registro das chamadas e uma falha opcional.
+export class FakeSolo implements SoloRecords {
+  readonly store = new MemoryProgressionStore();
+  readonly calls: string[] = [];
+  stateAtCall: () => string = () => "";
+  fail = false;
+
+  complete: SoloRecords["complete"] = async (match, playlist_id) => {
+    this.calls.push(this.stateAtCall());
+    if (this.fail) return err("store_unavailable");
+    return soloRecords(this.store).complete(match, playlist_id);
+  };
+}
+
 // Um "processo" novo que reaproveita o relógio e o Redis de outro passa os dois aqui.
 export const actorDeps = (shared: { clock?: FakeClock; snapshots?: MemorySnapshotStore } = {}) => {
   const clock = shared.clock ?? new FakeClock();
@@ -144,9 +170,10 @@ export const actorDeps = (shared: { clock?: FakeClock; snapshots?: MemorySnapsho
   const songs = new FakeSongs();
   const audio = new FakeAudio();
   const matches = new FakeMatches();
+  const solo = new FakeSolo();
   const logs = captureLogs();
-  const deps: ActorDeps = { clock, ids: fakeIds(), logger: logs.logger, snapshots, songs, audio, matches };
-  return { deps, clock, snapshots, songs, audio, matches, lines: logs.lines };
+  const deps: ActorDeps = { clock, ids: fakeIds(), logger: logs.logger, snapshots, songs, audio, matches, solo };
+  return { deps, clock, snapshots, songs, audio, matches, solo, lines: logs.lines };
 };
 
 // Socket falso: guarda o que o servidor mandou, já validado pelo contrato do fio (ADR-0014.R2).

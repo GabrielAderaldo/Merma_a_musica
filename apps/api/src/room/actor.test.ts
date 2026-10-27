@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { createRoom, InviteCode, RoomId, type PlayerUuid } from "@merma/domain";
-import { CloseCode } from "@merma/schema";
+import { CloseCode, type WsClientMessage } from "@merma/schema";
 import { RoomActor, TIMING } from "./actor.ts";
 import { actorDeps, FakeSocket, PLAYLIST, player } from "./testing.ts";
 
@@ -14,6 +14,7 @@ const CONFIG = {
 } as const;
 
 type Setup = ReturnType<typeof actorDeps>;
+type Config = Extract<WsClientMessage, { type: "configure_match" }>["config"];
 
 // Sala com `n` jogadores conectados (o 1º é o host), cada um com seu socket falso.
 const room = async (n: number, setup: Setup = actorDeps()) => {
@@ -34,7 +35,7 @@ const room = async (n: number, setup: Setup = actorDeps()) => {
 };
 
 // Todos escolhem playlist, o host configura e inicia; para no grace period da 1ª rodada.
-const started = async (n: number, config: Partial<typeof CONFIG> = {}, setup?: Setup) => {
+const started = async (n: number, config: Partial<Config> = {}, setup?: Setup) => {
   const r = await room(n, setup);
   for (let i = 1; i <= n; i++) await r.send(i, { type: "select_playlist", playlist_id: PLAYLIST, platform: "deezer" });
   await r.send(1, { type: "configure_match", config: { ...CONFIG, ...config } });
@@ -44,7 +45,7 @@ const started = async (n: number, config: Partial<typeof CONFIG> = {}, setup?: S
 };
 
 // Do grace period até o timer correndo.
-const timerRunning = async (n: number, config: Partial<typeof CONFIG> = {}, setup?: Setup) => {
+const timerRunning = async (n: number, config: Partial<Config> = {}, setup?: Setup) => {
   const r = await started(n, config, setup);
   await r.advance(TIMING.gracePeriodMs);
   return r;
@@ -323,6 +324,69 @@ describe("ADR-0006.R1 — o Postgres só recebe a partida em completed, uma vez"
     expect(JSON.stringify(setup.matches.saved)).not.toContain("Asa Branca");
     expect(JSON.stringify(setup.matches.saved)).not.toContain("answer_text");
     expect(r.actor.state.match?.state).toBe("persisted");
+  });
+});
+
+describe("R-704 — no solo, o game_ended compara com o recorde (Progression)", () => {
+  // Partida solo de 2 rodadas; acerta as rodadas marcadas em `hits`.
+  const soloMatch = async (setup: Setup, hits: readonly [boolean, boolean]) => {
+    setup.songs.count = 2;
+    const r = await timerRunning(1, { game_mode: "solo", scoring_rule: "speed_bonus", total_songs: 2 }, setup);
+    setup.solo.stateAtCall = () => `${r.actor.state.state}/${r.actor.state.match?.state}`;
+    const answer = (hit: boolean) => r.send(1, { type: "submit_answer", answer_text: hit ? currentSong(r) : "zzzz zzzz" });
+    await answer(hits[0]);
+    await r.advance(10_000 + TIMING.revealMs + TIMING.gracePeriodMs);
+    await answer(hits[1]);
+    await r.advance(10_000 + TIMING.revealMs);
+    return r;
+  };
+
+  test("1ª partida: sem recorde anterior, vira o recorde; a 2ª, pior, compara com ela", async () => {
+    const setup = actorDeps();
+    const first = await soloMatch(setup, [true, true]);
+    const comparison = first.socket(1).last("game_ended")?.solo_comparison;
+    expect(comparison?.previous_best).toBeNull();
+    expect(comparison?.is_new_personal_best).toBe(true);
+    expect(comparison?.current.known_songs).toBe(2);
+    expect(comparison?.current.max_streak).toBe(2);
+
+    await first.advance(TIMING.resultsMs);
+    expect(first.actor.state.state).toBe("lobby");
+    await first.send(1, { type: "start_game" });
+    await first.advance(TIMING.countdownMs + TIMING.gracePeriodMs);
+    await first.send(1, { type: "submit_answer", answer_text: "zzzz zzzz" });
+    await first.advance(10_000 + TIMING.revealMs + TIMING.gracePeriodMs);
+    await first.advance(10_000 + TIMING.revealMs);
+    const second = first.socket(1).last("game_ended")?.solo_comparison;
+    expect(second?.is_new_personal_best).toBe(false);
+    expect(second?.previous_best).toEqual(comparison?.current ?? null);
+    expect(second?.current.avg_points_per_song).toBe(0);
+    // Músicas conhecidas acumulam entre partidas (R-505): as 2 da 1ª continuam contando.
+    expect(second?.current.known_songs).toBe(2);
+  });
+
+  test("ADR-0006.R1: a Progression é chamada uma vez, só em completed", async () => {
+    const setup = actorDeps();
+    await soloMatch(setup, [true, false]);
+    expect(setup.solo.calls).toEqual(["finished/completed"]);
+  });
+
+  test("Progression fora do ar: game_ended sai sem solo_comparison, e o erro vai para o log", async () => {
+    const setup = actorDeps();
+    setup.solo.fail = true;
+    const r = await soloMatch(setup, [true, true]);
+    const ended = r.socket(1).last("game_ended");
+    expect(ended).toBeDefined();
+    expect(ended).not.toHaveProperty("solo_comparison");
+    expect(setup.lines.some((l) => l["event"] === "solo_record_failed")).toBe(true);
+  });
+
+  test("multiplayer não chama a Progression nem manda solo_comparison", async () => {
+    const setup = actorDeps();
+    const r = await timerRunning(2, { total_songs: 2 }, setup);
+    await r.advance(2 * (10_000 + TIMING.revealMs + TIMING.gracePeriodMs));
+    expect(r.socket(1).last("game_ended")).not.toHaveProperty("solo_comparison");
+    expect(setup.solo.calls).toEqual([]);
   });
 });
 

@@ -13,7 +13,8 @@
   "scripts": {
     "dev": "bun --filter \"*\" dev",
     "build": "bun --filter \"*\" build",
-    "test": "bun test --check ./.claude/hooks ./scripts ./deploy ./tools ./apps ./packages",
+    "test": "bun test --check ./.claude/hooks ./scripts ./deploy ./tools ./apps ./packages && bun run test:strict",
+    "test:strict": "bun --disallow-code-generation-from-strings=strict test --check ./apps/api ./packages",
     "typecheck": "bun check",
     "lint": "oxlint",
     "docs:check": "bun scripts/docs-check.ts",

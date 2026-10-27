@@ -222,6 +222,15 @@ describe("partida", () => {
     expect(r.socket(1).last("error")?.code).toBe("round_not_accepting_answers");
   });
 
+  test("S-20: response_time sai do relógio do servidor, contado do timer_started", async () => {
+    const r = await timerRunning(1);
+    await r.advance(4_000);
+    await r.send(1, { type: "submit_answer", answer_text: "x" });
+    const match = r.actor.state.match;
+    const answers = match?.rounds[match.current_round_index ?? -1]?.answers;
+    expect(answers?.map((a): number => a.response_time)).toEqual([4_000]);
+  });
+
   test("S-21: answer_confirmed só para quem respondeu, sem dizer se acertou", async () => {
     const r = await timerRunning(2);
     await r.send(1, { type: "submit_answer", answer_text: currentSong(r) });

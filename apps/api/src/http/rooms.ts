@@ -34,7 +34,7 @@ const roomSummaryRoute = createRoute({
   },
 });
 
-export const roomRoutes = (app: OpenApiApp, deps: GatewayDeps & { now: () => number }) => {
+export const roomRoutes = (app: OpenApiApp, deps: GatewayDeps) => {
   // ADR-0002: session → rateLimit → handler.
   app.post(createRoomRoute.path, rateLimit({ ...CREATE_ROOM_LIMIT, now: deps.now }));
   app.get("/ws/room/:invite_code", roomSocketHandler(deps));

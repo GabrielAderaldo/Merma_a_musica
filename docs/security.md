@@ -33,14 +33,14 @@ Fora do modelo de ameaça no MVP: atacante estatal, zero-day em Bun/Postgres/Red
 
 | ID | Mitigação | Verificação |
 |---|---|---|
-| S-20 | `response_time = server_now − timer_started_at` (servidor). Timestamp vindo do cliente é ignorado. | pendente: teste de domínio |
+| S-20 | `response_time = server_now − timer_started_at` (servidor). Timestamp vindo do cliente é ignorado. | `packages/domain/src/match.test.ts`, `packages/schema/src/ws.test.ts`, `apps/api/src/room/actor.test.ts` |
 | S-21 | `answer_confirmed` não revela acerto. `is_correct` só sai em `round_ended`. | `apps/api/src/room/actor.test.ts` |
 | S-22 | Autocomplete roda no servidor; o cliente nunca recebe o pool inteiro. | `apps/api/src/room/actor.test.ts` |
-| S-23 | Rate limit por `(player_uuid, room_id)`: `submit_answer` 10/s, `autocomplete_search` 5/s, demais 30/s somados. 1ª violação → `error: rate_limited`; 3ª → close 4029. | pendente |
+| S-23 | Rate limit por `(player_uuid, room_id)`: `submit_answer` 10/s, `autocomplete_search` 5/s, demais 30/s somados. 1ª violação → `error: rate_limited`; 3ª → close 4029. Janela fixa de 1s; estourar o limite conta uma violação por janela (o excesso da mesma janela é descartado sem resposta), e a contagem zera após 60s sem violação. (Decidido em 2026-10-26.) | `apps/api/src/room/rate-limit.test.ts`, `apps/api/src/room/gateway.test.ts` |
 | S-24 | Payload WS inválido no Zod → `error: invalid_payload`. 3 inválidos → close 1003. (Decidido em 2026-10-21: um cliente com bug não derruba o jogador na 1ª falha.) | `apps/api/src/room/gateway.test.ts` |
 | S-25 | REST: 10 salas/hora e 5 importações simultâneas por `player_uuid`. | salas: `apps/api/src/http/rooms.test.ts`; importações: `apps/api/src/playlist/importer.test.ts` |
 | S-26 | Padrão "100% de acerto e menos de 1s" vira métrica `merma_suspicious_pattern_total`. Sem ação automática no MVP. | pendente |
-| S-27 | Injeção que vire código → o `apps/api` de produção roda com `bun --disallow-code-generation-from-strings=strict`: `eval`, `new Function`, `node:vm`, `import()` de `data:` e `Worker` com `eval` lançam erro no processo inteiro, Workers inclusos (Bun ≥ 1.4.3). (Decidido em 2026-10-21.) Risco a confirmar: o Zod 4 usa `new Function` como otimização e deve cair no modo sem JIT. Desde a 1.4.4 o `=strict` recusa todo código que não seja do programa, não só uma lista de APIs: plugin que devolve `contents` e macros também caem. | pendente: a suíte do `apps/api` roda também sob a flag |
+| S-27 | Injeção que vire código → o `apps/api` de produção roda com `bun --disallow-code-generation-from-strings=strict`: `eval`, `new Function`, `node:vm`, `import()` de `data:` e `Worker` com `eval` lançam erro no processo inteiro, Workers inclusos (Bun ≥ 1.4.3). (Decidido em 2026-10-21.) O Zod 4 usa `new Function` como otimização e cai no modo sem JIT sob a flag (confirmado em 2026-10-26). Desde a 1.4.4 o `=strict` recusa todo código que não seja do programa, não só uma lista de APIs: plugin que devolve `contents` e macros também caem. | `apps/api/src/strict.test.ts`; o `bun run test` roda a suíte do `apps/api` e dos `packages` também sob a flag (`test:strict`) |
 
 **Não mitigamos, de propósito:** Shazam no celular ao lado (impossível), extensões do browser, captcha (atrito > ganho), detecção de VPN, fingerprinting (fere a minimização).
 

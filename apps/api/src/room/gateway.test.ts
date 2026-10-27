@@ -5,6 +5,7 @@ import type { Server } from "bun";
 import { OpenSockets } from "../http/socket.ts";
 import { closed, connect, sessionCookie, testApp } from "../testing.ts";
 import { MAX_INVALID_PAYLOADS } from "./gateway.ts";
+import { WS_RATE_LIMITS, WS_RATE_WINDOW_MS } from "./rate-limit.ts";
 import { RoomRegistry } from "./registry.ts";
 import { actorDeps } from "./testing.ts";
 
@@ -17,11 +18,11 @@ afterEach(async () => {
 });
 
 // Servidor de verdade, com os middlewares de produção e uma sala criada.
-const serve = () => {
+const serve = (now?: () => number) => {
   const setup = actorDeps();
   const registry = new RoomRegistry(setup.deps);
   const sockets = new OpenSockets();
-  const app = testApp({ registry, sockets });
+  const app = testApp({ registry, sockets, ...(now === undefined ? {} : { now }) });
   app.get("/whoami", (c) => c.json(c.get("session")));
   server = Bun.serve({ port: 0, fetch: app.fetch, websocket });
   const actor = registry.create() ?? expect.unreachable("sala");
@@ -110,6 +111,36 @@ describe("ADR-0002.R3 / ADR-0014.R2 — toda mensagem do cliente passa pelo Zod 
     expect((await box.next()).type).toBe("error");
     send(ws, "{");
     expect((await event).code).toBe(CloseCode.invalid_payload_repeated);
+  });
+});
+
+describe("S-23 — rate limit do WS", () => {
+  test("estourar o limite responde rate_limited uma vez por janela; a 3ª violação fecha com 4029", async () => {
+    let now = 1_000_000;
+    const { url, path } = serve(() => now);
+    const ws = await connect(url, path);
+    const box = inbox(ws);
+    const event = closed(ws);
+    const flood = () => {
+      for (let i = 0; i < WS_RATE_LIMITS.other + 5; i++) send(ws, { type: "ping" });
+    };
+    const drain = async () => {
+      const got: string[] = [];
+      for (let i = 0; i < WS_RATE_LIMITS.other + 1; i++) {
+        const m = await box.next();
+        got.push(m.type === "error" ? m.code : m.type);
+      }
+      return got;
+    };
+    flood();
+    // Os 5 pings além do limite viram um único erro; os 4 restantes caem em silêncio.
+    expect(await drain()).toEqual([...Array<string>(WS_RATE_LIMITS.other).fill("pong"), "rate_limited"]);
+    now += WS_RATE_WINDOW_MS;
+    flood();
+    expect((await drain()).at(-1)).toBe("rate_limited");
+    now += WS_RATE_WINDOW_MS;
+    flood();
+    expect((await event).code).toBe(CloseCode.rate_limited_repeated);
   });
 });
 

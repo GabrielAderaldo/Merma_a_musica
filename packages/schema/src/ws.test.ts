@@ -116,6 +116,10 @@ describe("WS cliente → servidor", () => {
     expect(WsClientMessage.safeParse({ type, ...validClient[type], player_uuid: UUID }).success).toBe(false);
   });
 
+  test.each(["response_time", "submitted_at", "client_now"])("S-20 submit_answer com timestamp do cliente (%s) é inválido", (field) => {
+    expect(WsClientMessage.safeParse({ type: "submit_answer", answer_text: "x", [field]: 1_000 }).success).toBe(false);
+  });
+
   test("type desconhecido é inválido", () => {
     expect(WsClientMessage.safeParse({ type: "kick_player" }).success).toBe(false);
   });

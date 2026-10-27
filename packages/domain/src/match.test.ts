@@ -100,6 +100,10 @@ describe("R-105 a R-108 respostas", () => {
     room = answer(room, p1, 2_000, "   ");
     expect(round(room).answers).toHaveLength(0);
   });
+  test("S-20 response_time = now − timer_started_at, os dois do servidor", () => {
+    const room = unwrap(submitAnswer(running(begin(2), 1, at(T0 + 7_000)), p1, "x", at(T0 + 9_500)));
+    expect(round(room).answers[0]).toMatchObject({ submitted_at: T0 + 9_500, response_time: 2_500 });
+  });
   test("R-202 response_time é limitado a time_per_round", () => {
     const room = answer(running(begin(2), 1), p1, 99_000);
     expect(round(room).answers[0]?.response_time).toBe(seconds(30));

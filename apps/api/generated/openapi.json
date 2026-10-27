@@ -1198,7 +1198,7 @@
             "description": "Para o consentimento do Spotify, com state e PKCE no __Host-csrf"
           },
           "404": {
-            "description": "Plataforma sem login: só o Spotify tem (ADR-0024.R4)",
+            "description": "Plataforma sem login: só o Spotify tem (ADR-0026.R4)",
             "content": {
               "application/json": {
                 "schema": {

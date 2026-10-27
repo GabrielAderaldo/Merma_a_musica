@@ -1,18 +1,28 @@
-// API pública da Deezer, sem login (ADR-0024): playlist pública por link, faixa por ISRC e busca. É também a
+// API pública da Deezer, sem login (ADR-0026): playlist pública por link, faixa por ISRC e busca. É também a
 // resolução de toda música importada (R-010).
 import { z } from "zod";
-import { type Fetch, type HttpError, requestJson } from "./http.ts";
+import { type Fetch, type HttpError, requestJson, requestLocation } from "./http.ts";
 import { err, ok, type Result } from "./result.ts";
 import type { Candidate, SourceError, SourcePlaylist, StoredSong } from "./types.ts";
 
 const API = "https://api.deezer.com";
 const PAGE = 100;
 
-// Link de playlist: deezer.com/playlist/{id} ou deezer.com/{idioma}/playlist/{id}. O link curto (link.deezer.com)
-// ainda não entra: o ADR-0024.R3 não lista o host dele.
+// Link de playlist: deezer.com/playlist/{id} ou deezer.com/{idioma}/playlist/{id}.
 export const parseDeezerLink = (url: URL): string | null => {
   if (url.hostname !== "www.deezer.com" && url.hostname !== "deezer.com") return null;
   return /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?playlist\/(\d{1,20})\/?$/.exec(url.pathname)?.[1] ?? null;
+};
+
+// Link curto do botão Compartilhar do app: link.deezer.com/s/{código} (ADR-0026).
+export const isDeezerShortLink = (url: URL): boolean => url.hostname === "link.deezer.com" && /^\/s\/[A-Za-z0-9]{1,64}\/?$/.test(url.pathname);
+
+// ADR-0026.R5: o link curto responde 301 para link.deezer.com/?dest=<link longo>; código inexistente vai para
+// www.deezer.com/deezer-links-404 (aferido em 2026-10-27). Só vale o dest que for link de playlist.
+export const playlistFromRedirect = (location: URL): string | null => {
+  if (location.hostname !== "link.deezer.com") return null;
+  const dest = URL.parse(location.searchParams.get("dest") ?? "");
+  return dest === null || dest.protocol !== "https:" ? null : parseDeezerLink(dest);
 };
 
 // A Deezer responde 200 com { error } quando não acha (código 800) ou recusa.
@@ -78,6 +88,8 @@ export type DeezerClient = Readonly<{
   search(query: string): Promise<Result<readonly StoredSong[], "provider_unavailable">>;
   // URL do preview da faixa. null: a faixa sumiu, não toca na região ou não tem preview.
   preview(id: string): Promise<Result<string | null, "provider_unavailable">>;
+  // ID da playlist do link curto. null: o link não leva a uma playlist (ou o código não existe).
+  expandShortLink(url: URL): Promise<Result<string | null, "provider_unavailable">>;
 }>;
 
 export const deezerClient = (deps: { fetch: Fetch; throttle: DeezerThrottle; maxSongs: number }): DeezerClient => {
@@ -131,6 +143,11 @@ export const deezerClient = (deps: { fetch: Fetch; throttle: DeezerThrottle; max
       if (!res.ok) return err("provider_unavailable");
       const track = res.value;
       return ok(track === null || track.readable === false || !track.preview ? null : track.preview);
+    },
+    // Fora do throttle: o link.deezer.com não é a API (ADR-0025.R4 limita a api.deezer.com).
+    expandShortLink: async (url) => {
+      const location = await requestLocation(deps.fetch, url.href);
+      return location.ok ? ok(playlistFromRedirect(location.value)) : location;
     },
   };
 };

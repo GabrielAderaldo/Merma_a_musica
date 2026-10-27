@@ -1,10 +1,10 @@
-// Importação assíncrona da playlist do jogador (R-002, R-010, ADR-0024): lê a fonte, procura cada música na Deezer e
+// Importação assíncrona da playlist do jogador (R-002, R-010, ADR-0026): lê a fonte, procura cada música na Deezer e
 // grava só o que achou. O cliente acompanha por polling; o job vive na memória do processo e some 10 min depois de
 // terminar (num restart, o jogador importa de novo).
 import type { ErrorCode, ImportPlaylistRequest } from "@merma/schema";
 import type { Logger } from "../http/logger.ts";
 import type { SpotifyAccounts } from "./accounts.ts";
-import { type DeezerClient, parseDeezerLink } from "./deezer.ts";
+import { type DeezerClient, isDeezerShortLink, parseDeezerLink } from "./deezer.ts";
 import { resolveCandidate } from "./resolve.ts";
 import { err, ok, type Result } from "./result.ts";
 import type { PlaylistStore } from "./store.ts";
@@ -107,6 +107,13 @@ export class ImportJobs {
         if (url === null || url.protocol !== "https:") return err("invalid_playlist_link");
         const deezerId = parseDeezerLink(url);
         if (deezerId !== null) return ok(() => deezer.playlist(deezerId));
+        // Link curto expandido antes de criar o job: o que não leva a uma playlist é recusado na hora (ADR-0026).
+        if (isDeezerShortLink(url)) {
+          const expanded = await deezer.expandShortLink(url);
+          if (!expanded.ok) return expanded;
+          const id = expanded.value;
+          return id === null ? err("invalid_playlist_link") : ok(() => deezer.playlist(id));
+        }
         const youtubeId = parseYoutubeLink(url);
         if (youtubeId === null) return err("invalid_playlist_link");
         return youtube === null ? err("provider_unavailable") : ok(() => youtube.playlist(youtubeId));

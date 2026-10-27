@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { fakeFetch, withStatus } from "../testing.ts";
 import { tokenCipher } from "./crypto.ts";
-import { ALLOWED_HOSTS, requestJson } from "./http.ts";
+import { ALLOWED_HOSTS, REDIRECT_HOSTS, requestJson, requestLocation } from "./http.ts";
 import { textPlaylist } from "./text.ts";
 import { parseYoutubeLink, videoCandidate, youtubeClient } from "./youtube.ts";
 import { z } from "zod";
@@ -22,7 +22,7 @@ describe("lista colada (R-002, R-010)", () => {
   });
 });
 
-describe("link do YouTube (ADR-0024)", () => {
+describe("link do YouTube (ADR-0026)", () => {
   test.each([
     ["https://www.youtube.com/playlist?list=PL4fGSI1pDJn5kI81J1fYWK5eZRl1zJ5kM", "PL4fGSI1pDJn5kI81J1fYWK5eZRl1zJ5kM"],
     ["https://music.youtube.com/playlist?list=OLAK5uy_kXyz1234567890abc", "OLAK5uy_kXyz1234567890abc"],
@@ -45,7 +45,7 @@ describe("link do YouTube (ADR-0024)", () => {
   });
 
   const API = "https://www.googleapis.com/youtube/v3";
-  test("ADR-0024.R2: da YouTube API só saem o ID e o nome da playlist; nem a miniatura fica", async () => {
+  test("ADR-0026.R2: da YouTube API só saem o ID e o nome da playlist; nem a miniatura fica", async () => {
     const youtube = youtubeClient({
       fetch: fakeFetch({
         [`${API}/playlists`]: { items: [{ snippet: { title: "Hits", thumbnails: { medium: { url: "https://i.ytimg.com/x.jpg" } } } }] },
@@ -75,12 +75,24 @@ describe("link do YouTube (ADR-0024)", () => {
   });
 });
 
-describe("ADR-0024.R3 — só as APIs oficiais, nunca página raspada", () => {
-  test("a allowlist tem só hosts de API", () => {
+describe("ADR-0026.R3 — só as APIs oficiais, nunca página raspada", () => {
+  test("a allowlist tem só hosts de API; do link.deezer.com só se lê o Location", () => {
     expect([...ALLOWED_HOSTS].toSorted()).toEqual(["accounts.spotify.com", "api.deezer.com", "api.spotify.com", "www.googleapis.com"]);
+    expect(REDIRECT_HOSTS).toEqual(["link.deezer.com"]);
   });
 
-  test.each(["https://open.spotify.com/embed/playlist/1", "https://music.youtube.com/playlist?list=PL1", "https://www.deezer.com/playlist/1"])(
+  test.each(["https://www.deezer.com/playlist/1", "https://api.deezer.com/playlist/1"])("requestLocation(%s) é recusado sem chamar o fetch", async (url) => {
+    const calls: string[] = [];
+    expect(await requestLocation(fakeFetch({ [url]: {} }, calls), url)).toEqual({ ok: false, error: "provider_unavailable" });
+    expect(calls).toEqual([]);
+  });
+
+  test.each([
+    "https://open.spotify.com/embed/playlist/1",
+    "https://music.youtube.com/playlist?list=PL1",
+    "https://www.deezer.com/playlist/1",
+    "https://link.deezer.com/s/31JZ5bXkJcJpAbqGkRvCk",
+  ])(
     "%s é recusado sem nem chamar o fetch",
     async (url) => {
       const calls: string[] = [];

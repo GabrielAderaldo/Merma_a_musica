@@ -45,7 +45,7 @@ const startFlow = async (a: Awaited<ReturnType<typeof app>>["app"], returnTo = "
   return { cookie, res, csrf: csrfCookie(res) ?? "", state: location.searchParams.get("state") ?? "" };
 };
 
-describe("ADR-0024.R4 — OAuth só do Spotify, com PKCE", () => {
+describe("ADR-0026.R4 — OAuth só do Spotify, com PKCE", () => {
   test.each(["deezer", "youtube_music", "text"])("/auth/%s → 404", async (platform) => {
     const { app: a } = await app();
     expect((await a.request(`/auth/${platform}`)).status).toBe(404);

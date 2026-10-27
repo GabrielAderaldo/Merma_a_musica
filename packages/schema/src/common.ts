@@ -36,7 +36,7 @@ export const ErrorCode = z.enum([
   "illegal_state_transition",
   // GET /api/v1/solo/personal-bests/{playlist_id}: nenhuma partida solo nessa playlist ainda.
   "personal_best_not_found",
-  // Playlists (R-002, R-010, ADR-0024).
+  // Playlists (R-002, R-010, ADR-0026).
   "invalid_playlist_link",
   "playlist_not_found",
   "no_songs_found",

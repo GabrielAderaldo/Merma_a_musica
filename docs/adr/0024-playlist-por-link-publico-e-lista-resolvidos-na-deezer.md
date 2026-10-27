@@ -1,7 +1,8 @@
 ---
 id: ADR-0024
 title: Trazer a playlist por link público ou lista colada, resolvida na Deezer, com OAuth só do Spotify
-status: accepted
+status: superseded
+superseded_by: ADR-0026
 date: 2026-10-26
 supersedes: null
 scope: ["apps/api/src/playlist/**", "apps/api/src/http/**", "packages/schema/**", ".env.example"]

@@ -1,4 +1,4 @@
-// Rotas de auth: OAuth do Spotify com PKCE (R-002, ADR-0024.R4), /auth/me e a desconexão (docs/privacy.md).
+// Rotas de auth: OAuth do Spotify com PKCE (R-002, ADR-0026.R4), /auth/me e a desconexão (docs/privacy.md).
 // O callback chega de accounts.spotify.com, então o __Host-session (SameSite=Strict) não vem junto: quem diz de que
 // jogador é o login é o __Host-csrf (SameSite=Lax, 10 min, S-04), assinado e emitido no início do fluxo.
 import { createRoute, z } from "@hono/zod-openapi";
@@ -34,7 +34,7 @@ const startRoute = createRoute({
   request: { params: z.object({ platform: z.string() }), query: z.object({ return_to: ReturnTo }) },
   responses: {
     302: { description: "Para o consentimento do Spotify, com state e PKCE no __Host-csrf" },
-    404: json(ErrorResponse, "Plataforma sem login: só o Spotify tem (ADR-0024.R4)"),
+    404: json(ErrorResponse, "Plataforma sem login: só o Spotify tem (ADR-0026.R4)"),
     503: json(ErrorResponse, "Login do Spotify não configurado nesta instância"),
   },
 });

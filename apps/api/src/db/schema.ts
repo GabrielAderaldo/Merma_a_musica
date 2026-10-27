@@ -127,7 +127,7 @@ export const soloPlayerStats = pgTable("solo_player_stats", {
   solo_matches_completed: integer().notNull(),
 });
 
-// --- Playlist Integration: playlists do jogador e conta do Spotify (R-002, R-010, ADR-0024) ----------------------
+// --- Playlist Integration: playlists do jogador e conta do Spotify (R-002, R-010, ADR-0026) ----------------------
 
 // Reimportar a mesma playlist (mesma origem e external_id) troca as músicas e mantém o playlist_id, e com ele os
 // recordes. A lista colada tem external_id null e vira sempre uma playlist nova (null não colide no unique).
@@ -146,7 +146,7 @@ export const playlists = pgTable(
   (t) => [unique().on(t.player_uuid, t.platform, t.external_id)],
 );
 
-// As músicas já achadas na Deezer (R-010). Da YouTube API nada fica aqui (ADR-0024.R2).
+// As músicas já achadas na Deezer (R-010). Da YouTube API nada fica aqui (ADR-0026.R2).
 export const playlistSongs = pgTable(
   "playlist_songs",
   {

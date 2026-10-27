@@ -23,6 +23,7 @@ const deezer: DeezerClient = {
   byIsrc: async () => ok(null),
   search: async () => ok([]),
   preview: async (id) => ok(id === DEEZER_ID ? PREVIEW : null),
+  expandShortLink: async () => ok(null),
 };
 
 // Músicas da playlist com o deezer_id da importação, como o playlistSongs entrega.

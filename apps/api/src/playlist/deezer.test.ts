@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { fakeFetch, withStatus } from "../testing.ts";
-import { DeezerThrottle, deezerClient, parseDeezerLink } from "./deezer.ts";
+import { fakeFetch, redirectTo, withStatus } from "../testing.ts";
+import { DeezerThrottle, deezerClient, isDeezerShortLink, parseDeezerLink, playlistFromRedirect } from "./deezer.ts";
 import { deezerTrack } from "./testing.ts";
 
 const API = "https://api.deezer.com";
@@ -13,12 +13,68 @@ describe("parseDeezerLink", () => {
     ["https://www.deezer.com/playlist/1313621735", "1313621735"],
     ["https://www.deezer.com/br/playlist/1313621735", "1313621735"],
     ["https://deezer.com/pt-br/playlist/1313621735/", "1313621735"],
+    ["https://www.deezer.com/playlist/1313621735?host=1&utm_source=user_sharing&deferredFl=1", "1313621735"],
     ["https://www.deezer.com/br/album/302127", null],
     ["https://www.deezer.com/br/playlist/abc", null],
     ["https://evil.com/playlist/1313621735", null],
     ["https://link.deezer.com/s/31JZ5bXkJcJpAbqGkRvCk", null],
   ])("%s → %p", (url, id) => {
     expect(parseDeezerLink(new URL(url))).toBe(id);
+  });
+});
+
+describe("ADR-0026.R5 — link curto lido só pelo redirect", () => {
+  const SHORT = "https://link.deezer.com/s/31JZ5bXkJcJpAbqGkRvCk";
+  // Formato do Location aferido em 2026-10-27: o link longo vem codificado no dest.
+  const via = (dest: string) => `https://link.deezer.com/?awf=x&dest=${encodeURIComponent(dest)}&gwf=x`;
+
+  test.each([
+    ["https://link.deezer.com/s/31JZ5bXkJcJpAbqGkRvCk", true],
+    ["https://link.deezer.com/s/", false],
+    ["https://link.deezer.com/s/31JZ5bXkJcJpAbqGkRvCk/x", false],
+    ["https://link.deezer.com/?dest=https://www.deezer.com/playlist/1", false],
+    ["https://evil.com/s/31JZ5bXkJcJpAbqGkRvCk", false],
+  ])("isDeezerShortLink(%s) → %p", (url, expected) => {
+    expect(isDeezerShortLink(new URL(url))).toBe(expected);
+  });
+
+  test("uma requisição só, sem seguir o redirect; o ID sai do dest", async () => {
+    const calls: { url: string; init: RequestInit | undefined }[] = [];
+    const deezer = deezerClient({
+      fetch: async (url, init) => {
+        calls.push({ url, init });
+        return new Response("<html>página que não é lida</html>", {
+          status: 301,
+          headers: { location: via("https://www.deezer.com/br/playlist/1313621735?host=1&utm_source=user_sharing") },
+        });
+      },
+      throttle: new DeezerThrottle({ limit: 1_000_000 }),
+      maxSongs: 500,
+    });
+    expect(await deezer.expandShortLink(new URL(SHORT))).toEqual({ ok: true, value: "1313621735" });
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.url).toBe(SHORT);
+    expect(calls[0]?.init?.redirect).toBe("manual");
+  });
+
+  test.each([
+    ["artista", redirectTo(via("https://www.deezer.com/artist/172293107?host=1"))],
+    ["código inexistente", redirectTo("https://www.deezer.com/deezer-links-404", 302)],
+    ["dest fora da Deezer", redirectTo(via("https://evil.com/playlist/1"))],
+    ["dest sem https", redirectTo(via("http://www.deezer.com/playlist/1"))],
+  ])("%s → null", async (_, reply) => {
+    expect(await client({ [SHORT]: reply }).expandShortLink(new URL(SHORT))).toEqual({ ok: true, value: null });
+  });
+
+  test("sem redirect ou com o host fora do ar (Akamai) → provider_unavailable", async () => {
+    for (const reply of [{}, withStatus(403), withStatus(503)]) {
+      expect(await client({ [SHORT]: reply }).expandShortLink(new URL(SHORT))).toEqual({ ok: false, error: "provider_unavailable" });
+    }
+  });
+
+  test("playlistFromRedirect só aceita o Location do próprio link.deezer.com", () => {
+    expect(playlistFromRedirect(new URL(via("https://www.deezer.com/playlist/7")))).toBe("7");
+    expect(playlistFromRedirect(new URL("https://www.deezer.com/playlist/7"))).toBeNull();
   });
 });
 

@@ -1,5 +1,5 @@
-// YouTube Data API v3 só com chave, para playlist pública do YouTube ou do YouTube Music (ADR-0024). Sem ISRC: cada
-// vídeo vira uma busca na Deezer pelo título limpo. Do YouTube só ficam o ID e o nome da playlist (ADR-0024.R2).
+// YouTube Data API v3 só com chave, para playlist pública do YouTube ou do YouTube Music (ADR-0026). Sem ISRC: cada
+// vídeo vira uma busca na Deezer pelo título limpo. Do YouTube só ficam o ID e o nome da playlist (ADR-0026.R2).
 import { z } from "zod";
 import { type Fetch, requestJson } from "./http.ts";
 import { err, ok, type Result } from "./result.ts";
@@ -56,7 +56,7 @@ export const youtubeClient = (deps: { fetch: Fetch; apiKey: string; maxSongs: nu
       platform: "youtube_music",
       external_id: id,
       name: snippet.title,
-      // A miniatura também é dado da YouTube API (ADR-0024.R2): a capa vem da 1ª música achada na Deezer.
+      // A miniatura também é dado da YouTube API (ADR-0026.R2): a capa vem da 1ª música achada na Deezer.
       cover_url: null,
       candidates: candidates.slice(0, deps.maxSongs),
     });

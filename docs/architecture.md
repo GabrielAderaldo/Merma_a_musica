@@ -10,7 +10,7 @@
 |---|---|---|
 | Game Engine (core) | `packages/domain` | Regras puras do GDD. Sem I/O. |
 | Game Orchestrator | `apps/api/src/room` | `RoomRegistry`, `RoomActor`, `WsGateway`, timers, snapshot, recovery. Aplica os `Result` da engine. |
-| Playlist Integration | `apps/api/src/playlist` (áudio em `playlist/audio`) | Importação por link, lista colada ou OAuth do Spotify, resolução de cada música na Deezer (R-010, [ADR-0024](adr/0024-playlist-por-link-publico-e-lista-resolvidos-na-deezer.md)), resolução de áudio. Anti-corruption layer: nada fora dele vê formato de plataforma. |
+| Playlist Integration | `apps/api/src/playlist` (áudio em `playlist/audio`) | Importação por link, lista colada ou OAuth do Spotify, resolução de cada música na Deezer (R-010, [ADR-0026](adr/0026-link-curto-da-deezer-pelo-redirect.md)), resolução de áudio. Anti-corruption layer: nada fora dele vê formato de plataforma. |
 | Progression | `apps/api/src/progression` | Recordes do solo no MVP; XP e leaderboard depois. |
 | Contratos | `packages/schema` | Zod, compartilhado por todos ([ADR-0014](adr/0014-contratos-zod-first.md)). |
 

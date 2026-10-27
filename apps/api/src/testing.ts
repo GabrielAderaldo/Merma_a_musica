@@ -35,6 +35,9 @@ export const captureLogs = (): Captured => {
 // Resposta com outro status no fakeFetch (o padrão é 200).
 export const withStatus = (status: number, body: unknown = {}) => ({ withStatus: status, body });
 
+// Redirect no fakeFetch: status 3xx com o cabeçalho Location.
+export const redirectTo = (location: string, status = 301) => ({ withStatus: status, body: {}, location });
+
 // Fetch que só conhece as URLs dadas (por prefixo); o resto é 503. Nenhum teste sai para a rede.
 export const fakeFetch = (routes: Record<string, unknown>, calls: string[] = []): Fetch => async (url) => {
   calls.push(url);
@@ -43,11 +46,13 @@ export const fakeFetch = (routes: Record<string, unknown>, calls: string[] = [])
     .toSorted((a, b) => b.length - a.length)
     .find((prefix) => url.startsWith(prefix));
   const route = key === undefined ? withStatus(503) : routes[key];
-  const { status, body } =
+  const { status, body, location } =
     typeof route === "object" && route !== null && "withStatus" in route && typeof route.withStatus === "number"
-      ? { status: route.withStatus, body: "body" in route ? route.body : {} }
-      : { status: 200, body: route };
-  return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
+      ? { status: route.withStatus, body: "body" in route ? route.body : {}, location: "location" in route ? String(route.location) : null }
+      : { status: 200, body: route, location: null };
+  const headers = new Headers({ "content-type": "application/json" });
+  if (location !== null) headers.set("location", location);
+  return new Response(JSON.stringify(body), { status, headers });
 };
 
 // Playlist Integration dos testes: Deezer (e YouTube, com chave) sobre o fakeFetch, sem esperar o throttle.

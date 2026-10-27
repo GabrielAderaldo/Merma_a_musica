@@ -1,4 +1,4 @@
-// Rotas REST das playlists do jogador (R-002, R-010, ADR-0024): importar por link, lista ou Spotify, acompanhar o job
+// Rotas REST das playlists do jogador (R-002, R-010, ADR-0026): importar por link, lista ou Spotify, acompanhar o job
 // por polling, listar e apagar.
 import { createRoute, z } from "@hono/zod-openapi";
 import {

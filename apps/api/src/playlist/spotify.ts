@@ -1,4 +1,4 @@
-// Spotify por OAuth com PKCE, opcional e limitado à allowlist do app em Development Mode (R-002, ADR-0024.R4).
+// Spotify por OAuth com PKCE, opcional e limitado à allowlist do app em Development Mode (R-002, ADR-0026.R4).
 // Rotas aferidas em 2026-10-26: /playlists/{id}/items no lugar de /tracks, campo `item` no lugar de `track`.
 // O access token fica só em memória (docs/privacy.md); o refresh token vai cifrado para o Postgres (ADR-0006.R3).
 import { z } from "zod";
@@ -80,7 +80,7 @@ export const spotifyClient = (deps: { fetch: Fetch; config: SpotifyConfig; maxSo
     requestJson(deps.fetch, path.startsWith("https://") ? path : `${API}${path}`, schema, {
       headers: { authorization: `Bearer ${accessToken}` },
     });
-  // Página seguinte só se for da própria API (ADR-0024.R3).
+  // Página seguinte só se for da própria API (ADR-0026.R3).
   const nextPage = (next: string | null) => (next !== null && next.startsWith(`${API}/`) ? next : null);
 
   return {

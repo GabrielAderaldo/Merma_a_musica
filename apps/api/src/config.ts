@@ -15,7 +15,7 @@ export type Config = {
   redisUrl: string | null;
   // Histórico de partidas (ADR-0006). Sem ele (dev e testes), a partida concluída não é gravada.
   postgresUrl: string | null;
-  // Link do YouTube (ADR-0024). Sem a chave, só esse tipo de link fica indisponível.
+  // Link do YouTube (ADR-0026). Sem a chave, só esse tipo de link fica indisponível.
   youtubeApiKey: string | null;
   // OAuth do Spotify, opcional (R-002). Ligado só com SPOTIFY_CLIENT_ID, e aí exige a chave de cifra (ADR-0006.R3).
   spotify: { clientId: string; redirectUri: string; tokenKey: string } | null;

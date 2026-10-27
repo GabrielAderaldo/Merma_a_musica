@@ -82,7 +82,7 @@ export const PersonalBestsResponse = z.object({
   by_playlist: z.array(PlaylistProgress),
 });
 
-// --- Playlists (R-002, R-010, ADR-0024) ------------------------------------------------------------------
+// --- Playlists (R-002, R-010, ADR-0026) ------------------------------------------------------------------
 // Limite de músicas por importação: a lista colada e o YouTube custam uma busca na Deezer por música.
 export const MAX_IMPORTED_SONGS = 500;
 

@@ -29,7 +29,6 @@ until: apps/api/src/observability
 | `GET /api/v1/solo/personal-bests/{playlist_id}` | sessão | Recorde, ou 404 se for a 1ª partida |
 | `GET /api/v1/me/export` · `DELETE /api/v1/me` | sessão | LGPD ([`privacy.md`](../privacy.md)) |
 | `GET /metrics` | Bearer `METRICS_AUTH_TOKEN` | Prometheus |
-| `GET /health` | — | `status`, `uptime_seconds`, `version`; 503 se o banco ou o Redis estiver fora |
 
 "Sessão" vale também para anônimos: toda visita tem `__Host-session` ([ADR-0013](../adr/0013-identidade-por-sessao-anonima.md)). Erros REST: `{ code, message }`; 429 vem com `Retry-After`. `platform` é o enum `Platform` de `packages/schema`.
 

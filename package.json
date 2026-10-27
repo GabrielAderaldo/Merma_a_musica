@@ -17,7 +17,8 @@
     "typecheck": "bun check",
     "lint": "oxlint",
     "docs:check": "bun scripts/docs-check.ts",
-    "schema:gen": "bun --filter @merma/schema generate"
+    "schema:gen": "bun --filter @merma/schema generate",
+    "openapi:gen": "bun --filter @merma/api generate"
   },
   "devDependencies": {
     "@types/bun": "1.4.4",

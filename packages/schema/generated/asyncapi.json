@@ -3,7 +3,7 @@
   "info": {
     "title": "Mermã, a Música! — WebSocket da sala",
     "version": "0.1.0",
-    "description": "Gerado de packages/schema por scripts/generate.ts; não edite. Close codes: 1000 normal · 1003 invalid_payload_repeated · 1008 origin_not_allowed · 4001 duplicate_identity · 4029 rate_limited_repeated."
+    "description": "Gerado de packages/schema por scripts/generate.ts; não edite. Close codes: 1000 normal · 1001 server_shutdown · 1003 invalid_payload_repeated · 1008 origin_not_allowed · 4001 duplicate_identity · 4029 rate_limited_repeated."
   },
   "channels": {
     "room": {

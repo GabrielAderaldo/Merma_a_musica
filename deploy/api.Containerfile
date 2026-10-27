@@ -9,6 +9,9 @@ RUN bun install --production --filter '@merma/api...'
 
 # Distroless: sem shell, como nonroot pela unit (merma-api.container). O ENTRYPOINT da imagem já é o bun.
 FROM docker.io/oven/bun:1.4.4-distroless@sha256:153a951ae40106e125898103e6e990ee0f38e6aee7f561029e26cf9fbed23470
+# Liga o pacote do GHCR ao repositório (o código da imagem é o dele, AGPL-3.0).
+LABEL org.opencontainers.image.source="https://github.com/GabrielAderaldo/Merma_a_musica"
+LABEL org.opencontainers.image.licenses="AGPL-3.0-only"
 WORKDIR /app/apps/api
 COPY --from=deps /app /app
 CMD ["--disallow-code-generation-from-strings=strict", "/app/apps/api/src/index.ts"]

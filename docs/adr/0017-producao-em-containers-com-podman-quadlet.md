@@ -17,7 +17,7 @@ O [`operations.md`](../operations.md#topologia-da-fase-0) descreve a produção 
 
 O app limita a escolha. As salas vivem na memória de um processo só ([ADR-0002](0002-servidor-hono-single-writer.md)) e se recuperam pelo snapshot no Redis ([ADR-0009](0009-snapshot-da-partida-em-redis.md)). Por isso o deploy é hard-cut, e troca sem queda (blue/green) não traz ganho. O Caddy já tem papel definido (TLS, `apps/web/dist`, headers S-30 a S-32). A VPS tem 2 vCPU e 4 GB, e há um mantenedor só.
 
-Revisão de 2026-10-27: o staging sobe na VM do caninha-games (outro projeto do mantenedor), onde um Caddy nativo já ocupa 80 e 443. O mantenedor escolheu que o Caddy fique no host em **todo** ambiente, e não só nessa VM: um conjunto só de units, e o staging igual à produção. A VM tem 1 vCPU e 960 MB, então cada container ganha um teto de memória.
+Revisão de 2026-10-27: o staging sobe na VM do caninha-games (outro projeto do mantenedor), onde um Caddy nativo já ocupa 80 e 443. O mantenedor escolheu que o Caddy fique no host em **todo** ambiente, e não só nessa VM: um conjunto só de units, e o staging igual à produção. A VM tem 1 vCPU e, desde o upgrade para o Ubuntu 26.04 (que trouxe o Podman 5; com 1 GB, o boot dava kernel panic por falta de memória), 2 GB. Por isso, cada container ganha um teto de memória.
 
 ## Decisão
 

@@ -19,14 +19,15 @@ jobs:
     timeout-minutes: 10
     # Mesmas imagens (e digests) da deploy/quadlet/merma-redis.container e da merma-postgres.container: os adapters do
     # snapshot e do histórico são testados contra o Redis e o Postgres da produção. O deploy/quadlet.test.ts confere
-    # que não divergem.
+    # que não divergem. O digest é o do image index (multi-arch), não o de um manifest de plataforma: o runner é
+    # amd64 e a PoC rodou em arm64.
     services:
       redis:
-        image: docker.io/library/redis:8@sha256:701d27eed8cbd5042c98ec4035146ed036c2390a31ddd9f3f617b4a5e316e12d
+        image: docker.io/library/redis:8@sha256:0a014ae5c04f55c82aaad2314de411c7a203de1c4312c3e526939226a0185dd9
         ports: ["6379:6379"]
         options: --health-cmd "redis-cli ping" --health-interval 2s --health-timeout 2s --health-retries 15
       postgres:
-        image: docker.io/library/postgres:17@sha256:8630835ad34e3e09007371ac2d8785bd941c3c1fccc02145e3af050b9e520659
+        image: docker.io/library/postgres:17@sha256:b8faeff7712663c2773a190181e1246e37e364b887611c04658c28b44e2408fe
         ports: ["5432:5432"]
         env:
           POSTGRES_USER: merma

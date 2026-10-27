@@ -9,7 +9,7 @@ Description=Mermã — Redis 8
 [Container]
 ContainerName=merma-redis
 Pod=merma.pod
-Image=docker.io/library/redis:8@sha256:701d27eed8cbd5042c98ec4035146ed036c2390a31ddd9f3f617b4a5e316e12d
+Image=docker.io/library/redis:8@sha256:0a014ae5c04f55c82aaad2314de411c7a203de1c4312c3e526939226a0185dd9
 User=redis
 Volume=merma-redisdata.volume:/data:U
 Secret=merma-redis-password,type=mount,target=/run/secrets/redis_password,uid=999

@@ -16,20 +16,19 @@ const values = (text: string, key: string): string[] =>
     .map((line) => line.slice(key.length + 1));
 
 describe("ADR-0017 — arquivos Quadlet", () => {
-  test("existem o pod e os quatro containers", () => {
-    expect(units.map((u) => u.name)).toEqual(
-      expect.arrayContaining(["merma.pod", "merma-api.container", "merma-caddy.container", "merma-postgres.container", "merma-redis.container"]),
-    );
+  test("ADR-0017.R1 o pod tem a API, o Postgres e o Redis; o Caddy fica no host", () => {
+    expect(containers.map((u) => u.name).toSorted()).toEqual(["merma-api.container", "merma-postgres.container", "merma-redis.container"]);
+    expect(units.map((u) => u.name)).toContain("merma.pod");
   });
 
   test.each(containers)("ADR-0017.R1 $name está no pod merma", ({ text }) => {
     expect(values(text, "Pod")).toEqual(["merma.pod"]);
   });
 
-  test("ADR-0017.R2 só o pod publica portas, e só 80 e 443", () => {
+  test("ADR-0017.R2 só o pod publica porta, e só a da API no loopback da VM", () => {
     for (const { name, text } of containers) expect(values(text, "PublishPort"), name).toEqual([]);
     const pod = units.find((u) => u.name === "merma.pod")?.text ?? "";
-    expect(values(pod, "PublishPort").sort()).toEqual(["443:443", "443:443/udp", "80:80"]);
+    expect(values(pod, "PublishPort")).toEqual(["127.0.0.1:3000:3000"]);
   });
 
   test("ADR-0017.R2 Postgres e Redis escutam só em 127.0.0.1", () => {
@@ -57,6 +56,16 @@ describe("ADR-0017 — arquivos Quadlet", () => {
     for (const env of values(text, "Environment").flatMap((v) => v.split(/\s+/))) {
       expect(env).not.toMatch(/^[A-Z_]*(PASSWORD|SECRET|TOKEN|KEY)[A-Z_]*=(?!\/run\/secrets\/)/);
     }
+  });
+
+  test.each(containers)("ADR-0017.R4 $name só recebe segredo por Secret=", ({ text }) => {
+    for (const secret of values(text, "Secret")) expect(secret).toMatch(/^merma-[a-z0-9-]+,type=(mount|env),target=/);
+  });
+
+  test.each(containers)("ADR-0017.R9 $name tem teto de memória", ({ text }) => {
+    const [memory] = values(text, "Memory");
+    expect(memory).toMatch(/^\d+m$/);
+    expect(Number.parseInt(memory ?? "", 10)).toBeLessThanOrEqual(256);
   });
 
   test.each(containers)("ADR-0017.R6 $name não usa AutoUpdate= (num pod ele reinicia o pod inteiro)", ({ text }) => {

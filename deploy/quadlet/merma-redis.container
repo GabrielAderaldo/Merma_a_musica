@@ -2,6 +2,7 @@
 # A senha vira um conf em /tmp (umask 077), para não aparecer no argv nem no ambiente. O `exec` sem pipe deixa o
 # redis-server como PID 1, recebendo o SIGTERM (com pipe, o `sh` ficava no meio e o stop acabava em SIGKILL).
 # User=redis porque o Exec= não passa pela troca de usuário do entrypoint; `:U` dá o volume a esse usuário.
+# --maxmemory abaixo do teto do container (ADR-0017.R9): cheio, o Redis recusa a escrita em vez de ser morto pelo OOM.
 # `$$` e `%%` são `$` e `%` literais: o systemd expande `$VAR` e `%x` no ExecStart.
 [Unit]
 Description=Mermã — Redis 8
@@ -13,11 +14,12 @@ Image=docker.io/library/redis:8@sha256:0a014ae5c04f55c82aaad2314de411c7a203de1c4
 User=redis
 Volume=merma-redisdata.volume:/data:U
 Secret=merma-redis-password,type=mount,target=/run/secrets/redis_password,uid=999
-Exec=sh -c 'umask 077 && printf "requirepass %%s\n" "$$(cat /run/secrets/redis_password)" > /tmp/auth.conf && exec redis-server /tmp/auth.conf --bind 127.0.0.1 --appendonly yes'
+Exec=sh -c 'umask 077 && printf "requirepass %%s\n" "$$(cat /run/secrets/redis_password)" > /tmp/auth.conf && exec redis-server /tmp/auth.conf --bind 127.0.0.1 --appendonly yes --maxmemory 64mb'
 HealthCmd=REDISCLI_AUTH="$$(cat /run/secrets/redis_password)" redis-cli -h 127.0.0.1 ping | grep -q PONG
 HealthInterval=5s
 HealthRetries=5
 Notify=healthy
+Memory=96m
 
 [Service]
 Restart=always

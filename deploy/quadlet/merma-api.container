@@ -1,7 +1,12 @@
-# apps/api em oven/bun distroless, como nonroot (a imagem declara User=0) e com a flag do S-27.
+# apps/api em oven/bun distroless (deploy/api.Containerfile), como nonroot (a imagem declara User=0) e com a flag do S-27.
 # Sem shell na imagem: o healthcheck é exec form, rodando o bun direto.
 # A imagem real vem do drop-in merma-api.container.d/image.conf, escrito pelo deploy/merma-deploy (GHCR por digest,
 # ADR-0017.R3). Sem AutoUpdate=: num pod, o `podman auto-update` reinicia o pod inteiro e não faz rollback.
+#
+# Segredos como variável de ambiente, porque a API lê tudo do ambiente (ADR-0017.R4). Os opcionais (SENTRY_DSN,
+# YOUTUBE_API_KEY, OAUTH_TOKEN_ENCRYPTION_KEY) entram num drop-in do host, merma-api.container.d/optional.conf, só
+# quando o segredo existe: o Podman não sobe container com Secret= de segredo inexistente.
+# O que não é segredo e muda por host (PUBLIC_BASE_URL, SPOTIFY_CLIENT_ID, SPOTIFY_REDIRECT_URI) fica no api.env.
 [Unit]
 Description=Mermã — API
 Requires=merma-postgres.service merma-redis.service
@@ -10,15 +15,22 @@ After=merma-postgres.service merma-redis.service
 [Container]
 ContainerName=merma-api
 Pod=merma.pod
-Image=localhost/merma-api:poc
+Image=localhost/merma-api:unset
 User=65532:65532
-Secret=merma-pg-password,type=mount,target=/run/secrets/pg_password,uid=65532
-Secret=merma-redis-password,type=mount,target=/run/secrets/redis_password,uid=65532
-Exec=--disallow-code-generation-from-strings=strict /app/server.ts
-HealthCmd=["/usr/local/bin/bun", "/app/healthcheck.ts"]
+EnvironmentFile=%h/.config/merma/api.env
+Environment=PORT=3000 LOG_LEVEL=info
+Secret=merma-session-secret,type=env,target=SESSION_SECRET
+Secret=merma-audio-hmac-secret,type=env,target=AUDIO_HMAC_SECRET
+Secret=merma-postgres-url,type=env,target=POSTGRES_URL
+Secret=merma-redis-url,type=env,target=REDIS_URL
+Secret=merma-metrics-token,type=env,target=METRICS_AUTH_TOKEN
+Exec=--disallow-code-generation-from-strings=strict /app/apps/api/src/index.ts
+HealthCmd=["/usr/local/bin/bun", "/app/apps/api/scripts/healthcheck.ts"]
 HealthInterval=5s
 HealthRetries=3
 Notify=healthy
+# ADR-0017.R9: o OOM mata o Mermã antes do que mais estiver na VM.
+Memory=256m
 
 [Service]
 Restart=always

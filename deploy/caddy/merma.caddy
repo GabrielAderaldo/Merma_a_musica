@@ -1,0 +1,35 @@
+# Bloco do Mermã no Caddy do host (ADR-0017): TLS, headers S-30 e S-31, estáticos do apps/web e proxy para o pod.
+# Vai para /etc/caddy/sites/merma.caddy com __MERMA_DOMAIN__ trocado pelo domínio; o Caddyfile do host faz
+# `import /etc/caddy/sites/*.caddy`. Antes de recarregar: `caddy validate --config /etc/caddy/Caddyfile`, porque um
+# erro aqui impede o reload do Caddy inteiro, inclusive o dos outros sites da VM.
+# `handle` fixa a ordem: o proxy vem antes dos estáticos.
+__MERMA_DOMAIN__ {
+	# S-30: só TLS 1.3.
+	tls {
+		protocols tls1.3
+	}
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		Content-Security-Policy "default-src 'self'; connect-src 'self' wss://__MERMA_DOMAIN__; img-src 'self' data: https://*.scdn.co https://*.dzcdn.net; media-src 'self' blob:; script-src 'self'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+
+	# A API no pod (127.0.0.1:3000). /metrics fica de fora: só pelo loopback da VM (ADR-0017.R10).
+	@api path /api/* /auth/* /ws/room/* /health
+	handle @api {
+		reverse_proxy 127.0.0.1:3000
+	}
+
+	# O apps/web (SPA): rota desconhecida cai no index.html. Até o web existir, uma página provisória.
+	handle {
+		root * /srv/merma/web
+		try_files {path} /index.html
+		file_server
+	}
+}

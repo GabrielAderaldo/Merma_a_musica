@@ -50,7 +50,7 @@ Fora do modelo de ameaça no MVP: atacante estatal, zero-day em Bun/Postgres/Red
 - **S-31** CSP: `default-src 'self'; connect-src 'self' wss://<domínio>; img-src 'self' data: https://*.scdn.co https://*.dzcdn.net; media-src 'self' blob:; script-src 'self'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'`. Mais `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin` e `Permissions-Policy: camera=(), microphone=(), geolocation=()`.
 - **S-32** Só dois cookies: `__Host-session` (30 dias) e `__Host-csrf` (durante o OAuth).
 
-Verificação de S-30 a S-32: pendente, teste de headers contra o Caddyfile quando o deploy existir.
+Verificação: S-30 e S-31 em `deploy/caddy.test.ts`, que compara o bloco do Caddy com este texto. S-32 continua pendente: falta o teste dos cookies da API.
 
 ## Segredos
 

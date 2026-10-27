@@ -1,0 +1,15 @@
+# Contexto do deploy/api.Containerfile: só o que a apps/api precisa para rodar.
+.git
+.github
+.claude
+**/node_modules
+**/*.test.ts
+docs
+deploy
+scripts
+tools
+.env
+.env.*
+.mcp.json
+.oxlintrc.json
+CLAUDE.md

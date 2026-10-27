@@ -3,6 +3,7 @@ id: ADR-0017
 title: Rodar a produção em containers com Podman + Quadlet, num pod só
 status: proposed
 date: 2026-10-21
+revised: 2026-10-27
 supersedes: null
 scope: ["apps/api/**", "apps/web/**", ".github/**", "deploy/**"]
 revisit_when: "O primeiro deploy numa VPS real divergir da PoC (boot, network-online, RAM), ou a Fase 1 (N VPS) chegar"
@@ -16,18 +17,21 @@ O [`operations.md`](../operations.md#topologia-da-fase-0) descreve a produção 
 
 O app limita a escolha. As salas vivem na memória de um processo só ([ADR-0002](0002-servidor-hono-single-writer.md)) e se recuperam pelo snapshot no Redis ([ADR-0009](0009-snapshot-da-partida-em-redis.md)). Por isso o deploy é hard-cut, e troca sem queda (blue/green) não traz ganho. O Caddy já tem papel definido (TLS, `apps/web/dist`, headers S-30 a S-32). A VPS tem 2 vCPU e 4 GB, e há um mantenedor só.
 
+Revisão de 2026-10-27: o staging sobe na VM do caninha-games (outro projeto do mantenedor), onde um Caddy nativo já ocupa 80 e 443. O mantenedor escolheu que o Caddy fique no host em **todo** ambiente, e não só nessa VM: um conjunto só de units, e o staging igual à produção. A VM tem 1 vCPU e 960 MB, então cada container ganha um teto de memória.
+
 ## Decisão
 
 Produção em **Podman 5.x com Quadlet**, **rootless**, sob um usuário de serviço dedicado com linger. Cada container é uma unit do systemd, com logs no journald. Os arquivos estão em [`deploy/quadlet/`](../../deploy/quadlet/).
 
-- Um **pod** (`merma.pod`) com quatro containers que compartilham o loopback:
-  - Caddy 2;
+- Um **pod** (`merma.pod`) com três containers que compartilham o loopback:
   - `apps/api` em `oven/bun:1.4.4-distroless` ([ADR-0018](0018-bun-1-4-4.md)), rodando como `65532` (a imagem declara `User=0`);
   - Postgres 17;
   - Redis 8, rodando como `redis`.
-- Só o pod publica `80`, `443` e `443/udp`. Postgres, Redis e a API escutam em `127.0.0.1`, e a topologia do `operations.md` continua valendo dentro do pod.
-- Imagens referenciadas por **digest** (`@sha256:…`), publicadas no GHCR. O CI roda os checks **dentro** da imagem `oven/bun:1.4.4` fixada pelo mesmo digest da produção, no lugar do `setup-bun`. A imagem de teste é a `debian` e a de produção é a `distroless`, ambas glibc.
-- Segredos via `Secret=…,type=mount` do Quadlet (`podman secret`), nunca em `Environment=`.
+- O **Caddy 2 roda no host**, nativo pelo apt e fora do pod. Ele cuida do TLS, dos headers S-30 e S-31, dos estáticos do `apps/web` e do proxy para a API. O bloco do Mermã fica em [`deploy/caddy/merma.caddy`](../../deploy/caddy/merma.caddy) e vai para `/etc/caddy/sites/`, que o Caddyfile do host importa. Assim ele convive com outro site na mesma VM.
+- O pod publica só `127.0.0.1:3000`. Postgres e Redis escutam em `127.0.0.1` do pod, e nada dele fica exposto para fora da VM.
+- Cada container tem teto de memória (`Memory=`). Se faltar RAM, o OOM mata o Mermã antes do que mais estiver na VM.
+- Imagens referenciadas por **digest** (`@sha256:…`), e a da API publicada no GHCR. A da API sai de [`deploy/api.Containerfile`](../../deploy/api.Containerfile). O CI roda os checks **dentro** da imagem `oven/bun:1.4.4` fixada pelo mesmo digest da produção, no lugar do `setup-bun`. A imagem de teste é a `debian` e a de produção é a `distroless`, ambas glibc.
+- Segredos via `Secret=` do Quadlet (`podman secret`), nunca em `Environment=`. O Postgres e o Redis recebem o segredo montado em arquivo (`type=mount`); a API recebe como variável de ambiente (`type=env`), porque lê tudo do ambiente (`apps/api/src/config.ts`). O que não é segredo e muda por host (`PUBLIC_BASE_URL`, o `client_id` do Spotify) fica num `EnvironmentFile=` do usuário de serviço.
 - **Deploy pelo [`deploy/merma-deploy`](../../deploy/merma-deploy)**, não pelo `podman auto-update`:
   1. grava o digest novo num drop-in (`merma-api.container.d/image.conf`);
   2. reinicia **só** a `merma-api.service`;
@@ -57,14 +61,16 @@ Outros achados da PoC:
 
 ## Restrições
 
-- **ADR-0017.R1** MUST rodar Caddy, `apps/api`, Postgres e Redis de produção como containers Quadlet num único pod. — Check: `deploy/quadlet.test.ts`
-- **ADR-0017.R2** MUST publicar só 80, 443 e 443/udp, e só no pod; Postgres, Redis e API escutam em `127.0.0.1`. — Check: `deploy/quadlet.test.ts`
+- **ADR-0017.R1** MUST rodar `apps/api`, Postgres e Redis de produção como containers Quadlet num único pod, com o Caddy no host. — Check: `deploy/quadlet.test.ts`
+- **ADR-0017.R2** MUST publicar só `127.0.0.1:3000`, e só no pod; Postgres, Redis e API escutam em `127.0.0.1`. — Check: `deploy/quadlet.test.ts`
 - **ADR-0017.R3** MUST referenciar toda imagem por digest, e o CI MUST testar na mesma versão do Bun da imagem de produção. — Check: `deploy/quadlet.test.ts` (digest) + `scripts/harness.test.ts` (CI, `packageManager` e imagem na mesma versão)
 - **ADR-0017.R4** MUST NOT pôr segredo em `Environment=` ou no arquivo da unit; só `Secret=`. — Check: `deploy/quadlet.test.ts`
 - **ADR-0017.R5** MUST NOT usar container no desenvolvimento: a aplicação roda nativa e Postgres e Redis vêm da `~/.infra`. — Check: Review: mantenedor
 - **ADR-0017.R6** MUST NOT usar `AutoUpdate=` nem `podman auto-update`; o deploy é pelo `deploy/merma-deploy`. — Check: `deploy/quadlet.test.ts`
 - **ADR-0017.R7** MUST ter `Notify=healthy` e `HealthCmd=` em todo container, para o restart esperar o serviço de fato. — Check: `deploy/quadlet.test.ts`
-- **ADR-0017.R8** MUST tratar SIGTERM na `apps/api`: gravar o snapshot das salas e sair, dentro dos 10 s antes do SIGKILL. — Check: pendente (apps/api) — teste de shutdown
+- **ADR-0017.R8** MUST tratar SIGTERM na `apps/api`: gravar o snapshot das salas e sair, dentro dos 10 s antes do SIGKILL. — Check: `apps/api/src/shutdown.test.ts`
+- **ADR-0017.R9** MUST pôr teto de memória (`Memory=`) em todo container. — Check: `deploy/quadlet.test.ts`
+- **ADR-0017.R10** MUST NOT expor `/metrics` pelo Caddy; só se chega a ele pelo loopback da VM. — Check: `deploy/caddy.test.ts`
 
 ## Consequências
 
@@ -72,12 +78,16 @@ Outros achados da PoC:
 - Sem daemon e com units do systemd: RTO, restart e logs seguem o que o `operations.md` já assume. O hard-cut medido (~7 s) cabe com folga na meta de < 30 s.
 - Deploy que falha fica fora do ar por até ~32 s antes do rollback. Pior que a meta, mas só no caso de erro.
 - O backup do Postgres passa a ser `podman exec … pg_dump`.
+- O Caddy fica fora da fixação por digest. Ele vem do apt do host, atualizado pelo sistema, e a versão pode divergir entre VPS.
+- Na VM compartilhada, um erro no bloco `merma.caddy` impede o Caddy de recarregar, e isso afeta o outro site. Por isso, valide com `caddy validate` antes de recarregar.
 - Abrimos mão da paridade de ferramenta com o Mac (OrbStack é Docker). Pouco pesa, porque em dev nada roda em container.
 
 ## Alternativas descartadas
 
 - Docker Engine + Compose: plano B, não foi preciso. Daemon root, e o restart e a ordem de subida do Compose duplicam o systemd.
 - `podman auto-update` com rollback: reprovado na PoC (ver a tabela).
+- Caddy dentro do pod, publicando 80 e 443: era a versão de 2026-10-21. Não convive com outro Caddy na VM do staging, e duas variantes de units custariam mais.
+- Caddy do pod servindo também o outro site da VM: um deploy quebrado do Mermã derrubaria o outro projeto.
 - Rede interna em vez de pod: tira o Redis do loopback e fere o [ADR-0009](0009-snapshot-da-partida-em-redis.md).R3.
 - Kamal 2: a troca sem queda não serve a salas em memória, e o kamal-proxy tomaria o lugar do Caddy.
 - Coolify / Dokploy: de 0,5 a 1,2 GB ociosos numa VPS de 4 GB, com proxy próprio; o Dokploy tem uma parte proprietária.

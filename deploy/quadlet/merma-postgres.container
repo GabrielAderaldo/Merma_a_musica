@@ -1,4 +1,5 @@
 # Postgres 17 só em loopback (ADR-0006, ADR-0017.R2). Senha via secret montado, nunca em Environment= (ADR-0017.R4).
+# shared_buffers e max_connections baixos para caber no teto de memória (ADR-0017.R9); a API usa um pool só.
 [Unit]
 Description=Mermã — Postgres 17
 
@@ -9,11 +10,12 @@ Image=docker.io/library/postgres:17@sha256:b8faeff7712663c2773a190181e1246e37e36
 Volume=merma-pgdata.volume:/var/lib/postgresql/data
 Secret=merma-pg-password,type=mount,target=/run/secrets/pg_password
 Environment=POSTGRES_USER=merma POSTGRES_DB=merma POSTGRES_PASSWORD_FILE=/run/secrets/pg_password
-Exec=postgres -c listen_addresses=127.0.0.1
+Exec=postgres -c listen_addresses=127.0.0.1 -c shared_buffers=32MB -c max_connections=20
 HealthCmd=pg_isready -h 127.0.0.1 -U merma -d merma
 HealthInterval=5s
 HealthRetries=5
 Notify=healthy
+Memory=192m
 
 [Service]
 Restart=always

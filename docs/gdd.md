@@ -11,14 +11,15 @@ Termos em [`glossary.md`](glossary.md). O porquê do produto em [`product.md`](p
 ## 1. Fluxo e sala
 
 - **R-001** Telas: Home → Criar sala | Entrar em sala | Jogar sozinho. Sala: Lobby → Partida → Resultados → Lobby. Solo: Dashboard solo → Partida solo → Resultado solo → Dashboard solo.
-- **R-002** Login OAuth (Spotify, Deezer, YouTube Music) é opcional e nunca bloqueia jogar. Conectar uma plataforma só libera importar playlists. Depois do callback, o jogador volta à tela onde estava.
+- **R-002** Cada jogador traz a **própria playlist**: as músicas que ele quer no sorteio da partida, venham de onde vierem. Formas de trazer, nenhuma exige login: colar o link de uma playlist **pública** da Deezer ou do YouTube/YouTube Music, ou colar uma lista de nomes (uma música por linha, de qualquer lugar). Conectar o Spotify por OAuth é opcional e só libera importar as playlists dele; depois do callback, o jogador volta à tela onde estava. (Decidido em 2026-10-26: OAuth de Deezer e YouTube saiu, porque o portal da Deezer não aceita apps novos e o escopo do YouTube exige verificação do Google.)
 - **R-003** Jogar anônimo é cidadão de primeira classe: a identidade existe desde a 1ª visita ([ADR-0013](adr/0013-identidade-por-sessao-anonima.md)). Entrar em sala exige `nickname`, editável fora de rodada, sem unicidade.
 - **R-004** Criar sala gera `invite_code` de 6 caracteres `[A-Z0-9]` e torna o criador **host**.
 - **R-005** Uma sala comporta de 1 a 20 jogadores. O 21º recebe `room_full`.
-- **R-006** O lobby mostra, por jogador: nickname, `ready` (exceto host), `afk`, plataforma conectada e se já escolheu playlist.
+- **R-006** O lobby mostra, por jogador: nickname, `ready` (exceto host), `afk`, a origem da playlist escolhida (R-010) e se já escolheu playlist.
 - **R-007** Só o host configura e inicia a partida. Toda mudança de configuração chega a todos em tempo real.
 - **R-008** O host é sempre `ready` e não pode marcar `unready` (`host_is_always_ready`).
 - **R-009** O host pode iniciar com ≥1 jogador na sala, mesmo com jogadores `unready`.
+- **R-010** Na importação, cada música é procurada na Deezer (por ISRC e, sem ele, por nome + artista) e entra com o nome, o artista e o ISRC que a Deezer devolveu. Música sem resultado fica fora da playlist, e o jogador é avisado de quantas e quais ficaram. A lista colada tem origem `text`. (Decidido em 2026-10-26.)
 
 ## 2. Rodada
 

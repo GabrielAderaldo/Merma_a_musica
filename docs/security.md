@@ -16,7 +16,7 @@ Fora do modelo de ameaça no MVP: atacante estatal, zero-day em Bun/Postgres/Red
 | S-01 | `player_uuid` é emitido pelo servidor no cookie `__Host-session` (`HttpOnly; Secure; SameSite=Strict; Path=/`). Nunca é lido de query, header ou body. | `apps/api/src/http/session.test.ts` (REST) e `apps/api/src/room/gateway.test.ts` (WS) |
 | S-02 | O handshake do WS identifica o jogador **só** pelo cookie e valida o `Origin` contra uma allowlist (fecha com 1008). | `apps/api/src/room/gateway.test.ts` |
 | S-03 | Segunda conexão do mesmo `player_uuid` na mesma sala fecha a anterior com close code 4001. | `apps/api/src/room/actor.test.ts` |
-| S-04 | Mutações REST validam o header `Origin` (CSRF). O cookie de state do OAuth é `__Host-csrf`, `SameSite=Lax`, 10 min. | pendente |
+| S-04 | Mutações REST validam o header `Origin` (CSRF). O cookie de state do OAuth é `__Host-csrf`, `SameSite=Lax`, 10 min. | `apps/api/src/http/auth.test.ts` e `apps/api/src/http/playlists.test.ts` |
 
 ## Áudio ([ADR-0004](adr/0004-audio-universal-via-deezer.md))
 
@@ -38,7 +38,7 @@ Fora do modelo de ameaça no MVP: atacante estatal, zero-day em Bun/Postgres/Red
 | S-22 | Autocomplete roda no servidor; o cliente nunca recebe o pool inteiro. | pendente |
 | S-23 | Rate limit por `(player_uuid, room_id)`: `submit_answer` 10/s, `autocomplete_search` 5/s, demais 30/s somados. 1ª violação → `error: rate_limited`; 3ª → close 4029. | pendente |
 | S-24 | Payload WS inválido no Zod → `error: invalid_payload`. 3 inválidos → close 1003. (Decidido em 2026-10-21: um cliente com bug não derruba o jogador na 1ª falha.) | `apps/api/src/room/gateway.test.ts` |
-| S-25 | REST: 10 salas/hora e 5 importações simultâneas por `player_uuid`. | salas: `apps/api/src/http/rooms.test.ts`; importações: pendente |
+| S-25 | REST: 10 salas/hora e 5 importações simultâneas por `player_uuid`. | salas: `apps/api/src/http/rooms.test.ts`; importações: `apps/api/src/playlist/importer.test.ts` |
 | S-26 | Padrão "100% de acerto e menos de 1s" vira métrica `merma_suspicious_pattern_total`. Sem ação automática no MVP. | pendente |
 | S-27 | Injeção que vire código → o `apps/api` de produção roda com `bun --disallow-code-generation-from-strings=strict`: `eval`, `new Function`, `node:vm`, `import()` de `data:` e `Worker` com `eval` lançam erro no processo inteiro, Workers inclusos (Bun ≥ 1.4.3). (Decidido em 2026-10-21.) Risco a confirmar: o Zod 4 usa `new Function` como otimização e deve cair no modo sem JIT. Desde a 1.4.4 o `=strict` recusa todo código que não seja do programa, não só uma lista de APIs: plugin que devolve `contents` e macros também caem. | pendente: a suíte do `apps/api` roda também sob a flag |
 

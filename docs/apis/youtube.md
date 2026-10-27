@@ -1,5 +1,7 @@
 # YouTube Data API v3 — Respostas de Referência
 
+> **Aferido em 2026-10-26 ([ADR-0024](../adr/0024-playlist-por-link-publico-e-lista-resolvidos-na-deezer.md)):** o projeto não usa mais o OAuth do Google. Lê só playlist pública, com `YOUTUBE_API_KEY` (`playlists?id=` e `playlistItems`), e não guarda nada da API além do ID e do nome da playlist. As seções de OAuth e de `mine=true` abaixo ficaram como histórico.
+
 Documentação coletada em março/2026.
 Base URL: `https://www.googleapis.com/youtube/v3`
 Auth: OAuth 2.0 (Google) para playlists do usuário.

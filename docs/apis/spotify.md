@@ -1,5 +1,7 @@
 # Spotify Web API — Respostas de Referência
 
+> **Aferido em 2026-10-26 ([ADR-0024](../adr/0024-playlist-por-link-publico-e-lista-resolvidos-na-deezer.md)):** o login é PKCE sem `client_secret`, com os scopes `playlist-read-private playlist-read-collaborative`. A contagem de faixas é `items.total` (`tracks.total` está deprecated), e o item da playlist vem em `item` (`track` está deprecated). As URLs de imagem expiram em menos de um dia, então não são guardadas. Em Development Mode, `/items` dá 403 em playlist que o usuário não criou nem colabora.
+
 Documentação coletada em março/2026. Inclui mudanças de fev/2026 (Dev Mode restrictions).
 
 ## Endpoints usados

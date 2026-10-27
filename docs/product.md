@@ -31,7 +31,7 @@ Não é streaming (as plataformas são fornecedoras), não é descoberta musical
 
 1. Partida completa sem bug crítico com 1 (solo), 4 e 20 jogadores.
 2. Reconexão em até 2 min retomando a partida.
-3. Importação real das 3 plataformas, com áudio universal via Deezer.
+3. Cada jogador traz a própria playlist sem login (link da Deezer ou do YouTube, ou lista colada; Spotify por OAuth opcional, R-002), com áudio universal via Deezer.
 4. Latência e disponibilidade dentro das metas de [`operations.md`](operations.md).
 5. Modo solo com recordes persistidos.
 

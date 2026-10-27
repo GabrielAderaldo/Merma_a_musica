@@ -19,7 +19,7 @@
 | D. Telemetria | Métricas agregadas; logs com `player_uuid` | `/metrics`, stdout | Execução de contrato + legítimo interesse |
 
 - O access token OAuth fica **só em memória**, nunca persistido.
-- O jogador anônimo só passa a ter linha no Postgres quando gera um recorde solo ou uma partida concluída.
+- O jogador anônimo só passa a ter linha no Postgres quando importa uma playlist, gera um recorde solo ou conclui uma partida.
 
 **Não coletamos:** e-mail (não pedimos esse scope no OAuth), telefone, documentos, localização precisa, fingerprint detalhado, histórico de navegação, `answer_text` em log, métrica ou histórico, nem dados de menores de 13 anos (anti-persona).
 
@@ -27,7 +27,8 @@
 
 | Terceiro | O que recebe |
 |---|---|
-| Spotify, Deezer, YouTube Music | Só o necessário para chamar a API deles (token, IDs de playlist) |
+| Spotify | Só o necessário para chamar a API (token, IDs de playlist) |
+| Deezer, YouTube | O ID da playlist colada e, na resolução, o nome e o artista de cada música buscada; nada que identifique o jogador |
 | Sentry | Stack trace + contexto técnico, com payload sanitizado |
 | Armazenamento de backup (ex.: Backblaze B2) | Backup do Postgres já cifrado |
 | Provedor da VPS | Tudo (é o substrato) |
@@ -42,7 +43,7 @@ Sentry e backup podem ficar fora do Brasil: execução de contrato + garantia co
 | `player_uuid` em logs | 90 dias (rotação do journald) |
 | Estado da partida | Vida da partida + TTL de 30 min do snapshot |
 | Histórico de partidas | 2 anos; depois agregado e anonimizado |
-| Recordes do solo, playlists | Enquanto o jogador existir ou até pedir exclusão |
+| Recordes do solo, playlists | Enquanto o jogador existir ou até pedir exclusão. Da playlist do YouTube só se guarda o resolvido na Deezer, mais o ID e o nome dela, renovados a cada reimportação: os termos da YouTube API proíbem guardar dado dela por mais de 30 dias (decidido em 2026-10-26) |
 | Refresh token | Enquanto a conta estiver conectada |
 | Backups | 14 dias |
 | Jogador inativo por 6 meses | Apagado; histórico mantido com `player_uuid` trocado por hash truncado |

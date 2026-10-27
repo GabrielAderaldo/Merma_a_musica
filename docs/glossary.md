@@ -16,6 +16,7 @@
 | Ready (`ready`) | Jogador pronto para a próxima partida. Não bloqueia o início (R-009). Não se aplica ao host. |
 | AFK (`afk`) | Sinal social de ausência temporária. Não muda regra (R-601). |
 | Invite code (`invite_code`) | 6 caracteres `[A-Z0-9]`. Ex.: `ABC123`. |
+| Playlist do jogador | As músicas que um jogador põe no sorteio, venham de onde vierem: link da Deezer ou do YouTube, lista colada ou Spotify conectado (R-002). No código, `ImportedPlaylist`. |
 | Pool (`pool`) | Todas as músicas das playlists dos jogadores presentes. Fonte do autocomplete. |
 | Pool de reserva | Músicas do pool que não foram sorteadas para a partida; substituem música sem áudio (R-307). |
 | Grace period (`grace_period`) | 3s entre `round_starting` e `timer_started`, para o áudio carregar. |
@@ -50,6 +51,9 @@
 | `audio_token` | Token HMAC por `(player_uuid, round_id, expiry)`, de uso único, usado em `GET /api/v1/audio/{audio_token}` ([ADR-0004](adr/0004-audio-universal-via-deezer.md)). |
 | Proxy de áudio | Endpoint que baixa o preview, remove os metadados e o entrega ao cliente. |
 | `NormalizedSong` | Música importada, já independente da plataforma: `{ isrc?, name, artist, album?, contributed_by, source_platform }`. |
+| Resolução na Deezer | Achar na Deezer, na importação, a música de cada linha ou vídeo (R-010). O que não é achado fica fora da playlist. |
+| Lista colada (`text`) | Playlist que o jogador cria colando nomes, uma música por linha. Origem `text` no lugar de uma plataforma (R-010). |
+| Importação (`ImportJob`) | Tarefa assíncrona que lê a fonte, resolve na Deezer e grava a playlist. O cliente acompanha por polling. |
 
 ## Identidade e plataformas
 
@@ -59,8 +63,8 @@
 | Sessão (`__Host-session`) | Cookie HttpOnly que prova quem é o jogador. Existe para anônimos e para logados. |
 | `nickname` | Nome exibido. Sem unicidade. |
 | `connection_status` | `connected`, `reconnecting` ou `disconnected`. Diferente de `ready`. |
-| `ConnectedAccount` | Vínculo OAuth entre `player_uuid` e uma plataforma. Guarda o refresh token cifrado. |
-| `ImportedPlaylist` | Playlist importada e normalizada, persistida no Postgres. |
+| `ConnectedAccount` | Vínculo OAuth entre `player_uuid` e o Spotify, a única plataforma com login (R-002). Guarda o refresh token cifrado. |
+| `ImportedPlaylist` | Playlist do jogador já resolvida na Deezer, persistida no Postgres. |
 
 ## Arquitetura
 

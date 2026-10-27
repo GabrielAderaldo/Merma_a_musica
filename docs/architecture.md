@@ -10,7 +10,7 @@
 |---|---|---|
 | Game Engine (core) | `packages/domain` | Regras puras do GDD. Sem I/O. |
 | Game Orchestrator | `apps/api/src/room` | `RoomRegistry`, `RoomActor`, `WsGateway`, timers, snapshot, recovery. Aplica os `Result` da engine. |
-| Playlist Integration | `apps/api/src/playlist` (áudio em `playlist/audio`) | OAuth, importação, normalização para `NormalizedSong`, resolução de áudio. Anti-corruption layer: nada fora dele vê formato de plataforma. |
+| Playlist Integration | `apps/api/src/playlist` (áudio em `playlist/audio`) | Importação por link, lista colada ou OAuth do Spotify, resolução de cada música na Deezer (R-010, [ADR-0024](adr/0024-playlist-por-link-publico-e-lista-resolvidos-na-deezer.md)), resolução de áudio. Anti-corruption layer: nada fora dele vê formato de plataforma. |
 | Progression | `apps/api/src/progression` | Recordes do solo no MVP; XP e leaderboard depois. |
 | Contratos | `packages/schema` | Zod, compartilhado por todos ([ADR-0014](adr/0014-contratos-zod-first.md)). |
 
@@ -35,7 +35,9 @@ apps/web ──► packages/schema ◄── packages/domain ◄── apps/api
 | Snapshot da sala em `in_match` | Redis `room:{invite_code}:snapshot`, a cada 5s | TTL 30 min; apagado ao persistir |
 | Cache ISRC → Deezer | Redis `isrc:{isrc}:deezer` | TTL 24h |
 | MP3 da rodada | Memória do `RoomActor`, por `round_id` | Até o fim da rodada |
-| Contas OAuth, playlists, histórico, recordes | Postgres | Ver retenção em [`privacy.md`](privacy.md) |
+| Job de importação de playlist | Memória do processo (`ImportJobs`) | 10 min depois de terminar; um restart o perde e o jogador importa de novo |
+| Access token do Spotify | Memória do processo | Até expirar ([`privacy.md`](privacy.md)) |
+| Conta do Spotify, playlists do jogador, histórico, recordes | Postgres | Ver retenção em [`privacy.md`](privacy.md) |
 
 - **Single-writer:** cada sala pertence a um único processo. Com N nodes, o Caddy roteia por hash do `invite_code` ([ADR-0002](adr/0002-servidor-hono-single-writer.md)).
 - O Postgres **não** guarda partida em andamento. Recebe uma escrita única quando a partida chega a `completed`: config, placar por jogador e, por rodada e jogador, `is_correct`, `is_near_miss`, `points` e `response_time`. **Sem `answer_text`** (decidido em 2026-10-21, [`privacy.md`](privacy.md)).

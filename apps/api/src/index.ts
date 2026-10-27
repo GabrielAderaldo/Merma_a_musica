@@ -8,13 +8,16 @@ import { connect, migrateDatabase } from "./db/client.ts";
 import { createApp } from "./http/app.ts";
 import { createLogger } from "./http/logger.ts";
 import { OpenSockets } from "./http/socket.ts";
+import { MemoryAccountStore, MemoryPlaylistStore, postgresAccountStore, postgresPlaylistStore } from "./playlist/store.ts";
+import { playlistIntegration } from "./playlist/system.ts";
 import { soloRecords } from "./progression/solo.ts";
 import { MemoryProgressionStore, postgresProgressionStore } from "./progression/store.ts";
 import { postgresMatchRepository } from "./room/match-store.ts";
+import { playlistSongs } from "./room/playlist-songs.ts";
 import { recoverRooms } from "./room/recovery.ts";
 import { RoomRegistry } from "./room/registry.ts";
 import { MemorySnapshotStore, redisSnapshotStore } from "./room/snapshot-store.ts";
-import { noAudio, noMatchStore, noPlaylists, systemClock, systemIds } from "./room/system.ts";
+import { noAudio, noMatchStore, systemClock, systemIds } from "./room/system.ts";
 import { type ShutdownHook, shutdown } from "./shutdown.ts";
 
 const config = loadConfig(process.env, pkg.version);
@@ -38,19 +41,35 @@ else {
 }
 // Sem Postgres (dev), os recordes do solo ficam na memória e somem num restart.
 const progression = db === null ? new MemoryProgressionStore() : postgresProgressionStore(db);
+// Idem para as playlists e a conta do Spotify.
+const playlists = await playlistIntegration({
+  fetch: (url, init) => fetch(url, init),
+  store: db === null ? new MemoryPlaylistStore() : postgresPlaylistStore(db),
+  accounts: db === null ? new MemoryAccountStore() : postgresAccountStore(db),
+  youtubeApiKey: config.value.youtubeApiKey,
+  spotify: config.value.spotify,
+  logger,
+  now: Date.now,
+});
+if (!playlists.ok) {
+  logger.error("config_invalid", { error: playlists.error });
+  process.exit(1);
+}
+if (config.value.youtubeApiKey === null) logger.warn("youtube_import_disabled");
+if (config.value.spotify === null) logger.warn("spotify_login_disabled");
 const sockets = new OpenSockets();
 const registry = new RoomRegistry({
   clock: systemClock,
   ids: systemIds,
   logger,
   snapshots,
-  songs: noPlaylists,
+  songs: playlistSongs(playlists.value.store),
   audio: noAudio,
   matches: db === null ? noMatchStore : postgresMatchRepository(db),
   solo: soloRecords(progression),
 });
 const hooks: ShutdownHook[] = [{ name: "room_snapshot", run: () => registry.snapshotAll() }];
-const app = createApp({ config: config.value, logger, now: Date.now, startedAt: Date.now(), registry, sockets, progression });
+const app = createApp({ config: config.value, logger, now: Date.now, startedAt: Date.now(), registry, sockets, progression, playlists: playlists.value });
 
 // Antes de aceitar conexões (docs/architecture.md#recuperação).
 const recovery = await recoverRooms({ store: snapshots, registry, clock: systemClock, logger });

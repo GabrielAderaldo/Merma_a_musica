@@ -1,0 +1,518 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "69cbe669-0eba-47fa-a76f-3ab4d47f7ef2",
+  "prevIds": [
+    "b6d99bda-5f47-4a55-a356-189a1b1cdf30"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "connected_accounts"
+      ],
+      "writes": [
+        "s|tbl|public.connected_accounts",
+        "n|tbl|public.connected_accounts",
+        "e|tbl|public.connected_accounts",
+        "n|rel|public.connected_accounts",
+        "n|type|public.connected_accounts",
+        "n|rel|public.connected_accounts_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "playlist_songs"
+      ],
+      "writes": [
+        "s|tbl|public.playlist_songs",
+        "n|tbl|public.playlist_songs",
+        "e|tbl|public.playlist_songs",
+        "n|rel|public.playlist_songs",
+        "n|type|public.playlist_songs",
+        "n|rel|public.playlist_songs_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "playlists"
+      ],
+      "writes": [
+        "s|tbl|public.playlists",
+        "n|tbl|public.playlists",
+        "e|tbl|public.playlists",
+        "n|rel|public.playlists",
+        "n|type|public.playlists",
+        "n|rel|public.playlists_pkey",
+        "n|rel|public.playlists_player_uuid_platform_external_id_unique"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "playlist_songs"
+      ],
+      "writes": [
+        "s|fk|public.playlist_songs.playlist_songs_playlist_id_playlists_playlist_id_fkey",
+        "n|fk|public.playlist_songs.playlist_songs_playlist_id_playlists_playlist_id_fkey",
+        "e|fk|public.playlist_songs.playlist_songs_playlist_id_playlists_playlist_id_fkey",
+        "n|con|public.playlist_songs.playlist_songs_playlist_id_playlists_playlist_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.playlist_songs",
+        "n|sch|public",
+        "n|tbl|public.playlists",
+        "n|sch|public",
+        "n|col|public.playlist_songs.playlist_id",
+        "n|col|public.playlists.playlist_id",
+        "e|uniqueness|public.playlists.playlist_id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "connected_accounts",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "playlist_songs",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "playlists",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "connected_accounts",
+        "name": "player_uuid",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "connected_accounts",
+        "name": "platform",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "connected_accounts",
+        "name": "external_user_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "connected_accounts",
+        "name": "refresh_token_encrypted",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "connected_accounts",
+        "name": "connected_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "playlist_songs",
+        "name": "playlist_id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "playlist_songs",
+        "name": "position",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "playlist_songs",
+        "name": "deezer_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "playlist_songs",
+        "name": "isrc",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "playlist_songs",
+        "name": "name",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "playlist_songs",
+        "name": "artist",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "playlist_songs",
+        "name": "album",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "playlist_songs",
+        "name": "cover_url",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "playlists",
+        "name": "playlist_id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "playlists",
+        "name": "player_uuid",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "playlists",
+        "name": "platform",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "playlists",
+        "name": "external_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "playlists",
+        "name": "name",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "playlists",
+        "name": "cover_url",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "playlists",
+        "name": "imported_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "playlist_songs",
+        "name": "playlist_songs_playlist_id_playlists_playlist_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "playlist_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "playlists",
+        "columnsTo": [
+          "playlist_id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "connected_accounts",
+        "name": "connected_accounts_pkey",
+        "columns": [
+          "player_uuid",
+          "platform"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "playlist_songs",
+        "name": "playlist_songs_pkey",
+        "columns": [
+          "playlist_id",
+          "position"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "playlists",
+        "name": "playlists_pkey",
+        "columns": [
+          "playlist_id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "playlists",
+        "name": "playlists_player_uuid_platform_external_id_unique",
+        "nameExplicit": false,
+        "columns": [
+          "player_uuid",
+          "platform",
+          "external_id"
+        ],
+        "nullsNotDistinct": false,
+        "entityType": "uniques"
+      }
+    }
+  ]
+}

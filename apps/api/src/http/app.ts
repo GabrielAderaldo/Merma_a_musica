@@ -7,7 +7,10 @@ import { secureHeaders } from "hono/secure-headers";
 import type { Config } from "../config.ts";
 import type { ProgressionStore } from "../progression/solo.ts";
 import type { RoomRegistry } from "../room/registry.ts";
+import { authRoutes } from "./auth.ts";
 import type { Logger } from "./logger.ts";
+import { originGuard } from "./origin.ts";
+import { playlistRoutes, type PlaylistRouteDeps } from "./playlists.ts";
 import { roomRoutes } from "./rooms.ts";
 import { session, type SessionVariables } from "./session.ts";
 import { soloRoutes } from "./solo.ts";
@@ -24,6 +27,7 @@ export type AppDeps = {
   registry: RoomRegistry;
   sockets: OpenSockets;
   progression: ProgressionStore;
+  playlists: Omit<PlaylistRouteDeps, "logger">;
 };
 
 const health = createRoute({
@@ -42,13 +46,14 @@ export const createApp = (deps: AppDeps) => {
     },
   });
 
-  // ADR-0002: secureHeaders → cors (allowlist) → requestId → session → rateLimit → handler.
-  // O rateLimit entra com as primeiras rotas que o S-25 limita (POST /rooms, importação).
+  // ADR-0002: secureHeaders → cors (allowlist) → requestId → session → rateLimit → handler, com o Origin das
+  // mutações (S-04) checado antes do rateLimit. O rateLimit fica nas rotas que o S-25 limita (POST /rooms, importação).
   app.use(secureHeaders());
   app.use(cors({ origin: deps.config.allowedOrigins, credentials: true }));
   // O trace_id é sempre do servidor: um X-Request-Id vindo do cliente é ignorado.
   app.use(requestId({ headerName: "" }));
   app.use(session({ secret: deps.config.sessionSecret, now: deps.now }));
+  app.use(originGuard({ allowedOrigins: deps.config.allowedOrigins, logger: deps.logger }));
   app.use(async (c, next) => {
     const start = deps.now();
     await next();
@@ -76,6 +81,8 @@ export const createApp = (deps: AppDeps) => {
     now: deps.now,
   });
   soloRoutes(app, { progression: deps.progression });
+  authRoutes(app, { spotify: deps.playlists.spotify, secret: deps.config.sessionSecret, now: deps.now, logger: deps.logger });
+  playlistRoutes(app, { ...deps.playlists, logger: deps.logger });
 
   // Postgres e Redis entram no corpo (503 se fora) quando os adapters existirem.
   return app.openapi(health, (c) =>

@@ -370,20 +370,11 @@
               "type": "string",
               "format": "uuid",
               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-            },
-            "platform": {
-              "type": "string",
-              "enum": [
-                "spotify",
-                "deezer",
-                "youtube_music"
-              ]
             }
           },
           "required": [
             "type",
-            "playlist_id",
-            "platform"
+            "playlist_id"
           ],
           "additionalProperties": false
         }
@@ -631,7 +622,8 @@
                         "enum": [
                           "spotify",
                           "deezer",
-                          "youtube_music"
+                          "youtube_music",
+                          "text"
                         ]
                       },
                       {
@@ -789,7 +781,8 @@
                       "enum": [
                         "spotify",
                         "deezer",
-                        "youtube_music"
+                        "youtube_music",
+                        "text"
                       ]
                     },
                     {
@@ -1274,7 +1267,8 @@
                   "enum": [
                     "spotify",
                     "deezer",
-                    "youtube_music"
+                    "youtube_music",
+                    "text"
                   ]
                 }
               },
@@ -1821,6 +1815,13 @@
                 "not_enough_unique_songs",
                 "illegal_state_transition",
                 "personal_best_not_found",
+                "invalid_playlist_link",
+                "playlist_not_found",
+                "no_songs_found",
+                "platform_not_connected",
+                "provider_unavailable",
+                "import_not_found",
+                "origin_not_allowed",
                 "rate_limited",
                 "invalid_payload",
                 "internal_error"

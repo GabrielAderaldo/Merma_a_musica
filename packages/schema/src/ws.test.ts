@@ -29,7 +29,7 @@ const validClient: Record<string, Record<string, unknown>> = {
   player_unready: {},
   player_afk_changed: { afk: true },
   configure_match: { config },
-  select_playlist: { playlist_id: UUID2, platform: "deezer" },
+  select_playlist: { playlist_id: UUID2 },
   start_game: {},
   submit_answer: { answer_text: "Evidências" },
   vote_skip: {},

@@ -44,13 +44,13 @@ export type SnapshotStore = Readonly<{
   list(): Promise<Result<readonly RoomSnapshot[], StoreError>>;
 }>;
 
-// Playlist Integration vista pelo Orchestrator: as músicas tocáveis da playlist que o jogador escolheu.
-export type PlaylistSongs = Readonly<{ playable_songs: number; songs: readonly Song[] }>;
+// Playlist Integration vista pelo Orchestrator: as músicas tocáveis da playlist que o jogador escolheu, e a origem
+// dela (R-006, R-010). Playlist de outro jogador ou apagada vale como não importada.
+export type PlaylistSongs = Readonly<{ platform: Platform; playable_songs: number; songs: readonly Song[] }>;
 export type SongSource = Readonly<{
   playlist(
     player: PlayerUuid,
     playlist_id: PlaylistId,
-    platform: Platform,
   ): Promise<Result<PlaylistSongs, "no_playlists_imported" | "source_unavailable">>;
 }>;
 

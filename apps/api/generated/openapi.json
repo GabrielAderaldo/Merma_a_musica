@@ -69,6 +69,13 @@
                         "not_enough_unique_songs",
                         "illegal_state_transition",
                         "personal_best_not_found",
+                        "invalid_playlist_link",
+                        "playlist_not_found",
+                        "no_songs_found",
+                        "platform_not_connected",
+                        "provider_unavailable",
+                        "import_not_found",
+                        "origin_not_allowed",
                         "rate_limited",
                         "invalid_payload",
                         "internal_error"
@@ -113,6 +120,13 @@
                         "not_enough_unique_songs",
                         "illegal_state_transition",
                         "personal_best_not_found",
+                        "invalid_playlist_link",
+                        "playlist_not_found",
+                        "no_songs_found",
+                        "platform_not_connected",
+                        "provider_unavailable",
+                        "import_not_found",
+                        "origin_not_allowed",
                         "rate_limited",
                         "invalid_payload",
                         "internal_error"
@@ -217,6 +231,13 @@
                         "not_enough_unique_songs",
                         "illegal_state_transition",
                         "personal_best_not_found",
+                        "invalid_playlist_link",
+                        "playlist_not_found",
+                        "no_songs_found",
+                        "platform_not_connected",
+                        "provider_unavailable",
+                        "import_not_found",
+                        "origin_not_allowed",
                         "rate_limited",
                         "invalid_payload",
                         "internal_error"
@@ -261,6 +282,13 @@
                         "not_enough_unique_songs",
                         "illegal_state_transition",
                         "personal_best_not_found",
+                        "invalid_playlist_link",
+                        "playlist_not_found",
+                        "no_songs_found",
+                        "platform_not_connected",
+                        "provider_unavailable",
+                        "import_not_found",
+                        "origin_not_allowed",
                         "rate_limited",
                         "invalid_payload",
                         "internal_error"
@@ -457,6 +485,13 @@
                         "not_enough_unique_songs",
                         "illegal_state_transition",
                         "personal_best_not_found",
+                        "invalid_playlist_link",
+                        "playlist_not_found",
+                        "no_songs_found",
+                        "platform_not_connected",
+                        "provider_unavailable",
+                        "import_not_found",
+                        "origin_not_allowed",
                         "rate_limited",
                         "invalid_payload",
                         "internal_error"
@@ -622,6 +657,13 @@
                         "not_enough_unique_songs",
                         "illegal_state_transition",
                         "personal_best_not_found",
+                        "invalid_playlist_link",
+                        "playlist_not_found",
+                        "no_songs_found",
+                        "platform_not_connected",
+                        "provider_unavailable",
+                        "import_not_found",
+                        "origin_not_allowed",
                         "rate_limited",
                         "invalid_payload",
                         "internal_error"
@@ -666,6 +708,13 @@
                         "not_enough_unique_songs",
                         "illegal_state_transition",
                         "personal_best_not_found",
+                        "invalid_playlist_link",
+                        "playlist_not_found",
+                        "no_songs_found",
+                        "platform_not_connected",
+                        "provider_unavailable",
+                        "import_not_found",
+                        "origin_not_allowed",
                         "rate_limited",
                         "invalid_payload",
                         "internal_error"
@@ -710,6 +759,1574 @@
                         "not_enough_unique_songs",
                         "illegal_state_transition",
                         "personal_best_not_found",
+                        "invalid_playlist_link",
+                        "playlist_not_found",
+                        "no_songs_found",
+                        "platform_not_connected",
+                        "provider_unavailable",
+                        "import_not_found",
+                        "origin_not_allowed",
+                        "rate_limited",
+                        "invalid_payload",
+                        "internal_error"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "pt-BR"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Quem é o jogador e quais contas ele conectou",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "player_uuid": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "Emitido pelo servidor no cookie __Host-session (ADR-0013)."
+                    },
+                    "is_authenticated": {
+                      "type": "boolean"
+                    },
+                    "connected_accounts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "platform": {
+                            "type": "string",
+                            "enum": [
+                              "spotify"
+                            ]
+                          },
+                          "connected_at": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "platform",
+                          "connected_at"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "player_uuid",
+                    "is_authenticated",
+                    "connected_accounts"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Postgres fora do ar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "unauthenticated",
+                        "not_host",
+                        "host_is_always_ready",
+                        "room_full",
+                        "room_not_found",
+                        "round_not_accepting_answers",
+                        "round_not_accepting_skip",
+                        "player_not_in_match",
+                        "player_already_voted",
+                        "player_not_answered_yet",
+                        "total_songs_out_of_range",
+                        "solo_requires_single_player",
+                        "no_playlists_imported",
+                        "not_enough_unique_songs",
+                        "illegal_state_transition",
+                        "personal_best_not_found",
+                        "invalid_playlist_link",
+                        "playlist_not_found",
+                        "no_songs_found",
+                        "platform_not_connected",
+                        "provider_unavailable",
+                        "import_not_found",
+                        "origin_not_allowed",
+                        "rate_limited",
+                        "invalid_payload",
+                        "internal_error"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "pt-BR"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "responses": {
+          "204": {
+            "description": "Contas desvinculadas; a identidade anônima continua (ADR-0013)"
+          },
+          "503": {
+            "description": "Postgres fora do ar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "unauthenticated",
+                        "not_host",
+                        "host_is_always_ready",
+                        "room_full",
+                        "room_not_found",
+                        "round_not_accepting_answers",
+                        "round_not_accepting_skip",
+                        "player_not_in_match",
+                        "player_already_voted",
+                        "player_not_answered_yet",
+                        "total_songs_out_of_range",
+                        "solo_requires_single_player",
+                        "no_playlists_imported",
+                        "not_enough_unique_songs",
+                        "illegal_state_transition",
+                        "personal_best_not_found",
+                        "invalid_playlist_link",
+                        "playlist_not_found",
+                        "no_songs_found",
+                        "platform_not_connected",
+                        "provider_unavailable",
+                        "import_not_found",
+                        "origin_not_allowed",
+                        "rate_limited",
+                        "invalid_payload",
+                        "internal_error"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "pt-BR"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/disconnect/{platform}": {
+      "post": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "spotify"
+              ]
+            },
+            "required": true,
+            "name": "platform",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Tokens apagados na hora; as playlists ficam (docs/privacy.md)"
+          },
+          "400": {
+            "description": "Plataforma sem login",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "unauthenticated",
+                        "not_host",
+                        "host_is_always_ready",
+                        "room_full",
+                        "room_not_found",
+                        "round_not_accepting_answers",
+                        "round_not_accepting_skip",
+                        "player_not_in_match",
+                        "player_already_voted",
+                        "player_not_answered_yet",
+                        "total_songs_out_of_range",
+                        "solo_requires_single_player",
+                        "no_playlists_imported",
+                        "not_enough_unique_songs",
+                        "illegal_state_transition",
+                        "personal_best_not_found",
+                        "invalid_playlist_link",
+                        "playlist_not_found",
+                        "no_songs_found",
+                        "platform_not_connected",
+                        "provider_unavailable",
+                        "import_not_found",
+                        "origin_not_allowed",
+                        "rate_limited",
+                        "invalid_payload",
+                        "internal_error"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "pt-BR"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Postgres fora do ar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "unauthenticated",
+                        "not_host",
+                        "host_is_always_ready",
+                        "room_full",
+                        "room_not_found",
+                        "round_not_accepting_answers",
+                        "round_not_accepting_skip",
+                        "player_not_in_match",
+                        "player_already_voted",
+                        "player_not_answered_yet",
+                        "total_songs_out_of_range",
+                        "solo_requires_single_player",
+                        "no_playlists_imported",
+                        "not_enough_unique_songs",
+                        "illegal_state_transition",
+                        "personal_best_not_found",
+                        "invalid_playlist_link",
+                        "playlist_not_found",
+                        "no_songs_found",
+                        "platform_not_connected",
+                        "provider_unavailable",
+                        "import_not_found",
+                        "origin_not_allowed",
+                        "rate_limited",
+                        "invalid_payload",
+                        "internal_error"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "pt-BR"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/{platform}": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "platform",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 200,
+              "pattern": "^\\/(?![/\\\\])"
+            },
+            "required": false,
+            "name": "return_to",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Para o consentimento do Spotify, com state e PKCE no __Host-csrf"
+          },
+          "404": {
+            "description": "Plataforma sem login: só o Spotify tem (ADR-0024.R4)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "unauthenticated",
+                        "not_host",
+                        "host_is_always_ready",
+                        "room_full",
+                        "room_not_found",
+                        "round_not_accepting_answers",
+                        "round_not_accepting_skip",
+                        "player_not_in_match",
+                        "player_already_voted",
+                        "player_not_answered_yet",
+                        "total_songs_out_of_range",
+                        "solo_requires_single_player",
+                        "no_playlists_imported",
+                        "not_enough_unique_songs",
+                        "illegal_state_transition",
+                        "personal_best_not_found",
+                        "invalid_playlist_link",
+                        "playlist_not_found",
+                        "no_songs_found",
+                        "platform_not_connected",
+                        "provider_unavailable",
+                        "import_not_found",
+                        "origin_not_allowed",
+                        "rate_limited",
+                        "invalid_payload",
+                        "internal_error"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "pt-BR"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Login do Spotify não configurado nesta instância",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "unauthenticated",
+                        "not_host",
+                        "host_is_always_ready",
+                        "room_full",
+                        "room_not_found",
+                        "round_not_accepting_answers",
+                        "round_not_accepting_skip",
+                        "player_not_in_match",
+                        "player_already_voted",
+                        "player_not_answered_yet",
+                        "total_songs_out_of_range",
+                        "solo_requires_single_player",
+                        "no_playlists_imported",
+                        "not_enough_unique_songs",
+                        "illegal_state_transition",
+                        "personal_best_not_found",
+                        "invalid_playlist_link",
+                        "playlist_not_found",
+                        "no_songs_found",
+                        "platform_not_connected",
+                        "provider_unavailable",
+                        "import_not_found",
+                        "origin_not_allowed",
+                        "rate_limited",
+                        "invalid_payload",
+                        "internal_error"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "pt-BR"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/{platform}/callback": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "platform",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 2000
+            },
+            "required": false,
+            "name": "code",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "required": false,
+            "name": "state",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "required": false,
+            "name": "error",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "De volta ao return_to; com ?oauth_error=… se o login não se completou"
+          },
+          "404": {
+            "description": "Plataforma sem login",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "unauthenticated",
+                        "not_host",
+                        "host_is_always_ready",
+                        "room_full",
+                        "room_not_found",
+                        "round_not_accepting_answers",
+                        "round_not_accepting_skip",
+                        "player_not_in_match",
+                        "player_already_voted",
+                        "player_not_answered_yet",
+                        "total_songs_out_of_range",
+                        "solo_requires_single_player",
+                        "no_playlists_imported",
+                        "not_enough_unique_songs",
+                        "illegal_state_transition",
+                        "personal_best_not_found",
+                        "invalid_playlist_link",
+                        "playlist_not_found",
+                        "no_songs_found",
+                        "platform_not_connected",
+                        "provider_unavailable",
+                        "import_not_found",
+                        "origin_not_allowed",
+                        "rate_limited",
+                        "invalid_payload",
+                        "internal_error"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "pt-BR"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/playlists": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "As playlists do jogador, da mais recente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "playlists": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "playlist_id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "platform": {
+                            "type": "string",
+                            "enum": [
+                              "spotify",
+                              "deezer",
+                              "youtube_music",
+                              "text"
+                            ]
+                          },
+                          "external_id": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "description": "null na lista colada"
+                          },
+                          "track_count": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "cover_url": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "format": "uri"
+                          },
+                          "imported_at": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "playlist_id",
+                          "name",
+                          "platform",
+                          "external_id",
+                          "track_count",
+                          "cover_url",
+                          "imported_at"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "playlists"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Postgres fora do ar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "unauthenticated",
+                        "not_host",
+                        "host_is_always_ready",
+                        "room_full",
+                        "room_not_found",
+                        "round_not_accepting_answers",
+                        "round_not_accepting_skip",
+                        "player_not_in_match",
+                        "player_already_voted",
+                        "player_not_answered_yet",
+                        "total_songs_out_of_range",
+                        "solo_requires_single_player",
+                        "no_playlists_imported",
+                        "not_enough_unique_songs",
+                        "illegal_state_transition",
+                        "personal_best_not_found",
+                        "invalid_playlist_link",
+                        "playlist_not_found",
+                        "no_songs_found",
+                        "platform_not_connected",
+                        "provider_unavailable",
+                        "import_not_found",
+                        "origin_not_allowed",
+                        "rate_limited",
+                        "invalid_payload",
+                        "internal_error"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "pt-BR"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/playlists/available/{platform}": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "spotify"
+              ]
+            },
+            "required": true,
+            "name": "platform",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "As playlists que a conta do Spotify pode importar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "playlists": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "external_id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "track_count": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "cover_url": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "format": "uri"
+                          }
+                        },
+                        "required": [
+                          "external_id",
+                          "name",
+                          "track_count",
+                          "cover_url"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "playlists"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Só o Spotify tem catálogo por conta (R-002)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "unauthenticated",
+                        "not_host",
+                        "host_is_always_ready",
+                        "room_full",
+                        "room_not_found",
+                        "round_not_accepting_answers",
+                        "round_not_accepting_skip",
+                        "player_not_in_match",
+                        "player_already_voted",
+                        "player_not_answered_yet",
+                        "total_songs_out_of_range",
+                        "solo_requires_single_player",
+                        "no_playlists_imported",
+                        "not_enough_unique_songs",
+                        "illegal_state_transition",
+                        "personal_best_not_found",
+                        "invalid_playlist_link",
+                        "playlist_not_found",
+                        "no_songs_found",
+                        "platform_not_connected",
+                        "provider_unavailable",
+                        "import_not_found",
+                        "origin_not_allowed",
+                        "rate_limited",
+                        "invalid_payload",
+                        "internal_error"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "pt-BR"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Spotify não conectado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "unauthenticated",
+                        "not_host",
+                        "host_is_always_ready",
+                        "room_full",
+                        "room_not_found",
+                        "round_not_accepting_answers",
+                        "round_not_accepting_skip",
+                        "player_not_in_match",
+                        "player_already_voted",
+                        "player_not_answered_yet",
+                        "total_songs_out_of_range",
+                        "solo_requires_single_player",
+                        "no_playlists_imported",
+                        "not_enough_unique_songs",
+                        "illegal_state_transition",
+                        "personal_best_not_found",
+                        "invalid_playlist_link",
+                        "playlist_not_found",
+                        "no_songs_found",
+                        "platform_not_connected",
+                        "provider_unavailable",
+                        "import_not_found",
+                        "origin_not_allowed",
+                        "rate_limited",
+                        "invalid_payload",
+                        "internal_error"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "pt-BR"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Spotify fora do ar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "unauthenticated",
+                        "not_host",
+                        "host_is_always_ready",
+                        "room_full",
+                        "room_not_found",
+                        "round_not_accepting_answers",
+                        "round_not_accepting_skip",
+                        "player_not_in_match",
+                        "player_already_voted",
+                        "player_not_answered_yet",
+                        "total_songs_out_of_range",
+                        "solo_requires_single_player",
+                        "no_playlists_imported",
+                        "not_enough_unique_songs",
+                        "illegal_state_transition",
+                        "personal_best_not_found",
+                        "invalid_playlist_link",
+                        "playlist_not_found",
+                        "no_songs_found",
+                        "platform_not_connected",
+                        "provider_unavailable",
+                        "import_not_found",
+                        "origin_not_allowed",
+                        "rate_limited",
+                        "invalid_payload",
+                        "internal_error"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "pt-BR"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/playlists/import": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "source": {
+                        "type": "string",
+                        "enum": [
+                          "link"
+                        ]
+                      },
+                      "url": {
+                        "type": "string",
+                        "maxLength": 500,
+                        "format": "uri",
+                        "description": "Playlist pública da Deezer ou do YouTube/YouTube Music"
+                      }
+                    },
+                    "required": [
+                      "source",
+                      "url"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "source": {
+                        "type": "string",
+                        "enum": [
+                          "text"
+                        ]
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      },
+                      "text": {
+                        "type": "string",
+                        "maxLength": 50000,
+                        "description": "Uma música por linha, no máximo 500"
+                      }
+                    },
+                    "required": [
+                      "source",
+                      "name",
+                      "text"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "source": {
+                        "type": "string",
+                        "enum": [
+                          "spotify"
+                        ]
+                      },
+                      "external_id": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9]{1,64}$"
+                      }
+                    },
+                    "required": [
+                      "source",
+                      "external_id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Importação aceita; acompanhe por GET /api/v1/playlists/imports/{job_id}",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "job_id": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  },
+                  "required": [
+                    "job_id"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Corpo inválido ou link não reconhecido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "unauthenticated",
+                        "not_host",
+                        "host_is_always_ready",
+                        "room_full",
+                        "room_not_found",
+                        "round_not_accepting_answers",
+                        "round_not_accepting_skip",
+                        "player_not_in_match",
+                        "player_already_voted",
+                        "player_not_answered_yet",
+                        "total_songs_out_of_range",
+                        "solo_requires_single_player",
+                        "no_playlists_imported",
+                        "not_enough_unique_songs",
+                        "illegal_state_transition",
+                        "personal_best_not_found",
+                        "invalid_playlist_link",
+                        "playlist_not_found",
+                        "no_songs_found",
+                        "platform_not_connected",
+                        "provider_unavailable",
+                        "import_not_found",
+                        "origin_not_allowed",
+                        "rate_limited",
+                        "invalid_payload",
+                        "internal_error"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "pt-BR"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Spotify não conectado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "unauthenticated",
+                        "not_host",
+                        "host_is_always_ready",
+                        "room_full",
+                        "room_not_found",
+                        "round_not_accepting_answers",
+                        "round_not_accepting_skip",
+                        "player_not_in_match",
+                        "player_already_voted",
+                        "player_not_answered_yet",
+                        "total_songs_out_of_range",
+                        "solo_requires_single_player",
+                        "no_playlists_imported",
+                        "not_enough_unique_songs",
+                        "illegal_state_transition",
+                        "personal_best_not_found",
+                        "invalid_playlist_link",
+                        "playlist_not_found",
+                        "no_songs_found",
+                        "platform_not_connected",
+                        "provider_unavailable",
+                        "import_not_found",
+                        "origin_not_allowed",
+                        "rate_limited",
+                        "invalid_payload",
+                        "internal_error"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "pt-BR"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Já há 5 importações em andamento (S-25), com Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "unauthenticated",
+                        "not_host",
+                        "host_is_always_ready",
+                        "room_full",
+                        "room_not_found",
+                        "round_not_accepting_answers",
+                        "round_not_accepting_skip",
+                        "player_not_in_match",
+                        "player_already_voted",
+                        "player_not_answered_yet",
+                        "total_songs_out_of_range",
+                        "solo_requires_single_player",
+                        "no_playlists_imported",
+                        "not_enough_unique_songs",
+                        "illegal_state_transition",
+                        "personal_best_not_found",
+                        "invalid_playlist_link",
+                        "playlist_not_found",
+                        "no_songs_found",
+                        "platform_not_connected",
+                        "provider_unavailable",
+                        "import_not_found",
+                        "origin_not_allowed",
+                        "rate_limited",
+                        "invalid_payload",
+                        "internal_error"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "pt-BR"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Fonte não configurada nesta instância (YouTube sem chave, Spotify sem app)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "unauthenticated",
+                        "not_host",
+                        "host_is_always_ready",
+                        "room_full",
+                        "room_not_found",
+                        "round_not_accepting_answers",
+                        "round_not_accepting_skip",
+                        "player_not_in_match",
+                        "player_already_voted",
+                        "player_not_answered_yet",
+                        "total_songs_out_of_range",
+                        "solo_requires_single_player",
+                        "no_playlists_imported",
+                        "not_enough_unique_songs",
+                        "illegal_state_transition",
+                        "personal_best_not_found",
+                        "invalid_playlist_link",
+                        "playlist_not_found",
+                        "no_songs_found",
+                        "platform_not_connected",
+                        "provider_unavailable",
+                        "import_not_found",
+                        "origin_not_allowed",
+                        "rate_limited",
+                        "invalid_payload",
+                        "internal_error"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "pt-BR"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/playlists/imports/{job_id}": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "job_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estado da importação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "job_id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "in_progress",
+                        "completed",
+                        "failed"
+                      ]
+                    },
+                    "progress": {
+                      "type": "object",
+                      "properties": {
+                        "done": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "total": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "done",
+                        "total"
+                      ]
+                    },
+                    "playlist_id": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "uuid"
+                    },
+                    "not_found": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "maxItems": 500
+                    },
+                    "error_code": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "unauthenticated",
+                        "not_host",
+                        "host_is_always_ready",
+                        "room_full",
+                        "room_not_found",
+                        "round_not_accepting_answers",
+                        "round_not_accepting_skip",
+                        "player_not_in_match",
+                        "player_already_voted",
+                        "player_not_answered_yet",
+                        "total_songs_out_of_range",
+                        "solo_requires_single_player",
+                        "no_playlists_imported",
+                        "not_enough_unique_songs",
+                        "illegal_state_transition",
+                        "personal_best_not_found",
+                        "invalid_playlist_link",
+                        "playlist_not_found",
+                        "no_songs_found",
+                        "platform_not_connected",
+                        "provider_unavailable",
+                        "import_not_found",
+                        "origin_not_allowed",
+                        "rate_limited",
+                        "invalid_payload",
+                        "internal_error",
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "job_id",
+                    "status",
+                    "progress",
+                    "playlist_id",
+                    "not_found",
+                    "error_code"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "job_id fora do formato",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "unauthenticated",
+                        "not_host",
+                        "host_is_always_ready",
+                        "room_full",
+                        "room_not_found",
+                        "round_not_accepting_answers",
+                        "round_not_accepting_skip",
+                        "player_not_in_match",
+                        "player_already_voted",
+                        "player_not_answered_yet",
+                        "total_songs_out_of_range",
+                        "solo_requires_single_player",
+                        "no_playlists_imported",
+                        "not_enough_unique_songs",
+                        "illegal_state_transition",
+                        "personal_best_not_found",
+                        "invalid_playlist_link",
+                        "playlist_not_found",
+                        "no_songs_found",
+                        "platform_not_connected",
+                        "provider_unavailable",
+                        "import_not_found",
+                        "origin_not_allowed",
+                        "rate_limited",
+                        "invalid_payload",
+                        "internal_error"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "pt-BR"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Importação inexistente, de outro jogador ou expirada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "unauthenticated",
+                        "not_host",
+                        "host_is_always_ready",
+                        "room_full",
+                        "room_not_found",
+                        "round_not_accepting_answers",
+                        "round_not_accepting_skip",
+                        "player_not_in_match",
+                        "player_already_voted",
+                        "player_not_answered_yet",
+                        "total_songs_out_of_range",
+                        "solo_requires_single_player",
+                        "no_playlists_imported",
+                        "not_enough_unique_songs",
+                        "illegal_state_transition",
+                        "personal_best_not_found",
+                        "invalid_playlist_link",
+                        "playlist_not_found",
+                        "no_songs_found",
+                        "platform_not_connected",
+                        "provider_unavailable",
+                        "import_not_found",
+                        "origin_not_allowed",
+                        "rate_limited",
+                        "invalid_payload",
+                        "internal_error"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "pt-BR"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/playlists/{playlist_id}": {
+      "delete": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "playlist_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Playlist apagada"
+          },
+          "400": {
+            "description": "playlist_id fora do formato",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "unauthenticated",
+                        "not_host",
+                        "host_is_always_ready",
+                        "room_full",
+                        "room_not_found",
+                        "round_not_accepting_answers",
+                        "round_not_accepting_skip",
+                        "player_not_in_match",
+                        "player_already_voted",
+                        "player_not_answered_yet",
+                        "total_songs_out_of_range",
+                        "solo_requires_single_player",
+                        "no_playlists_imported",
+                        "not_enough_unique_songs",
+                        "illegal_state_transition",
+                        "personal_best_not_found",
+                        "invalid_playlist_link",
+                        "playlist_not_found",
+                        "no_songs_found",
+                        "platform_not_connected",
+                        "provider_unavailable",
+                        "import_not_found",
+                        "origin_not_allowed",
+                        "rate_limited",
+                        "invalid_payload",
+                        "internal_error"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "pt-BR"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Playlist inexistente ou de outro jogador",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "unauthenticated",
+                        "not_host",
+                        "host_is_always_ready",
+                        "room_full",
+                        "room_not_found",
+                        "round_not_accepting_answers",
+                        "round_not_accepting_skip",
+                        "player_not_in_match",
+                        "player_already_voted",
+                        "player_not_answered_yet",
+                        "total_songs_out_of_range",
+                        "solo_requires_single_player",
+                        "no_playlists_imported",
+                        "not_enough_unique_songs",
+                        "illegal_state_transition",
+                        "personal_best_not_found",
+                        "invalid_playlist_link",
+                        "playlist_not_found",
+                        "no_songs_found",
+                        "platform_not_connected",
+                        "provider_unavailable",
+                        "import_not_found",
+                        "origin_not_allowed",
+                        "rate_limited",
+                        "invalid_payload",
+                        "internal_error"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "pt-BR"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Postgres fora do ar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "unauthenticated",
+                        "not_host",
+                        "host_is_always_ready",
+                        "room_full",
+                        "room_not_found",
+                        "round_not_accepting_answers",
+                        "round_not_accepting_skip",
+                        "player_not_in_match",
+                        "player_already_voted",
+                        "player_not_answered_yet",
+                        "total_songs_out_of_range",
+                        "solo_requires_single_player",
+                        "no_playlists_imported",
+                        "not_enough_unique_songs",
+                        "illegal_state_transition",
+                        "personal_best_not_found",
+                        "invalid_playlist_link",
+                        "playlist_not_found",
+                        "no_songs_found",
+                        "platform_not_connected",
+                        "provider_unavailable",
+                        "import_not_found",
+                        "origin_not_allowed",
                         "rate_limited",
                         "invalid_payload",
                         "internal_error"

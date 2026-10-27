@@ -31,6 +31,25 @@ const fresh = (now: number): Stored | null => {
 
 const isUpgrade = (c: Context) => c.req.header("upgrade")?.toLowerCase() === "websocket";
 
+const issue = (c: Context, secret: string, stored: Stored) =>
+  setSignedCookie(c, NAME, `${stored.session_id}:${stored.player_uuid}:${stored.issued_at}`, secret, {
+    prefix: "host",
+    path: "/",
+    secure: true,
+    httpOnly: true,
+    sameSite: "Strict",
+    maxAge: MAX_AGE_SECONDS,
+  });
+
+// ADR-0013.R4: no login OAuth, um session_id novo para o mesmo player_uuid. Apaga antes os Set-Cookie já postos
+// nesta resposta (o middleware emite uma sessão nova no callback, que chega sem o cookie Strict).
+export const rotateSession = async (c: Context, opts: { secret: string; now: () => number }, player_uuid: PlayerUuid) => {
+  c.header("Set-Cookie", undefined);
+  const rotated = { session_id: crypto.randomUUID(), player_uuid, issued_at: opts.now() };
+  await issue(c, opts.secret, rotated);
+  c.set("session", { session_id: rotated.session_id, player_uuid });
+};
+
 export const session = (opts: { secret: string; now: () => number }) =>
   createMiddleware<{ Variables: SessionVariables }>(async (c, next) => {
     const now = opts.now();
@@ -43,17 +62,7 @@ export const session = (opts: { secret: string; now: () => number }) =>
     }
     const stored = current ?? fresh(now);
     if (stored === null) return c.json({ code: "internal_error", message: "falha ao criar a sessão" }, 500);
-    if (current === null || now - stored.issued_at > RENEW_AFTER_MS) {
-      const value = `${stored.session_id}:${stored.player_uuid}:${now}`;
-      await setSignedCookie(c, NAME, value, opts.secret, {
-        prefix: "host",
-        path: "/",
-        secure: true,
-        httpOnly: true,
-        sameSite: "Strict",
-        maxAge: MAX_AGE_SECONDS,
-      });
-    }
+    if (current === null || now - stored.issued_at > RENEW_AFTER_MS) await issue(c, opts.secret, { ...stored, issued_at: now });
     c.set("session", { session_id: stored.session_id, player_uuid: stored.player_uuid });
     await next();
   });

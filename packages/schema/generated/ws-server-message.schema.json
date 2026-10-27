@@ -127,7 +127,8 @@
                     "enum": [
                       "spotify",
                       "deezer",
-                      "youtube_music"
+                      "youtube_music",
+                      "text"
                     ]
                   },
                   {
@@ -281,7 +282,8 @@
                   "enum": [
                     "spotify",
                     "deezer",
-                    "youtube_music"
+                    "youtube_music",
+                    "text"
                   ]
                 },
                 {
@@ -722,7 +724,8 @@
               "enum": [
                 "spotify",
                 "deezer",
-                "youtube_music"
+                "youtube_music",
+                "text"
               ]
             }
           },
@@ -1253,6 +1256,13 @@
             "not_enough_unique_songs",
             "illegal_state_transition",
             "personal_best_not_found",
+            "invalid_playlist_link",
+            "playlist_not_found",
+            "no_songs_found",
+            "platform_not_connected",
+            "provider_unavailable",
+            "import_not_found",
+            "origin_not_allowed",
             "rate_limited",
             "invalid_payload",
             "internal_error"

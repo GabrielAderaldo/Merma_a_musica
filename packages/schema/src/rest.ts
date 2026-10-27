@@ -1,6 +1,6 @@
 // Corpos das rotas REST (ADR-0014). Entram aqui junto com a rota da apps/api, que gera o openapi.json.
 import { z } from "zod";
-import { AnswerType, ErrorCode, InviteCode, MatchId, MAX_PLAYERS, Phase, PlayerUuid, PlaylistId, RoomId } from "./common.ts";
+import { AnswerType, ErrorCode, InviteCode, MatchId, MAX_PLAYERS, Phase, Platform, PlayerUuid, PlaylistId, RoomId } from "./common.ts";
 
 export const HealthResponse = z.object({
   status: z.enum(["ok", "unavailable"]), // unavailable vem com 503
@@ -68,4 +68,61 @@ export const GlobalSoloStats = z.object({
 export const PersonalBestsResponse = z.object({
   global_stats: GlobalSoloStats,
   by_playlist: z.array(PlaylistProgress),
+});
+
+// --- Playlists (R-002, R-010, ADR-0024) ------------------------------------------------------------------
+// Limite de músicas por importação: a lista colada e o YouTube custam uma busca na Deezer por música.
+export const MAX_IMPORTED_SONGS = 500;
+
+// POST /api/v1/playlists/import. O Spotify exige a conta conectada; link e lista, não.
+export const ImportPlaylistRequest = z.discriminatedUnion("source", [
+  z.strictObject({
+    source: z.literal("link"),
+    url: z.url().max(500).meta({ description: "Playlist pública da Deezer ou do YouTube/YouTube Music" }),
+  }),
+  z.strictObject({
+    source: z.literal("text"),
+    name: z.string().trim().min(1).max(100),
+    text: z.string().max(50_000).meta({ description: `Uma música por linha, no máximo ${MAX_IMPORTED_SONGS}` }),
+  }),
+  z.strictObject({ source: z.literal("spotify"), external_id: z.string().regex(/^[A-Za-z0-9]{1,64}$/) }),
+]);
+export type ImportPlaylistRequest = z.infer<typeof ImportPlaylistRequest>;
+
+export const ImportJobId = z.uuid();
+export const ImportAcceptedResponse = z.object({ job_id: ImportJobId });
+
+// GET /api/v1/playlists/imports/{job_id}, por polling (sem evento WS). `not_found` lista o que a Deezer não achou.
+export const ImportJobResponse = z.object({
+  job_id: ImportJobId,
+  status: z.enum(["queued", "in_progress", "completed", "failed"]),
+  progress: z.object({ done: z.int().nonnegative(), total: z.int().nonnegative() }),
+  playlist_id: PlaylistId.nullable(),
+  not_found: z.array(z.string()).max(MAX_IMPORTED_SONGS),
+  error_code: ErrorCode.nullable(),
+});
+
+export const ImportedPlaylist = z.object({
+  playlist_id: PlaylistId,
+  name: z.string(),
+  platform: Platform,
+  external_id: z.string().nullable().meta({ description: "null na lista colada" }),
+  track_count: z.int().nonnegative(),
+  cover_url: z.url().nullable(),
+  imported_at: z.iso.datetime(),
+});
+export const PlaylistsResponse = z.object({ playlists: z.array(ImportedPlaylist) });
+
+// GET /api/v1/playlists/available/spotify: o que a conta conectada pode importar.
+export const AvailablePlaylistsResponse = z.object({
+  playlists: z.array(
+    z.object({ external_id: z.string(), name: z.string(), track_count: z.int().nonnegative(), cover_url: z.url().nullable() }),
+  ),
+});
+
+// GET /auth/me (docs/privacy.md, direito de acesso). Só o Spotify tem login (R-002).
+export const MeResponse = z.object({
+  player_uuid: PlayerUuid,
+  is_authenticated: z.boolean(),
+  connected_accounts: z.array(z.object({ platform: z.literal("spotify"), connected_at: z.iso.datetime() })),
 });

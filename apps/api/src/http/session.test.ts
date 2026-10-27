@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { sessionCookie, testApp } from "../testing.ts";
+import { ORIGIN, sessionCookie, testApp } from "../testing.ts";
 
 const FORGED = "11111111-1111-4111-8111-111111111111";
 const DAY = 24 * 60 * 60 * 1000;
@@ -79,6 +79,7 @@ describe("ADR-0013.R1 — o player_uuid vem só da sessão (S-01)", () => {
       method: "POST",
       headers: {
         cookie: sessionCookie(first) ?? "",
+        origin: ORIGIN,
         "x-player-uuid": FORGED,
         "content-type": "application/json",
       },

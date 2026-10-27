@@ -1,6 +1,6 @@
 // Adapters de produção do relógio e dos IDs, e as portas que ainda não têm implementação.
 import { err, MatchId, RoomId, RoundId, Timestamp } from "@merma/domain";
-import type { AudioResolver, Clock, Ids, MatchRepository, SongSource } from "./ports.ts";
+import type { AudioResolver, Clock, Ids, MatchRepository } from "./ports.ts";
 
 // Os smart constructors só falham com entrada fora do formato, o que Date.now e randomUUID não produzem.
 const must = <T>(r: { ok: true; value: T } | { ok: false; error: string }): T => {
@@ -37,8 +37,7 @@ export const systemIds: Ids = {
   inviteCode,
 };
 
-// Até a Playlist Integration (apps/api/src/playlist) nascer, ninguém escolhe playlist, então nenhuma partida começa e
-// estas portas nunca chegam a tocar áudio. O noMatchStore fica para quando não há POSTGRES_URL (dev sem banco).
-export const noPlaylists: SongSource = { playlist: async () => err("no_playlists_imported") };
+// Até o áudio (apps/api/src/playlist/audio) nascer, toda música fica sem áudio e cai na reserva (R-307). O
+// noMatchStore fica para quando não há POSTGRES_URL (dev sem banco).
 export const noAudio: AudioResolver = { resolve: async () => null, token: () => "" };
 export const noMatchStore: MatchRepository = { saveCompleted: async () => err("store_unavailable") };

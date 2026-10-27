@@ -12,7 +12,6 @@ import {
   MAX_PLAYERS,
   Nickname,
   Phase,
-  Platform,
   Player,
   PlayerUuid,
   PlaylistId,
@@ -41,7 +40,7 @@ export const clientMessages = [
   client("player_unready", {}),
   client("player_afk_changed", { afk: z.boolean() }), // R-601
   client("configure_match", { config: MatchConfiguration }), // só host (R-007)
-  client("select_playlist", { playlist_id: PlaylistId, platform: Platform }),
+  client("select_playlist", { playlist_id: PlaylistId }), // a origem vem da playlist gravada, não do cliente
   client("start_game", {}), // só host (R-009)
   client("submit_answer", { answer_text: z.string().min(1).max(200) }), // vale a última (R-105)
   client("vote_skip", {}), // só depois de responder (R-120)

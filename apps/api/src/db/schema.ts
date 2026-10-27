@@ -1,8 +1,8 @@
 // Schema Drizzle do Postgres (ADR-0006): o histórico de partidas (a escrita única em `completed`,
-// docs/architecture.md) e os recordes do solo (Progression). Sem answer_text nem nickname (docs/privacy.md);
-// o schema.test.ts confere.
+// docs/architecture.md), os recordes do solo (Progression) e as playlists do jogador (Playlist Integration).
+// Sem answer_text nem nickname (docs/privacy.md); o schema.test.ts confere.
 import type { MatchConfiguration } from "@merma/domain";
-import type { AnswerType } from "@merma/schema";
+import type { AnswerType, Platform } from "@merma/schema";
 import {
   boolean,
   doublePrecision,
@@ -13,6 +13,7 @@ import {
   primaryKey,
   text,
   timestamp,
+  unique,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -125,3 +126,53 @@ export const soloPlayerStats = pgTable("solo_player_stats", {
   fastest_correct_ms: integer(),
   solo_matches_completed: integer().notNull(),
 });
+
+// --- Playlist Integration: playlists do jogador e conta do Spotify (R-002, R-010, ADR-0024) ----------------------
+
+// Reimportar a mesma playlist (mesma origem e external_id) troca as músicas e mantém o playlist_id, e com ele os
+// recordes. A lista colada tem external_id null e vira sempre uma playlist nova (null não colide no unique).
+export const playlists = pgTable(
+  "playlists",
+  {
+    playlist_id: uuid().primaryKey(),
+    player_uuid: uuid().notNull(),
+    platform: text().$type<Platform>().notNull(),
+    external_id: text(),
+    name: text().notNull(),
+    cover_url: text(),
+    imported_at: instant(),
+  },
+  // O unique começa por player_uuid e serve também à listagem por jogador.
+  (t) => [unique().on(t.player_uuid, t.platform, t.external_id)],
+);
+
+// As músicas já achadas na Deezer (R-010). Da YouTube API nada fica aqui (ADR-0024.R2).
+export const playlistSongs = pgTable(
+  "playlist_songs",
+  {
+    playlist_id: uuid()
+      .notNull()
+      .references(() => playlists.playlist_id, { onDelete: "cascade" }),
+    position: integer().notNull(),
+    deezer_id: text().notNull(),
+    isrc: text(),
+    name: text().notNull(),
+    artist: text().notNull(),
+    album: text(),
+    cover_url: text(),
+  },
+  (t) => [primaryKey({ columns: [t.playlist_id, t.position] })],
+);
+
+// ConnectedAccount: só o Spotify tem login (R-002). O refresh token vai cifrado (ADR-0006.R3).
+export const connectedAccounts = pgTable(
+  "connected_accounts",
+  {
+    player_uuid: uuid().notNull(),
+    platform: text().$type<"spotify">().notNull(),
+    external_user_id: text().notNull(),
+    refresh_token_encrypted: text().notNull(),
+    connected_at: instant(),
+  },
+  (t) => [primaryKey({ columns: [t.player_uuid, t.platform] })],
+);

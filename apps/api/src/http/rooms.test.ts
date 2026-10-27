@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { CreateRoomResponse, RoomSummaryResponse } from "@merma/schema";
 import { RoomRegistry } from "../room/registry.ts";
 import { actorDeps } from "../room/testing.ts";
-import { sessionCookie, testApp } from "../testing.ts";
+import { ORIGIN, sessionCookie, testApp } from "../testing.ts";
 import { CREATE_ROOM_LIMIT } from "./rooms.ts";
 
 const app = (now = () => 1_000_000) => {
@@ -25,7 +25,7 @@ describe("POST /api/v1/rooms", () => {
   test("R-004: cria a sala com invite_code de 6 caracteres e o criador como host", async () => {
     const { app: a, registry } = app();
     const cookie = await cookieOf(a);
-    const res = await a.request("/api/v1/rooms", { method: "POST", headers: { cookie } });
+    const res = await a.request("/api/v1/rooms", { method: "POST", headers: { cookie, origin: ORIGIN } });
     expect(res.status).toBe(201);
     const body = CreateRoomResponse.parse(await res.json());
     expect(registry.get(body.invite_code)?.roomId).toBe(body.room_id);
@@ -38,17 +38,17 @@ describe("POST /api/v1/rooms", () => {
     const { app: a } = app(() => now);
     const cookie = await cookieOf(a);
     for (let i = 0; i < CREATE_ROOM_LIMIT.limit; i++) {
-      expect((await a.request("/api/v1/rooms", { method: "POST", headers: { cookie } })).status).toBe(201);
+      expect((await a.request("/api/v1/rooms", { method: "POST", headers: { cookie, origin: ORIGIN } })).status).toBe(201);
     }
     now += 60_000;
-    const limited = await a.request("/api/v1/rooms", { method: "POST", headers: { cookie } });
+    const limited = await a.request("/api/v1/rooms", { method: "POST", headers: { cookie, origin: ORIGIN } });
     expect(limited.status).toBe(429);
     expect(limited.headers.get("retry-after")).toBe("3540");
     expect(await limited.json()).toEqual({ code: "rate_limited", message: expect.any(String) });
     const other = await cookieOf(a);
-    expect((await a.request("/api/v1/rooms", { method: "POST", headers: { cookie: other } })).status).toBe(201);
+    expect((await a.request("/api/v1/rooms", { method: "POST", headers: { cookie: other, origin: ORIGIN } })).status).toBe(201);
     now += CREATE_ROOM_LIMIT.windowMs;
-    expect((await a.request("/api/v1/rooms", { method: "POST", headers: { cookie } })).status).toBe(201);
+    expect((await a.request("/api/v1/rooms", { method: "POST", headers: { cookie, origin: ORIGIN } })).status).toBe(201);
   });
 });
 

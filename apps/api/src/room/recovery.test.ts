@@ -12,7 +12,7 @@ const snapshotOfRunningMatch = async () => {
   const sockets = [new FakeSocket(), new FakeSocket()];
   for (const [i, socket] of sockets.entries()) {
     await actor.join(player(i + 1), `P${i + 1}`, socket);
-    await actor.receive(player(i + 1), { type: "select_playlist", playlist_id: PLAYLIST, platform: "deezer" }, socket);
+    await actor.receive(player(i + 1), { type: "select_playlist", playlist_id: PLAYLIST }, socket);
   }
   await actor.receive(player(1), { type: "start_game" }, sockets[0] ?? expect.unreachable("socket"));
   await setup.clock.advance(TIMING.countdownMs + TIMING.gracePeriodMs + 10_000, () => actor.idle());

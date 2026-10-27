@@ -7,7 +7,15 @@ import { soloRecords } from "./progression/solo.ts";
 import { MemoryProgressionStore } from "./progression/store.ts";
 import { RoomRegistry } from "./room/registry.ts";
 import { MemorySnapshotStore } from "./room/snapshot-store.ts";
-import { noAudio, noMatchStore, noPlaylists, systemClock, systemIds } from "./room/system.ts";
+import { noAudio, noMatchStore, systemClock, systemIds } from "./room/system.ts";
+import type { SpotifyAuth } from "./playlist/accounts.ts";
+import { DeezerThrottle, deezerClient } from "./playlist/deezer.ts";
+import type { Fetch } from "./playlist/http.ts";
+import { ImportJobs } from "./playlist/importer.ts";
+import { MemoryPlaylistStore, type PlaylistStore } from "./playlist/store.ts";
+import type { PlaylistIntegration } from "./playlist/system.ts";
+import { youtubeClient } from "./playlist/youtube.ts";
+import { playlistSongs } from "./room/playlist-songs.ts";
 
 export const SECRET = "test-secret-with-at-least-32-characters!";
 export const ORIGIN = "https://merma.test";
@@ -19,11 +27,57 @@ export const captureLogs = (): Captured => {
   return { lines, logger: createLogger({ level: "debug", write: (line) => lines.push(JSON.parse(line)) }) };
 };
 
+// Resposta com outro status no fakeFetch (o padrão é 200).
+export const withStatus = (status: number, body: unknown = {}) => ({ withStatus: status, body });
+
+// Fetch que só conhece as URLs dadas (por prefixo); o resto é 503. Nenhum teste sai para a rede.
+export const fakeFetch = (routes: Record<string, unknown>, calls: string[] = []): Fetch => async (url) => {
+  calls.push(url);
+  // O prefixo mais longo vence, para /playlist/1/tracks não cair em /playlist/1.
+  const key = Object.keys(routes)
+    .toSorted((a, b) => b.length - a.length)
+    .find((prefix) => url.startsWith(prefix));
+  const route = key === undefined ? withStatus(503) : routes[key];
+  const { status, body } =
+    typeof route === "object" && route !== null && "withStatus" in route && typeof route.withStatus === "number"
+      ? { status: route.withStatus, body: "body" in route ? route.body : {} }
+      : { status: 200, body: route };
+  return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
+};
+
+// Playlist Integration dos testes: Deezer (e YouTube, com chave) sobre o fakeFetch, sem esperar o throttle.
+export const testPlaylists = (
+  opts: { fetch?: Fetch; store?: PlaylistStore; youtube?: boolean; spotify?: SpotifyAuth | null; logger?: Logger; now?: () => number } = {},
+): PlaylistIntegration => {
+  const fetch = opts.fetch ?? fakeFetch({});
+  const store = opts.store ?? new MemoryPlaylistStore();
+  const spotify = opts.spotify ?? null;
+  const jobs = new ImportJobs({
+    deezer: deezerClient({ fetch, throttle: new DeezerThrottle({ limit: 1_000_000 }), maxSongs: 500 }),
+    youtube: opts.youtube === true ? youtubeClient({ fetch, apiKey: "test-key", maxSongs: 500 }) : null,
+    spotify: spotify?.accounts ?? null,
+    store,
+    newId: () => crypto.randomUUID(),
+    now: opts.now ?? (() => 1_000_000),
+    logger: opts.logger ?? captureLogs().logger,
+    maxSongs: 500,
+  });
+  return { store, jobs, spotify };
+};
+
 export const testApp = (
-  opts: { now?: () => number; logger?: Logger; registry?: RoomRegistry; sockets?: OpenSockets; progression?: ProgressionStore } = {},
+  opts: {
+    now?: () => number;
+    logger?: Logger;
+    registry?: RoomRegistry;
+    sockets?: OpenSockets;
+    progression?: ProgressionStore;
+    playlists?: PlaylistIntegration;
+  } = {},
 ) => {
   const logger = opts.logger ?? captureLogs().logger;
   const progression = opts.progression ?? new MemoryProgressionStore();
+  const playlists = opts.playlists ?? testPlaylists({ logger });
   const registry =
     opts.registry ??
     new RoomRegistry({
@@ -31,7 +85,7 @@ export const testApp = (
       ids: systemIds,
       logger,
       snapshots: new MemorySnapshotStore(),
-      songs: noPlaylists,
+      songs: playlistSongs(playlists.store),
       audio: noAudio,
       matches: noMatchStore,
       solo: soloRecords(progression),
@@ -44,6 +98,7 @@ export const testApp = (
     registry,
     sockets: opts.sockets ?? new OpenSockets(),
     progression,
+    playlists,
   });
 };
 

@@ -13,13 +13,23 @@ export type Config = {
   redisUrl: string | null;
   // Histórico de partidas (ADR-0006). Sem ele (dev e testes), a partida concluída não é gravada.
   postgresUrl: string | null;
+  // Link do YouTube (ADR-0024). Sem a chave, só esse tipo de link fica indisponível.
+  youtubeApiKey: string | null;
+  // OAuth do Spotify, opcional (R-002). Ligado só com SPOTIFY_CLIENT_ID, e aí exige a chave de cifra (ADR-0006.R3).
+  spotify: { clientId: string; redirectUri: string; tokenKey: string } | null;
 };
 
 export type LogLevel = "debug" | "info" | "warn" | "error";
 const LEVELS: readonly string[] = ["debug", "info", "warn", "error"] satisfies LogLevel[];
 const isLogLevel = (s: string): s is LogLevel => LEVELS.includes(s);
 
-export type ConfigError = "invalid_port" | "session_secret_too_short" | "invalid_public_base_url" | "invalid_log_level";
+export type ConfigError =
+  | "invalid_port"
+  | "session_secret_too_short"
+  | "invalid_public_base_url"
+  | "invalid_log_level"
+  | "invalid_spotify_redirect_uri"
+  | "invalid_oauth_token_encryption_key";
 
 export const loadConfig = (env: Record<string, string | undefined>, version: string): Result<Config, ConfigError> => {
   const port = Number(env["PORT"] ?? "3000");
@@ -31,6 +41,8 @@ export const loadConfig = (env: Record<string, string | undefined>, version: str
   if (!base) return err("invalid_public_base_url");
   const logLevel = env["LOG_LEVEL"] ?? "info";
   if (!isLogLevel(logLevel)) return err("invalid_log_level");
+  const spotify = spotifyConfig(env);
+  if (!spotify.ok) return spotify;
   return ok({
     port,
     // Só loopback: o Caddy é quem fala com a internet (docs/operations.md).
@@ -41,5 +53,18 @@ export const loadConfig = (env: Record<string, string | undefined>, version: str
     version,
     redisUrl: env["REDIS_URL"] || null,
     postgresUrl: env["POSTGRES_URL"] || null,
+    youtubeApiKey: env["YOUTUBE_API_KEY"] || null,
+    spotify: spotify.value,
   });
+};
+
+const spotifyConfig = (env: Record<string, string | undefined>): Result<Config["spotify"], ConfigError> => {
+  const clientId = env["SPOTIFY_CLIENT_ID"];
+  if (!clientId) return ok(null);
+  const redirect = URL.parse(env["SPOTIFY_REDIRECT_URI"] ?? "");
+  if (!redirect || !redirect.pathname.endsWith("/auth/spotify/callback")) return err("invalid_spotify_redirect_uri");
+  // AES-256: 32 bytes em base64 (`openssl rand -base64 32`).
+  const tokenKey = env["OAUTH_TOKEN_ENCRYPTION_KEY"] ?? "";
+  if (Buffer.from(tokenKey, "base64").length !== 32) return err("invalid_oauth_token_encryption_key");
+  return ok({ clientId, redirectUri: redirect.toString(), tokenKey });
 };

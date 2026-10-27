@@ -6,7 +6,8 @@ export const AnswerType = z.enum(["song", "artist", "both"]);
 export const ScoringRule = z.enum(["simple", "speed_bonus"]);
 export const GameMode = z.enum(["multiplayer", "solo"]);
 export const ConnectionStatus = z.enum(["connected", "reconnecting", "disconnected"]);
-export const Platform = z.enum(["spotify", "deezer", "youtube_music"]);
+// Origem da playlist do jogador (R-002, R-010): `text` é a lista colada, que não vem de plataforma nenhuma.
+export const Platform = z.enum(["spotify", "deezer", "youtube_music", "text"]);
 export const AudioSource = z.enum(["deezer", "spotify_sdk"]);
 // Tipos dos enums, para packages/domain usá-los sem importar o Zod.
 export type Phase = z.infer<typeof Phase>;
@@ -36,6 +37,15 @@ export const ErrorCode = z.enum([
   "illegal_state_transition",
   // GET /api/v1/solo/personal-bests/{playlist_id}: nenhuma partida solo nessa playlist ainda.
   "personal_best_not_found",
+  // Playlists (R-002, R-010, ADR-0024).
+  "invalid_playlist_link",
+  "playlist_not_found",
+  "no_songs_found",
+  "platform_not_connected",
+  "provider_unavailable",
+  "import_not_found",
+  // S-04: mutação REST sem o Origin da allowlist.
+  "origin_not_allowed",
   "rate_limited",
   "invalid_payload",
   "internal_error",

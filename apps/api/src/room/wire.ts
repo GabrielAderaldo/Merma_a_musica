@@ -44,7 +44,8 @@ export const toWirePlayer = (room: Room, p: RoomPlayer): WirePlayer => ({
   afk: p.afk,
   connection_status: p.connection_status,
   has_playlist: p.playlist !== null,
-  platform: p.platform,
+  // R-006: a origem da playlist escolhida (R-010).
+  platform: p.playlist?.platform ?? null,
 });
 
 export const toWireAudio = (audio: ResolvedAudio, token: () => string): WireAudio =>
@@ -164,6 +165,13 @@ const MESSAGES: Record<ErrorCode, string> = {
   not_enough_unique_songs: "Não há músicas diferentes suficientes.",
   illegal_state_transition: "Ação indisponível agora.",
   personal_best_not_found: "Nenhuma partida solo nessa playlist ainda.",
+  invalid_playlist_link: "Link de playlist não reconhecido.",
+  playlist_not_found: "Playlist não encontrada ou privada.",
+  no_songs_found: "Nenhuma música foi encontrada.",
+  platform_not_connected: "Conecte o Spotify antes.",
+  provider_unavailable: "A plataforma está fora do ar. Tente de novo.",
+  import_not_found: "Importação não encontrada.",
+  origin_not_allowed: "Origem não permitida.",
   rate_limited: "Muitas mensagens. Espere um pouco.",
   invalid_payload: "Mensagem inválida.",
   internal_error: "Erro interno.",

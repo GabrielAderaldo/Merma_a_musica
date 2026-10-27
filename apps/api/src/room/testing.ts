@@ -117,7 +117,7 @@ export class FakeSongs implements SongSource {
     if (this.count === 0) return err("no_playlists_imported" as const);
     const tag = owner.slice(-2);
     const songs = Array.from({ length: this.count }, (_, i) => song(owner, `Musica ${tag} ${i}`, `Artista ${tag}`));
-    return ok({ playable_songs: songs.length, songs });
+    return ok({ platform: "deezer" as const, playable_songs: songs.length, songs });
   };
 }
 

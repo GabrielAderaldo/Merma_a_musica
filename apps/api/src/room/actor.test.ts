@@ -37,7 +37,7 @@ const room = async (n: number, setup: Setup = actorDeps()) => {
 // Todos escolhem playlist, o host configura e inicia; para no grace period da 1ª rodada.
 const started = async (n: number, config: Partial<Config> = {}, setup?: Setup) => {
   const r = await room(n, setup);
-  for (let i = 1; i <= n; i++) await r.send(i, { type: "select_playlist", playlist_id: PLAYLIST, platform: "deezer" });
+  for (let i = 1; i <= n; i++) await r.send(i, { type: "select_playlist", playlist_id: PLAYLIST });
   await r.send(1, { type: "configure_match", config: { ...CONFIG, ...config } });
   await r.send(1, { type: "start_game" });
   await r.advance(TIMING.countdownMs);
@@ -93,24 +93,25 @@ describe("lobby", () => {
     expect(r.socket(1).last("player_ready_changed")).toEqual({ type: "player_ready_changed", player_uuid: player(2), ready: true });
   });
 
-  test("R-006: escolher playlist manda o estado inteiro, com has_playlist", async () => {
+  test("R-006: escolher playlist manda o estado inteiro, com has_playlist e a origem da playlist (R-010)", async () => {
     const r = await room(2);
-    await r.send(2, { type: "select_playlist", playlist_id: PLAYLIST, platform: "deezer" });
-    const state = r.socket(1).last("room_state");
-    expect(state?.players.find((p) => p.player_uuid === player(2))?.has_playlist).toBe(true);
+    expect(r.socket(2).last("room_state")?.players.find((p) => p.player_uuid === player(2))?.platform).toBeNull();
+    await r.send(2, { type: "select_playlist", playlist_id: PLAYLIST });
+    const chosen = r.socket(1).last("room_state")?.players.find((p) => p.player_uuid === player(2));
+    expect(chosen).toMatchObject({ has_playlist: true, platform: "deezer" });
   });
 
   test("playlist sem músicas volta no_playlists_imported", async () => {
     const setup = actorDeps();
     setup.songs.count = 0;
     const r = await room(1, setup);
-    await r.send(1, { type: "select_playlist", playlist_id: PLAYLIST, platform: "deezer" });
+    await r.send(1, { type: "select_playlist", playlist_id: PLAYLIST });
     expect(r.socket(1).last("error")?.code).toBe("no_playlists_imported");
   });
 
   test("R-104/S-22: autocomplete por substring no pool de quem está na sala, até 10", async () => {
     const r = await room(2);
-    await r.send(1, { type: "select_playlist", playlist_id: PLAYLIST, platform: "deezer" });
+    await r.send(1, { type: "select_playlist", playlist_id: PLAYLIST });
     await r.send(2, { type: "autocomplete_search", query: "musica 01 1" });
     expect(r.socket(2).last("autocomplete_results")?.results.map((s) => s.text)).toEqual([
       "Musica 01 1",
@@ -300,7 +301,7 @@ describe("ADR-0002.R1 — toda mutação da sala passa pela fila do RoomActor", 
     let release = () => {};
     setup.songs.delay = new Promise<void>((resolve) => (release = resolve));
     const r = await room(2, setup);
-    const select = r.send(1, { type: "select_playlist", playlist_id: PLAYLIST, platform: "deezer" });
+    const select = r.send(1, { type: "select_playlist", playlist_id: PLAYLIST });
     const start = r.send(1, { type: "start_game" });
     await Bun.sleep(1);
     expect(r.actor.state.state).toBe("lobby"); // o start_game ainda espera o select_playlist
@@ -397,7 +398,7 @@ describe("ADR-0009.R2 — snapshot só com a sala em in_match", () => {
     await r.advance(60_000);
     expect(setup.snapshots.saves).toBe(0);
 
-    await r.send(1, { type: "select_playlist", playlist_id: PLAYLIST, platform: "deezer" });
+    await r.send(1, { type: "select_playlist", playlist_id: PLAYLIST });
     await r.send(1, { type: "configure_match", config: { ...CONFIG, total_songs: 1 } });
     await r.send(1, { type: "start_game" });
     await r.advance(TIMING.snapshotEveryMs);

@@ -257,9 +257,9 @@ export class RoomActor {
     if (this.#room.state !== "lobby") return this.#reject(socket, "illegal_state_transition");
     const playlist_id = PlaylistId(command.playlist_id);
     if (!playlist_id.ok) return this.#reject(socket, "invalid_payload");
-    const songs = await this.#deps.songs.playlist(player, playlist_id.value, command.platform);
+    const songs = await this.#deps.songs.playlist(player, playlist_id.value);
     if (!songs.ok) return this.#reject(socket, songs.error === "source_unavailable" ? "internal_error" : songs.error);
-    const selection = { playlist_id: playlist_id.value, platform: command.platform, playable_songs: songs.value.playable_songs };
+    const selection = { playlist_id: playlist_id.value, platform: songs.value.platform, playable_songs: songs.value.playable_songs };
     if (!this.#apply(socket, selectPlaylist(this.#room, player, selection))) return;
     this.#songs.set(player, songs.value.songs);
     // Nenhum evento parcial diz "escolheu playlist" (R-006): todos recebem o estado inteiro.

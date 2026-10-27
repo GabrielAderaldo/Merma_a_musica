@@ -37,7 +37,7 @@ export const systemIds: Ids = {
   inviteCode,
 };
 
-// Até o áudio (apps/api/src/playlist/audio) nascer, toda música fica sem áudio e cai na reserva (R-307). O
+// noAudio: toda música fica sem áudio e cai na reserva (R-307), para os testes que não chegam à rodada. O
 // noMatchStore fica para quando não há POSTGRES_URL (dev sem banco).
 export const noAudio: AudioResolver = { resolve: async () => null, token: () => "" };
 export const noMatchStore: MatchRepository = { saveCompleted: async () => err("store_unavailable") };

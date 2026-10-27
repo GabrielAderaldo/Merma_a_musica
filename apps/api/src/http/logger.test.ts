@@ -30,10 +30,9 @@ describe("ADR-0010.R1 — o log nunca leva answer_text, nickname, cookie nem tok
   test("o log de requisição usa a rota, não o path com o audio_token", async () => {
     const { logger, lines } = captureLogs();
     const app = testApp({ logger });
-    app.get("/api/v1/audio/:audio_token", (c) => c.body(null, 204));
     await app.request("/api/v1/audio/segredo-do-token");
     expect(JSON.stringify(lines)).not.toContain("segredo-do-token");
-    expect(lines.at(-1)).toMatchObject({ event: "http_request", route: "/api/v1/audio/:audio_token", status: 204 });
+    expect(lines.at(-1)).toMatchObject({ event: "http_request", route: "/api/v1/audio/:audio_token", status: 401 });
   });
 
   test("o header Cookie da requisição não aparece no log", async () => {

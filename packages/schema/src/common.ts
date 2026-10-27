@@ -44,6 +44,15 @@ export const ErrorCode = z.enum([
   "platform_not_connected",
   "provider_unavailable",
   "import_not_found",
+  // Proxy de áudio GET /api/v1/audio/{audio_token} (ADR-0004, S-11 a S-14), na ordem das checagens.
+  "partial_request_not_supported",
+  "malformed",
+  "invalid_signature",
+  "player_mismatch",
+  "expired",
+  "round_expired",
+  "token_already_used",
+  "audio_not_ready",
   // S-04: mutação REST sem o Origin da allowlist.
   "origin_not_allowed",
   "rate_limited",

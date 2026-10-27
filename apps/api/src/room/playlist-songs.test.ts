@@ -32,14 +32,14 @@ describe("SongSource sobre as playlists do jogador", () => {
     return { source: playlistSongs(store), owner, playlist: must(PlaylistId(saved.playlist_id)) };
   };
 
-  test("R-130 e R-010: a música vira Song com o jogador como dono e a origem da playlist; ISRC inválido vira null", async () => {
+  test("R-130 e R-010: a música vira Song com o jogador como dono, a origem da playlist e a faixa da Deezer; ISRC inválido vira null", async () => {
     const { source, owner, playlist } = await setup();
     const found = must(await source.playlist(owner, playlist));
     expect(found.platform).toBe("text");
     expect(found.playable_songs).toBe(2);
     expect(found.songs).toEqual([
-      { isrc: must(Isrc("BRXXX2600001")), name: "Envolver", artist: "Anitta", album: "A", cover_url: null, contributed_by: owner, source_platform: "text" },
-      { isrc: null, name: "Infiel", artist: "Marília Mendonça", album: null, cover_url: null, contributed_by: owner, source_platform: "text" },
+      { isrc: must(Isrc("BRXXX2600001")), name: "Envolver", artist: "Anitta", album: "A", cover_url: null, contributed_by: owner, source_platform: "text", deezer_id: "1" },
+      { isrc: null, name: "Infiel", artist: "Marília Mendonça", album: null, cover_url: null, contributed_by: owner, source_platform: "text", deezer_id: "2" },
     ]);
   });
 

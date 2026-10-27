@@ -5,8 +5,10 @@ import { cors } from "hono/cors";
 import { requestId, type RequestIdVariables } from "hono/request-id";
 import { secureHeaders } from "hono/secure-headers";
 import type { Config } from "../config.ts";
+import type { AudioTokens } from "../playlist/audio/token.ts";
 import type { ProgressionStore } from "../progression/solo.ts";
 import type { RoomRegistry } from "../room/registry.ts";
+import { audioRoutes } from "./audio.ts";
 import { authRoutes } from "./auth.ts";
 import type { Logger } from "./logger.ts";
 import { originGuard } from "./origin.ts";
@@ -28,6 +30,7 @@ export type AppDeps = {
   sockets: OpenSockets;
   progression: ProgressionStore;
   playlists: Omit<PlaylistRouteDeps, "logger">;
+  audioTokens: AudioTokens;
 };
 
 const health = createRoute({
@@ -83,6 +86,7 @@ export const createApp = (deps: AppDeps) => {
   soloRoutes(app, { progression: deps.progression });
   authRoutes(app, { spotify: deps.playlists.spotify, secret: deps.config.sessionSecret, now: deps.now, logger: deps.logger });
   playlistRoutes(app, { ...deps.playlists, logger: deps.logger });
+  audioRoutes(app, { registry: deps.registry, tokens: deps.audioTokens, now: deps.now });
 
   // Postgres e Redis entram no corpo (503 se fora) quando os adapters existirem.
   return app.openapi(health, (c) =>

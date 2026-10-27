@@ -17,7 +17,6 @@ import {
   type SoloStats,
 } from "@merma/domain";
 import { ErrorCode, type WsClientMessage, type WsServerMessage } from "@merma/schema";
-import type { ResolvedAudio } from "./ports.ts";
 
 type Msg<T extends WsServerMessage["type"]> = Extract<WsServerMessage, { type: T }>;
 type WirePlayer = Msg<"player_joined">["player"];
@@ -47,9 +46,6 @@ export const toWirePlayer = (room: Room, p: RoomPlayer): WirePlayer => ({
   // R-006: a origem da playlist escolhida (R-010).
   platform: p.playlist?.platform ?? null,
 });
-
-export const toWireAudio = (audio: ResolvedAudio, token: () => string): WireAudio =>
-  audio.audio_source === "deezer" ? { audio_source: "deezer", audio_token: token() } : audio;
 
 // Só existe com alguém na sala: quem recebe o room_state está nela, e a sala com gente sempre tem host.
 export const roomState = (room: Room, host: PlayerUuid, audio?: WireAudio): Msg<"room_state"> => {
@@ -171,6 +167,14 @@ const MESSAGES: Record<ErrorCode, string> = {
   platform_not_connected: "Conecte o Spotify antes.",
   provider_unavailable: "A plataforma está fora do ar. Tente de novo.",
   import_not_found: "Importação não encontrada.",
+  partial_request_not_supported: "O áudio não aceita requisição parcial.",
+  malformed: "Token de áudio inválido.",
+  invalid_signature: "Token de áudio inválido.",
+  player_mismatch: "Este áudio é de outro jogador.",
+  expired: "O áudio desta rodada expirou.",
+  round_expired: "A rodada já acabou.",
+  token_already_used: "Este áudio já foi baixado.",
+  audio_not_ready: "O áudio ainda não está pronto.",
   origin_not_allowed: "Origem não permitida.",
   rate_limited: "Muitas mensagens. Espere um pouco.",
   invalid_payload: "Mensagem inválida.",
@@ -182,5 +186,7 @@ export const toErrorCode = (error: DomainError): ErrorCode => {
   const code = ErrorCode.safeParse(error);
   return code.success ? code.data : "internal_error";
 };
+
+export const errorText = (code: ErrorCode): string => MESSAGES[code];
 
 export const errorMessage = (code: ErrorCode): Msg<"error"> => ({ type: "error", code, message: MESSAGES[code] });

@@ -23,6 +23,12 @@ export class RoomRegistry {
     return this.#rooms.get(invite_code);
   }
 
+  // A sala cuja rodada atual está tocando, para o proxy de áudio. Varre as salas: são no máximo 500 (operations.md).
+  byPlayingRound(round_id: string): RoomActor | undefined {
+    for (const actor of this.#rooms.values()) if (actor.playingRoundId === round_id) return actor;
+    return undefined;
+  }
+
   // R-004. null só se 20 códigos seguidos colidirem: com 36^6 códigos, é sinal de bug no gerador.
   create(): RoomActor | null {
     for (let i = 0; i < MAX_CODE_ATTEMPTS; i++) {

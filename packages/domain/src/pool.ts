@@ -13,6 +13,9 @@ export type Song = Readonly<{
   cover_url: string | null;
   contributed_by: PlayerUuid;
   source_platform: Platform;
+  // A faixa achada na importação (R-010), para o áudio sair dela (ADR-0004). Fica no servidor: o fio nunca a leva
+  // (ADR-0004.R1). Ausente num snapshot gravado antes dela: aí o áudio resolve por ISRC ou busca.
+  deezer_id?: string;
 }>;
 
 // Músicas tocáveis da playlist escolhida por um jogador.

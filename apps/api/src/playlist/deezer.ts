@@ -24,6 +24,8 @@ const Track = z.object({
   isrc: z.string().optional(),
   artist: z.object({ name: z.string() }),
   album: z.object({ title: z.string(), cover_medium: z.string().nullish() }).optional(),
+  // URL assinada e com prazo do MP3 de 30s: pedida de novo a cada rodada, nunca guardada (ADR-0004).
+  preview: z.string().optional(),
 });
 type Track = z.infer<typeof Track>;
 const Playlist = z.object({ title: z.string(), public: z.boolean(), picture_medium: z.string().nullish() });
@@ -74,6 +76,8 @@ export type DeezerClient = Readonly<{
   playlist(id: string): Promise<Result<SourcePlaylist, SourceError>>;
   byIsrc(isrc: string): Promise<Result<StoredSong | null, "provider_unavailable">>;
   search(query: string): Promise<Result<readonly StoredSong[], "provider_unavailable">>;
+  // URL do preview da faixa. null: a faixa sumiu, não toca na região ou não tem preview.
+  preview(id: string): Promise<Result<string | null, "provider_unavailable">>;
 }>;
 
 export const deezerClient = (deps: { fetch: Fetch; throttle: DeezerThrottle; maxSongs: number }): DeezerClient => {
@@ -120,6 +124,13 @@ export const deezerClient = (deps: { fetch: Fetch; throttle: DeezerThrottle; max
       const res = await get(`/search?limit=5&q=${encodeURIComponent(query)}`, Search);
       if (!res.ok) return err("provider_unavailable");
       return ok((res.value?.data ?? []).filter((t) => t.readable !== false).map(song));
+    },
+    preview: async (id) => {
+      if (!/^\d{1,20}$/.test(id)) return ok(null);
+      const res = await get(`/track/${id}`, Track);
+      if (!res.ok) return err("provider_unavailable");
+      const track = res.value;
+      return ok(track === null || track.readable === false || !track.preview ? null : track.preview);
     },
   };
 };

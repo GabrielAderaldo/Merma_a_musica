@@ -6,6 +6,7 @@ import {
   derivePhase,
   endMatch,
   endRound,
+  err,
   findPlayer,
   finishCountdown,
   hasNextRound,
@@ -14,6 +15,7 @@ import {
   markAudioResolved,
   markPersisted,
   normalize,
+  ok,
   PlaylistId,
   replaceUnplayableSong,
   returnToLobby,
@@ -57,7 +59,7 @@ import type {
   SoloRecords,
   SongSource,
 } from "./ports.ts";
-import { errorMessage, fromWireConfig, gameEnded, roomState, roundEnded, toErrorCode, toWireAudio, toWireConfig, toWirePlayer } from "./wire.ts";
+import { errorMessage, fromWireConfig, gameEnded, roomState, roundEnded, toErrorCode, toWireConfig, toWirePlayer } from "./wire.ts";
 
 export type ActorDeps = Readonly<{
   clock: Clock;
@@ -86,6 +88,10 @@ export const TIMING = {
 } as const;
 
 const AUTOCOMPLETE_LIMIT = 10; // R-104
+// S-12: o token da rodada sai no round_starting e é reemitido a cada reconexão, até 3 por jogador.
+export const MAX_AUDIO_TOKENS_PER_ROUND = 3;
+
+export type AudioError = "round_expired" | "token_already_used" | "audio_not_ready";
 
 export type RoomSummary = Readonly<{ invite_code: string; phase: Phase; player_count: number }>;
 
@@ -98,6 +104,9 @@ export class RoomActor {
   readonly #songs = new Map<PlayerUuid, readonly Song[]>();
   readonly #timers = new Map<string, Cancel>();
   #audio: Readonly<{ round_id: RoundId; audio: ResolvedAudio }> | null = null;
+  // Tokens da rodada atual (S-12): o último emitido para cada jogador e os já usados ou substituídos.
+  readonly #audioTokens = new Map<PlayerUuid, Readonly<{ token: string; issued: number }>>();
+  readonly #usedAudioTokens = new Set<string>();
   #tail: Promise<void> = Promise.resolve();
 
   constructor(room: Room, deps: ActorDeps, onTerminated: (invite_code: string) => void = () => {}) {
@@ -118,6 +127,13 @@ export class RoomActor {
   // Leitura sem mutação: não precisa da fila.
   get state(): Room {
     return this.#room;
+  }
+
+  // A rodada que está tocando, para o proxy de áudio achar a sala pelo round_id do token.
+  get playingRoundId(): RoundId | undefined {
+    const match = this.#room.match;
+    const round = match === null ? undefined : currentRound(match);
+    return round?.state === "grace_period" || round?.state === "timer_running" ? round.round_id : undefined;
   }
 
   summary(): RoomSummary {
@@ -195,7 +211,7 @@ export class RoomActor {
       if (match.state === "countdown") return this.#schedule("flow", TIMING.countdownMs, () => this.#enqueue(() => this.#countdownDone()));
       const round = currentRound(match);
       if (round === undefined) return this.#nextRound();
-      if (round.state !== "resolving") {
+      if (round.state === "streaming" || round.state === "grace_period" || round.state === "timer_running") {
         const audio = await this.#deps.audio.resolve(round.round_id, round.song);
         if (audio !== null) this.#audio = { round_id: round.round_id, audio };
       }
@@ -205,6 +221,27 @@ export class RoomActor {
       if (round.state === "reveal") return this.#schedule("flow", TIMING.revealMs, () => this.#enqueue(() => this.#afterReveal()));
       this.#scheduleRoundEnd();
     });
+  }
+
+  // Proxy de áudio (ADR-0004.R3, S-12, S-14), depois de o token ter sido verificado: a rodada ainda toca, o token não
+  // foi usado nem substituído, e o MP3 existe. Marcar o token como usado é mutação, por isso entra na fila.
+  async takeAudio(player: PlayerUuid, round_id: string, token: string): Promise<Result<Uint8Array<ArrayBuffer>, AudioError>> {
+    let result: Result<Uint8Array<ArrayBuffer>, AudioError> = err("round_expired");
+    await this.#enqueue(() => {
+      result = this.#takeAudio(player, round_id, token);
+    });
+    return result;
+  }
+
+  #takeAudio(player: PlayerUuid, round_id: string, token: string): Result<Uint8Array<ArrayBuffer>, AudioError> {
+    if (this.playingRoundId !== round_id) return err("round_expired");
+    if (this.#usedAudioTokens.has(token)) return err("token_already_used");
+    const audio = this.#audio?.round_id === round_id ? this.#audio.audio : undefined;
+    if (audio?.audio_source !== "deezer") return err("audio_not_ready");
+    this.#usedAudioTokens.add(token);
+    // Token assinado mas não emitido por este actor: só acontece com um emitido antes de uma recuperação.
+    if (this.#audioTokens.get(player)?.token !== token) this.#deps.logger.warn("audio_token_unknown", { invite_code: this.#room.invite_code });
+    return ok(audio.mp3);
   }
 
   // --- Comandos ------------------------------------------------------------------------------------------------------
@@ -372,6 +409,7 @@ export class RoomActor {
     const reason = shouldEndRound(this.#room, this.#deps.clock.now());
     if (reason === null || !this.#advance(endRound(this.#room, reason))) return;
     this.#cancel("flow");
+    this.#clearAudio(); // S-14: o token morre com a rodada
     const match = this.#room.match;
     const round = match === null ? undefined : currentRound(match);
     if (match !== null && round !== undefined) this.#broadcast(roundEnded(match, round));
@@ -379,7 +417,7 @@ export class RoomActor {
   }
 
   async #afterReveal(): Promise<void> {
-    this.#audio = null;
+    this.#clearAudio();
     const match = this.#room.match;
     if (match !== null && hasNextRound(match)) return this.#nextRound();
     return this.#finishIfDone();
@@ -509,9 +547,33 @@ export class RoomActor {
     this.#deps.logger.error("room_illegal_transition", { invite_code: this.#room.invite_code, error });
   }
 
-  #audioFor(player: PlayerUuid, round_id: RoundId) {
+  // Emite o token do jogador para a rodada e invalida o anterior (S-12). Depois do 3º, não há mais áudio para ele.
+  #audioFor(player: PlayerUuid, round_id: RoundId): WireAudio | undefined {
     if (this.#audio?.round_id !== round_id) return undefined;
-    return toWireAudio(this.#audio.audio, () => this.#deps.audio.token(player, round_id));
+    const audio = this.#audio.audio;
+    if (audio.audio_source === "spotify_sdk") return audio;
+    const previous = this.#audioTokens.get(player);
+    const issued = previous?.issued ?? 0;
+    if (issued >= MAX_AUDIO_TOKENS_PER_ROUND) return undefined;
+    const token = this.#deps.audio.token(player, round_id, this.#roundDeadline());
+    if (previous !== undefined) this.#usedAudioTokens.add(previous.token);
+    this.#audioTokens.set(player, { token, issued: issued + 1 });
+    return { audio_source: "deezer", audio_token: token };
+  }
+
+  // S-14: o token vale até o fim previsto da rodada. Antes do timer, conta o grace period inteiro.
+  #roundDeadline(): number {
+    const match = this.#room.match;
+    const round = match === null ? undefined : currentRound(match);
+    const duration = match?.config.time_per_round ?? 0;
+    const start = round?.timer_started_at ?? this.#deps.clock.now() + TIMING.gracePeriodMs;
+    return start + duration;
+  }
+
+  #clearAudio(): void {
+    this.#audio = null;
+    this.#audioTokens.clear();
+    this.#usedAudioTokens.clear();
   }
 
   #roomStateFor(player: PlayerUuid) {
@@ -584,6 +646,8 @@ export class RoomActor {
     this.#timers.clear();
   }
 }
+
+type WireAudio = Extract<WsServerMessage, { type: "round_starting" }>["audio"];
 
 const send = (socket: ServerSocket, message: WsServerMessage) => socket.send(JSON.stringify(message));
 

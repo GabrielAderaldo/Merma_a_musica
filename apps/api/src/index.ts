@@ -9,15 +9,20 @@ import { createApp } from "./http/app.ts";
 import { createLogger } from "./http/logger.ts";
 import { OpenSockets } from "./http/socket.ts";
 import { MemoryAccountStore, MemoryPlaylistStore, postgresAccountStore, postgresPlaylistStore } from "./playlist/store.ts";
+import { MemoryIsrcCache, redisIsrcCache } from "./playlist/audio/cache.ts";
+import { previewResolver } from "./playlist/audio/resolver.ts";
+import { AudioTokens } from "./playlist/audio/token.ts";
+import { DeezerThrottle, deezerClient } from "./playlist/deezer.ts";
 import { playlistIntegration } from "./playlist/system.ts";
 import { soloRecords } from "./progression/solo.ts";
 import { MemoryProgressionStore, postgresProgressionStore } from "./progression/store.ts";
+import { deezerAudio } from "./room/audio.ts";
 import { postgresMatchRepository } from "./room/match-store.ts";
 import { playlistSongs } from "./room/playlist-songs.ts";
 import { recoverRooms } from "./room/recovery.ts";
 import { RoomRegistry } from "./room/registry.ts";
 import { MemorySnapshotStore, redisSnapshotStore } from "./room/snapshot-store.ts";
-import { noAudio, noMatchStore, systemClock, systemIds } from "./room/system.ts";
+import { noMatchStore, systemClock, systemIds } from "./room/system.ts";
 import { type ShutdownHook, shutdown } from "./shutdown.ts";
 
 const config = loadConfig(process.env, pkg.version);
@@ -41,6 +46,8 @@ else {
 }
 // Sem Postgres (dev), os recordes do solo ficam na memória e somem num restart.
 const progression = db === null ? new MemoryProgressionStore() : postgresProgressionStore(db);
+// Um throttle da Deezer por processo (ADR-0004.R4), dividido entre a importação e o áudio.
+const deezerThrottle = new DeezerThrottle();
 // Idem para as playlists e a conta do Spotify.
 const playlists = await playlistIntegration({
   fetch: (url, init) => fetch(url, init),
@@ -50,6 +57,7 @@ const playlists = await playlistIntegration({
   spotify: config.value.spotify,
   logger,
   now: Date.now,
+  throttle: deezerThrottle,
 });
 if (!playlists.ok) {
   logger.error("config_invalid", { error: playlists.error });
@@ -57,6 +65,14 @@ if (!playlists.ok) {
 }
 if (config.value.youtubeApiKey === null) logger.warn("youtube_import_disabled");
 if (config.value.spotify === null) logger.warn("spotify_login_disabled");
+// O áudio da rodada (ADR-0004): pool de conexões próprio para a Deezer, separado do resto da API.
+const deezerSession = new Bun.FetchSession({ keepAlive: { idleTimeout: 30, maxIdleSockets: 8 } });
+const audioTokens = new AudioTokens(config.value.audioSecret);
+const previews = previewResolver({
+  deezer: deezerClient({ fetch: deezerSession.fetch, throttle: deezerThrottle, maxSongs: 0 }),
+  cache: redis === null ? new MemoryIsrcCache() : redisIsrcCache(redis),
+  fetch: deezerSession.fetch,
+});
 const sockets = new OpenSockets();
 const registry = new RoomRegistry({
   clock: systemClock,
@@ -64,12 +80,12 @@ const registry = new RoomRegistry({
   logger,
   snapshots,
   songs: playlistSongs(playlists.value.store),
-  audio: noAudio,
+  audio: deezerAudio({ previews, tokens: audioTokens }),
   matches: db === null ? noMatchStore : postgresMatchRepository(db),
   solo: soloRecords(progression),
 });
 const hooks: ShutdownHook[] = [{ name: "room_snapshot", run: () => registry.snapshotAll() }];
-const app = createApp({ config: config.value, logger, now: Date.now, startedAt: Date.now(), registry, sockets, progression, playlists: playlists.value });
+const app = createApp({ config: config.value, logger, now: Date.now, startedAt: Date.now(), registry, sockets, progression, playlists: playlists.value, audioTokens });
 
 // Antes de aceitar conexões (docs/architecture.md#recuperação).
 const recovery = await recoverRooms({ store: snapshots, registry, clock: systemClock, logger });

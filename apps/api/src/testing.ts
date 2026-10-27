@@ -7,6 +7,7 @@ import { soloRecords } from "./progression/solo.ts";
 import { MemoryProgressionStore } from "./progression/store.ts";
 import { RoomRegistry } from "./room/registry.ts";
 import { MemorySnapshotStore } from "./room/snapshot-store.ts";
+import { AudioTokens } from "./playlist/audio/token.ts";
 import { noAudio, noMatchStore, systemClock, systemIds } from "./room/system.ts";
 import type { SpotifyAuth } from "./playlist/accounts.ts";
 import { DeezerThrottle, deezerClient } from "./playlist/deezer.ts";
@@ -18,6 +19,7 @@ import { youtubeClient } from "./playlist/youtube.ts";
 import { playlistSongs } from "./room/playlist-songs.ts";
 
 export const SECRET = "test-secret-with-at-least-32-characters!";
+export const AUDIO_SECRET = "audio-secret-with-at-least-32-characters";
 export const ORIGIN = "https://merma.test";
 
 export type Captured = { logger: Logger; lines: Record<string, unknown>[] };
@@ -73,6 +75,7 @@ export const testApp = (
     sockets?: OpenSockets;
     progression?: ProgressionStore;
     playlists?: PlaylistIntegration;
+    audioTokens?: AudioTokens;
   } = {},
 ) => {
   const logger = opts.logger ?? captureLogs().logger;
@@ -99,6 +102,7 @@ export const testApp = (
     sockets: opts.sockets ?? new OpenSockets(),
     progression,
     playlists,
+    audioTokens: opts.audioTokens ?? new AudioTokens(AUDIO_SECRET),
   });
 };
 

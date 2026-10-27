@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import { OpenSockets, type ServerSocket } from "./http/socket.ts";
 import { type ShutdownDeps, shutdown } from "./shutdown.ts";
-import { captureLogs, SECRET } from "./testing.ts";
+import { AUDIO_SECRET, captureLogs, SECRET } from "./testing.ts";
 
 // Registra a ordem do que o desligamento faz, com sockets e servidor falsos.
 const harness = (hooks: ShutdownDeps["hooks"], deadlineMs?: number) => {
@@ -58,7 +58,7 @@ describe("ADR-0017.R8 — SIGTERM grava o snapshot das salas e sai antes do SIGK
     const proc = Bun.spawn(
       [process.execPath, "--disallow-code-generation-from-strings=strict", join(import.meta.dir, "index.ts")],
       {
-        env: { ...process.env, PORT: "0", SESSION_SECRET: SECRET, PUBLIC_BASE_URL: "https://merma.test", LOG_LEVEL: "info" },
+        env: { ...process.env, PORT: "0", SESSION_SECRET: SECRET, AUDIO_HMAC_SECRET: AUDIO_SECRET, PUBLIC_BASE_URL: "https://merma.test", LOG_LEVEL: "info" },
         stdout: "pipe",
         stderr: "pipe",
       },

@@ -121,15 +121,20 @@ export class FakeSongs implements SongSource {
   };
 }
 
+// Um frame MP3 qualquer: o actor não abre o áudio.
+export const FAKE_MP3 = new Uint8Array([0xff, 0xfb, 0x90, 0x00]);
+
 export class FakeAudio implements AudioResolver {
   // Nomes de música sem áudio (R-307).
   readonly unplayable = new Set<string>();
   readonly tokens: string[] = [];
+  readonly expiries: number[] = [];
 
   resolve = async (_round: RoundIdType, s: Song): Promise<ResolvedAudio | null> =>
-    this.unplayable.has(s.name) ? null : { audio_source: "deezer" };
+    this.unplayable.has(s.name) ? null : { audio_source: "deezer", mp3: FAKE_MP3 };
 
-  token = (p: PlayerUuid, round: RoundIdType) => {
+  token = (p: PlayerUuid, round: RoundIdType, expires_at: number) => {
+    this.expiries.push(expires_at);
     const token = `tok:${p.slice(-2)}:${round.slice(-4)}:${this.tokens.length}`;
     this.tokens.push(token);
     return token;

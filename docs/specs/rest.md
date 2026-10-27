@@ -12,7 +12,7 @@ until: apps/api/src/observability
 
 | Método e rota | Auth | Resposta |
 |---|---|---|
-| `GET /api/v1/audio/{audio_token}` | sessão | MP3; erros em [`audio.md`](audio.md#proxy-get-apiv1audioaudio_token) |
+| `GET /api/v1/audio/{audio_token}` | sessão | MP3; já implementado em `apps/api/src/http/audio.ts` ([ADR-0004](../adr/0004-audio-universal-via-deezer.md)) |
 | `GET /api/v1/me/export` · `DELETE /api/v1/me` | sessão | LGPD ([`privacy.md`](../privacy.md)) |
 | `GET /metrics` | Bearer `METRICS_AUTH_TOKEN` | Prometheus |
 

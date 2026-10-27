@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { createRoom, InviteCode, RoomId, type PlayerUuid } from "@merma/domain";
 import { CloseCode, type WsClientMessage } from "@merma/schema";
 import { RoomActor, TIMING } from "./actor.ts";
-import { actorDeps, FakeSocket, PLAYLIST, player } from "./testing.ts";
+import { actorDeps, FAKE_MP3, FakeSocket, PLAYLIST, player } from "./testing.ts";
 
 const CONFIG = {
   time_per_round: 10,
@@ -55,6 +55,14 @@ const currentSong = (r: { actor: RoomActor }) => {
   const match = r.actor.state.match;
   const round = match?.rounds[match.current_round_index ?? -1];
   return round?.song.name ?? expect.unreachable("rodada atual");
+};
+
+// O token do round_starting do jogador e a rodada dele.
+const audioOf = (r: { socket: (i: number) => FakeSocket; actor: RoomActor }, i: number) => {
+  const audio = r.socket(i).last("round_starting")?.audio;
+  const round = r.actor.playingRoundId;
+  if (audio?.audio_source !== "deezer" || round === undefined) return expect.unreachable("round_starting com áudio da Deezer");
+  return { round, token: audio.audio_token };
 };
 
 describe("lobby", () => {
@@ -276,6 +284,47 @@ describe("partida", () => {
     const back = new FakeSocket();
     await r.actor.join(player(2), "P2", back);
     expect(back.last("room_state")).toMatchObject({ phase: "playing", current_round_index: 0, total_rounds: 2, audio: { audio_source: "deezer" } });
+  });
+
+  test("S-14: o token vale até o fim previsto da rodada (grace period + time_per_round)", async () => {
+    const r = await started(1);
+    // O round_starting saiu agora: o timer começa daqui a 3s e dura 10s.
+    expect(r.audio.expiries).toEqual([r.clock.now() + TIMING.gracePeriodMs + 10_000]);
+  });
+
+  test("S-12: o MP3 sai uma vez por token; depois, token_already_used", async () => {
+    const r = await started(1);
+    const { round, token } = audioOf(r, 1);
+    expect(await r.actor.takeAudio(player(1), round, token)).toEqual({ ok: true, value: FAKE_MP3 });
+    expect(await r.actor.takeAudio(player(1), round, token)).toEqual({ ok: false, error: "token_already_used" });
+  });
+
+  test("S-12: reconectar emite um token novo e invalida o anterior, até 3 por rodada", async () => {
+    const r = await timerRunning(2);
+    const first = audioOf(r, 2);
+    const tokens = [first.token];
+    let current = r.socket(2);
+    for (let i = 0; i < 3; i++) {
+      await r.actor.disconnect(player(2), current);
+      current = new FakeSocket();
+      await r.actor.join(player(2), "P2", current);
+      const audio = current.last("room_state")?.audio;
+      tokens.push(audio?.audio_source === "deezer" ? audio.audio_token : "");
+    }
+    // round_starting + 2 reconexões = 3 emissões; a 3ª reconexão volta sem áudio.
+    expect(tokens.filter((t) => t !== "")).toHaveLength(3);
+    expect(tokens[3]).toBe("");
+    expect(await r.actor.takeAudio(player(2), first.round, first.token)).toEqual({ ok: false, error: "token_already_used" });
+    expect(await r.actor.takeAudio(player(2), first.round, tokens[2] ?? "")).toEqual({ ok: true, value: FAKE_MP3 });
+  });
+
+  test("S-14: depois de round_ended o áudio acabou (round_expired)", async () => {
+    const r = await timerRunning(1);
+    const { round, token } = audioOf(r, 1);
+    await r.advance(10_000);
+    expect(r.socket(1).of("round_ended")).toHaveLength(1);
+    expect(r.actor.playingRoundId).toBeUndefined();
+    expect(await r.actor.takeAudio(player(1), round, token)).toEqual({ ok: false, error: "round_expired" });
   });
 
   test("todos saem no meio da partida: ela termina com o placar que tiver e é persistida", async () => {

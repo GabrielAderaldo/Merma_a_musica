@@ -5,6 +5,8 @@ export type Config = {
   port: number;
   hostname: string;
   sessionSecret: string;
+  // HMAC do audio_token (ADR-0004), separado do da sessão.
+  audioSecret: string;
   // Origins aceitos no CORS e no handshake do WS (S-02).
   allowedOrigins: string[];
   logLevel: LogLevel;
@@ -26,6 +28,7 @@ const isLogLevel = (s: string): s is LogLevel => LEVELS.includes(s);
 export type ConfigError =
   | "invalid_port"
   | "session_secret_too_short"
+  | "audio_secret_too_short"
   | "invalid_public_base_url"
   | "invalid_log_level"
   | "invalid_spotify_redirect_uri"
@@ -37,6 +40,8 @@ export const loadConfig = (env: Record<string, string | undefined>, version: str
   // HMAC-SHA256 do cookie de sessão: 32 bytes em base64 dão 44 caracteres (`openssl rand -base64 32`).
   const sessionSecret = env["SESSION_SECRET"] ?? "";
   if (sessionSecret.length < 32) return err("session_secret_too_short");
+  const audioSecret = env["AUDIO_HMAC_SECRET"] ?? "";
+  if (audioSecret.length < 32) return err("audio_secret_too_short");
   const base = URL.parse(env["PUBLIC_BASE_URL"] ?? "");
   if (!base) return err("invalid_public_base_url");
   const logLevel = env["LOG_LEVEL"] ?? "info";
@@ -48,6 +53,7 @@ export const loadConfig = (env: Record<string, string | undefined>, version: str
     // Só loopback: o Caddy é quem fala com a internet (docs/operations.md).
     hostname: "127.0.0.1",
     sessionSecret,
+    audioSecret,
     allowedOrigins: [base.origin],
     logLevel,
     version,

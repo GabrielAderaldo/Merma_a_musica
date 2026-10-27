@@ -22,20 +22,20 @@ Fora do modelo de ameaça no MVP: atacante estatal, zero-day em Bun/Postgres/Red
 
 | ID | Ameaça → mitigação | Verificação |
 |---|---|---|
-| S-10 | Ver URL ou metadados do Deezer no DevTools → proxy em `/api/v1/audio/{token}`, com ID3v1/ID3v2 removidos e `Cache-Control: no-store, private`. | pendente: teste "resposta sem tag ID3" |
-| S-11 | Repassar a URL para outro jogador → `audio_token` = HMAC-SHA256 de `(player_uuid, round_id, expiry)`; outro jogador recebe `401 player_mismatch`. | pendente |
-| S-12 | Baixar de novo para analisar → token de uso único (`410 token_already_used`). A revelação toca o blob que o cliente já tem. Ao reconectar, o servidor emite um token novo para o mesmo `(player, round)` e invalida o anterior, no máximo 3 por rodada. | pendente |
-| S-13 | Inspeção fragmentada → requisição com `Range` recebe `416`, **antes** de consumir o token. | pendente |
-| S-14 | Token vazado para fora da sala → expira no fim da rodada. | pendente |
-| S-15 | Fallback Spotify SDK expõe metadados ao cliente. **Aceito**: é raro (R-801). | — |
+| S-10 | Ver URL ou metadados do Deezer no DevTools → proxy em `/api/v1/audio/{token}`, com ID3v1/ID3v2 removidos e `Cache-Control: no-store, private`. | `apps/api/src/http/audio.test.ts` e `apps/api/src/playlist/audio/id3.test.ts` |
+| S-11 | Repassar a URL para outro jogador → `audio_token` = HMAC-SHA256 de `(player_uuid, round_id, expiry)`; outro jogador recebe `401 player_mismatch`. | `apps/api/src/http/audio.test.ts` e `apps/api/src/playlist/audio/token.test.ts` |
+| S-12 | Baixar de novo para analisar → token de uso único (`410 token_already_used`). A revelação toca o blob que o cliente já tem. Ao reconectar, o servidor emite um token novo para o mesmo `(player, round)` e invalida o anterior, no máximo 3 por rodada. | `apps/api/src/http/audio.test.ts` e `apps/api/src/room/actor.test.ts` |
+| S-13 | Inspeção fragmentada → requisição com `Range` recebe `416`, **antes** de consumir o token. Nunca `Bun.file`, que atende `Range` sozinho. | `apps/api/src/http/audio.test.ts` |
+| S-14 | Token vazado para fora da sala → expira no fim previsto da rodada, e a rodada encerrada recusa com `410 round_expired`. | `apps/api/src/http/audio.test.ts`, `apps/api/src/room/actor.test.ts` e `apps/api/src/playlist/audio/token.test.ts` |
+| S-15 | Fallback Spotify SDK expõe metadados ao cliente. **Aceito**: é raro (R-801). Desde a [ADR-0024](adr/0024-playlist-por-link-publico-e-lista-resolvidos-na-deezer.md) toda música importada já está na Deezer, e nenhum resolver produz o fallback. | — |
 
 ## Tempo, resposta e bots
 
 | ID | Mitigação | Verificação |
 |---|---|---|
 | S-20 | `response_time = server_now − timer_started_at` (servidor). Timestamp vindo do cliente é ignorado. | pendente: teste de domínio |
-| S-21 | `answer_confirmed` não revela acerto. `is_correct` só sai em `round_ended`. | pendente: teste de schema |
-| S-22 | Autocomplete roda no servidor; o cliente nunca recebe o pool inteiro. | pendente |
+| S-21 | `answer_confirmed` não revela acerto. `is_correct` só sai em `round_ended`. | `apps/api/src/room/actor.test.ts` |
+| S-22 | Autocomplete roda no servidor; o cliente nunca recebe o pool inteiro. | `apps/api/src/room/actor.test.ts` |
 | S-23 | Rate limit por `(player_uuid, room_id)`: `submit_answer` 10/s, `autocomplete_search` 5/s, demais 30/s somados. 1ª violação → `error: rate_limited`; 3ª → close 4029. | pendente |
 | S-24 | Payload WS inválido no Zod → `error: invalid_payload`. 3 inválidos → close 1003. (Decidido em 2026-10-21: um cliente com bug não derruba o jogador na 1ª falha.) | `apps/api/src/room/gateway.test.ts` |
 | S-25 | REST: 10 salas/hora e 5 importações simultâneas por `player_uuid`. | salas: `apps/api/src/http/rooms.test.ts`; importações: `apps/api/src/playlist/importer.test.ts` |
